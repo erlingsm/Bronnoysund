@@ -1,0 +1,53 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+trim_trailing_whitespace = true
+
+[*.{cs,vb}]
+indent_size = 4
+
+[*.{csproj,vbproj,proj,props,targets,xml,xaml}]
+indent_size = 2
+
+[*.{json,yml,yaml}]
+indent_size = 2
+
+[*.{razor,cshtml,html}]
+indent_size = 4
+
+[*.md]
+trim_trailing_whitespace = false
+indent_size = 2
+
+# C# code style
+[*.cs]
+# Use file-scoped namespaces (C# 10+)
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Prefer var when type is apparent
+csharp_style_var_for_built_in_types = true:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = true:suggestion
+
+# Modern C# preferences
+csharp_style_expression_bodied_methods = when_on_single_line:suggestion
+csharp_style_expression_bodied_properties = when_on_single_line:suggestion
+csharp_style_pattern_matching_over_is_with_cast_check = true:warning
+csharp_style_pattern_matching_over_as_with_null_check = true:warning
+csharp_style_inlined_variable_declaration = true:warning
+
+# Naming
+dotnet_naming_rule.interfaces_should_be_pascal_case_with_i.severity = warning
+dotnet_naming_rule.interfaces_should_be_pascal_case_with_i.symbols = interfaces
+dotnet_naming_rule.interfaces_should_be_pascal_case_with_i.style = begins_with_i_pascal_case
+
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+dotnet_naming_style.begins_with_i_pascal_case.required_prefix = I
+dotnet_naming_style.begins_with_i_pascal_case.capitalization = pascal_case
+
+# Sortér using
+dotnet_sort_system_directives_first = true
