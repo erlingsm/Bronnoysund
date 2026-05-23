@@ -1,0 +1,92 @@
+@page "/"
+@page "/lookup"
+@using MudBlazor
+@using Bronnoysund.Lookup.ViewModels
+@inject CompanyLookupViewModel ViewModel
+@implements IDisposable
+
+<PageTitle>Bronnoysund Lookup</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">Bronnoysund Lookup</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        Slå opp norske virksomheter i Enhetsregisteret. Skriv organisasjonsnummer (9 siffer, starter på 8 eller 9).
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudTextField @bind-Value="ViewModel.OrgNumberInput"
+                      Label="Organisasjonsnummer"
+                      Placeholder="f.eks. 919300388"
+                      Variant="Variant.Outlined"
+                      Immediate="true"
+                      OnKeyDown="@OnKeyDown"
+                      Disabled="@ViewModel.IsBusy" />
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Class="mt-3"
+                   FullWidth="true"
+                   Disabled="@ViewModel.IsBusy"
+                   OnClick="OnLookupClicked">
+            @if (ViewModel.IsBusy)
+            {
+                <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Søker…</span>
+            }
+            else
+            {
+                <span>Slå opp</span>
+            }
+        </MudButton>
+    </MudPaper>
+
+    @if (ViewModel.ErrorMessage is not null)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">@ViewModel.ErrorMessage</MudAlert>
+    }
+
+    @if (ViewModel.Found is { } found)
+    {
+        <MudPaper Class="pa-4" Elevation="3">
+            <MudText Typo="Typo.h6" Class="mb-3">@found.OrganizationName</MudText>
+            <MudList T="string" Dense="true">
+                <MudListItem T="string" Icon="@Icons.Material.Filled.Numbers"
+                             Text="@($"Organization Number: {found.OrganizationNumber}")" />
+                <MudListItem T="string" Icon="@Icons.Material.Filled.Business"
+                             Text="@($"Company Type: {found.CompanyType}")" />
+                <MudListItem T="string" Icon="@Icons.Material.Filled.Language"
+                             Text="@($"Language Form: {found.LanguageForm}")" />
+            </MudList>
+            @if (ViewModel.StatusMessage is not null)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Success" Class="mt-3 d-block">
+                    @ViewModel.StatusMessage
+                </MudText>
+            }
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ViewModel.PropertyChanged += OnViewModelChanged;
+    }
+
+    private void OnViewModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private async Task OnLookupClicked() => await ViewModel.LookupAsync(CancellationToken.None);
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !ViewModel.IsBusy)
+        {
+            await ViewModel.LookupAsync(CancellationToken.None);
+        }
+    }
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnViewModelChanged;
+    }
+}
