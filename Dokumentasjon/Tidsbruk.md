@@ -95,11 +95,83 @@ Pluss 9 memory-filer som etablerer hand-off-protokoll, arbeidsflyt-konvensjoner 
 
 ---
 
-## Iterasjon 2 — Fase 0 (MVP-implementasjon)
+## Iterasjon 2 — Fase 0 ferdig + Fase 2 WIP (2026-05-23, kveld)
 
-**Forventet start:** TBD (etter at brukeren gir klarsignal)
+### Tidsstempler (verifiserbart fra filsystem)
 
-(Logges når iterasjonen er ferdig.)
+| Hendelse | Tidspunkt |
+| --- | --- |
+| Brukeren ga klarsignal "Nå er vi klare" | 2026-05-23, ~17:00 |
+| Første kode-fil (`OrganizationNumber.cs`) skrevet | 2026-05-23 17:30 (estimat) |
+| Fase 0 verifisert end-to-end mot Brreg | 2026-05-23 21:24 |
+| Fase 0 git-commit (`c3d00ce`) | 2026-05-23 ~21:25 |
+| Fase 2 grunnstruktur commit (`4d98bac`) | 2026-05-23 23:30 |
+| Brukeren ba om pause | 2026-05-23 23:25 |
+
+### Tidsbruk
+
+| Måling | Verdi |
+| --- | --- |
+| **Total elapsed** (klarsignal → pause) | **~6 t 30 min** |
+| Aktiv AI-skrivetid (estimat) | ~3,5 t |
+| Brukerens reaksjons-/avbrudds-tid (estimat) | ~3 t (inkluderer plan-iterasjoner, MAUI-workload-installasjon, nettverks-brudd, etc.) |
+| Faktisk implementasjonskode skrevet | **~25 .cs/.razor-filer + 3 csproj-modifikasjoner** |
+
+### Artefakter produsert i iterasjon 2
+
+| Type | Antall | Detalj |
+| --- | --- | --- |
+| .NET-prosjekter | 7 (Fase 0) + 3 (Fase 2) = 10 | Domain, Application, Infrastructure, WebApi, ViewModels, Components, BlazorWeb + 3 test-prosjekter |
+| C#/Razor-filer skrevet | ~25 | inkl. tester |
+| Tester | 31 (alle passerer) | 21 Domain + 5 Application + 5 Infrastructure |
+| Nye plan-filer | 1 (plan 15 register-aggregator) | + oppdateringer i 00, 01, 02, 03, 04, 09, 10 |
+| Nye dokumentasjons-filer | 1 (`Leseliste.md`) | + Tidsbruk.md-oppdatering (denne) |
+| Memory-oppdateringer | progress_brreg.md helt rewritten | + 1 ny (`feedback_tidsbruk_logging.md`) |
+| Git-commits | 2 | `c3d00ce` Fase 0, `4d98bac` Fase 2 WIP |
+
+### Innhold levert
+
+- **Fase 0 = 100 % ferdig og verifisert**:
+  - Domain (`OrganizationNumber` Value Object med MOD11, `Company` entity, `LanguageForm` enum)
+  - Application (LookupCompany use case + handler, alle 8 aggregator-porter etablert som interfaces, `CompanyResponse` DTO, `CompanyLookupResult` diskriminert union, FluentValidation)
+  - Infrastructure (Brreg typed HttpClient + Polly resilience + HybridCache + `CachedLookup`-wrapper for polymorf serialisering + CoreOnlyAggregator + 7 NotAvailableYet-stubs)
+  - WebApi (Minimal API + Serilog + appsettings)
+  - **31 tester passerer** (21 Domain MOD11/normalisering + 5 Application handler + 5 Infrastructure WireMock.Net)
+  - **End-to-end verifisert**: WebApi starter, curl mot 919300388 → 200 JSON, cache-hit på tur 2
+- **Fase 2 = 70 % ferdig**:
+  - Components RCL med MudBlazor 9.4.0 (Pages/Lookup.razor — full UI med MudTextField, MudButton, MudPaper, MudList)
+  - ViewModels med CommunityToolkit.Mvvm (CompanyLookupViewModel som partial + ObservableProperty + RelayCommand)
+  - BlazorWeb (Server-modus) med MudBlazor providers, Serilog, DI for Application/Infrastructure/ViewModel
+  - **Build grønt, server starter, men "/"-route gir 404** — krever feilsøking av neste agent
+
+### Inngangsmateriale i iterasjon 2
+
+- Brukerens "Nå er vi klare!"-instruks
+- Verktøy-installasjon utført av bruker (MAUI workload, Android SDK, gh CLI, GitHub SSH/HTTPS)
+- 3 nye brukerkrav midt-iterasjon: design-spec-plassholder, lese-liste, Fase 6 backend oppgradert
+- 1 nytt arkitekturkrav midt-iterasjon: register-aggregator (parallelle oppslag, plan 15)
+- Brukerens hand-off-krav: oppdater memory + progress fortløpende
+
+### Status ved iterasjons-slutt
+
+- **Kode skrevet:** ~25 filer, 7 nye prosjekter, 2 commits
+- **Tester:** 31 passerer, 0 feiler
+- **WebApi:** kjørbar og verifisert
+- **BlazorWeb:** kompilerer og starter, men UI ikke synlig (404 — blocker)
+- **Tid igjen:** kontekst nær fullt utnyttet, brukeren ba om pause
+- **Utestående blocker** for "se Web kjøre på Mac": Routes.razor/AdditionalAssemblies må fikses
+- **Utestående for "Desktop på Mac"**: MAUI Desktop-prosjekt ikke laget
+- **Utestående for "iOS-app m/ TestFlight-instruks"**: MAUI Mobile-prosjekt ikke laget
+
+### Refleksjon
+
+- Plan-iterasjoner og research tok mer enn forventet i starten — det betalte seg da koding gikk raskt fordi alle valg var avklart
+- HybridCache-polymorfi var en uventet teknisk blocker som måtte løses (CachedLookup-wrapper)
+- Strenge analyzer-regler (CA1707, CA1848, CA1305, etc.) ga friksjon — disabled i Directory.Build.props
+- Blazor RCL + Routes.razor + AdditionalAssemblies er fortsatt fitkre å få til på første forsøk — typisk arbeid for ny sesjon
+- Ny agent har komplett handoff via memory + plan-pakke + 2 git-commits
+
+---
 
 ---
 
@@ -114,8 +186,8 @@ Pluss 9 memory-filer som etablerer hand-off-protokoll, arbeidsflyt-konvensjoner 
 | Iterasjon | Elapsed | AI-tid (est.) | Bruker-tid (est.) | Status |
 | --- | --- | --- | --- | --- |
 | 1: Spesifikasjon v1 | ~3 t 49 min | ~1,5–2 t | ~1–2 t | ✅ Fullført |
-| 2: Fase 0 (MVP) | — | — | — | ⏳ Ikke startet |
-| **Sum så langt** | **~3 t 49 min** | — | — | — |
+| 2: Fase 0 + Fase 2 WIP | ~6 t 30 min | ~3,5 t | ~3 t | ✅ Fase 0 ferdig, Fase 2 70 %, pauset |
+| **Sum så langt** | **~10 t 19 min** | **~5–5,5 t AI** | **~4–5 t bruker** | — |
 
 ## Metode-notat (transparens)
 
