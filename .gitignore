@@ -6,3 +6,9 @@
 Oppdrag/
 Plan/
 Dokumentasjon/
+
+# Build-output
+.dist/
+dist/
+**/bin/
+**/obj/
