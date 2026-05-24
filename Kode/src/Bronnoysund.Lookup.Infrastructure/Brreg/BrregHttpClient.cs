@@ -26,6 +26,13 @@ internal sealed class BrregHttpClient(HttpClient http, ILogger<BrregHttpClient> 
         // size=100 covers the long tail; pagination kicks in beyond that — handled here as "first page only" until needed.
         => GetJsonOrNullAsync<BrregUnderenheterPageDto>($"underenheter?overordnetEnhet={org.Value}&size=100", org.Value, ct);
 
+    public Task<BrregEnheterPageDto?> SearchEnheterByNameAsync(string query, int size, CancellationToken ct)
+    {
+        // Uri.EscapeDataString safely encodes Norwegian characters (æøå) and spaces.
+        var encoded = Uri.EscapeDataString(query);
+        return GetJsonOrNullAsync<BrregEnheterPageDto>($"enheter?navn={encoded}&size={size}", query, ct);
+    }
+
     private async Task<T?> GetJsonOrNullAsync<T>(string path, string contextValue, CancellationToken ct)
         where T : class
     {

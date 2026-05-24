@@ -43,6 +43,16 @@
   <data name="CompanyTypeRow"><value>Verksemdsform: {0}</value></data>
   <data name="LanguageFormRow"><value>Målform: {0}</value></data>
 
+  <data name="SearchModeOrgNumber"><value>Organisasjonsnummer</value></data>
+  <data name="SearchModeName"><value>Namn</value></data>
+  <data name="SearchByNameLabel"><value>Verksemdsnamn</value></data>
+  <data name="SearchByNamePlaceholder"><value>t.d. Statens vegvesen</value></data>
+  <data name="SearchButtonName"><value>Søk</value></data>
+  <data name="CompanyNameCol"><value>Namn</value></data>
+  <data name="PostalCityCol"><value>Stad</value></data>
+  <data name="SearchPaginationHint"><value>Viser {0} av {1} treff — søk meir presist for å snevre inn.</value></data>
+  <data name="NoHitsForName"><value>Inga verksemd funne med dette namnet.</value></data>
+
   <data name="EnterOrgNumber"><value>Skriv inn eit organisasjonsnummer.</value></data>
   <data name="FoundInRegistry"><value>Funne i Brønnøysundregistera.</value></data>
   <data name="NotFoundForOrgNumber"><value>Inga verksemd med organisasjonsnummer {0} blei funne.</value></data>

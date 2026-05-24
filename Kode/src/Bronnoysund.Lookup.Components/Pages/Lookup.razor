@@ -13,34 +13,86 @@
     </MudText>
 
     <MudPaper Class="pa-4 mb-4" Elevation="2">
-        <MudTextField @bind-Value="ViewModel.OrgNumberInput"
-                      Label="@L["OrgNumberLabel"]"
-                      Placeholder="@L["OrgNumberPlaceholder"]"
-                      Variant="Variant.Outlined"
-                      Immediate="true"
-                      OnKeyDown="@OnKeyDown"
-                      Disabled="@ViewModel.IsBusy" />
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   Class="mt-3"
-                   FullWidth="true"
-                   Disabled="@ViewModel.IsBusy"
-                   OnClick="OnLookupClicked">
-            @if (ViewModel.IsBusy)
-            {
-                <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                <span>@L["Searching"]</span>
-            }
-            else
-            {
-                <span>@L["SearchButton"]</span>
-            }
-        </MudButton>
+        <MudRadioGroup T="bool" Value="@ViewModel.IsNameSearchMode" ValueChanged="OnSearchModeChanged" Class="mb-4">
+            <MudRadio T="bool" Value="@false">@L["SearchModeOrgNumber"]</MudRadio>
+            <MudRadio T="bool" Value="@true">@L["SearchModeName"]</MudRadio>
+        </MudRadioGroup>
+
+        @if (!ViewModel.IsNameSearchMode)
+        {
+            <MudTextField @bind-Value="ViewModel.OrgNumberInput"
+                          Label="@L["OrgNumberLabel"]"
+                          Placeholder="@L["OrgNumberPlaceholder"]"
+                          Variant="Variant.Outlined"
+                          Immediate="true"
+                          OnKeyDown="@OnOrgNumberKeyDown"
+                          Disabled="@ViewModel.IsBusy" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" FullWidth="true"
+                       Disabled="@ViewModel.IsBusy" OnClick="OnLookupClicked">
+                @if (ViewModel.IsBusy)
+                {
+                    <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>@L["Searching"]</span>
+                }
+                else
+                {
+                    <span>@L["SearchButton"]</span>
+                }
+            </MudButton>
+        }
+        else
+        {
+            <MudTextField @bind-Value="ViewModel.NameQueryInput"
+                          Label="@L["SearchByNameLabel"]"
+                          Placeholder="@L["SearchByNamePlaceholder"]"
+                          Variant="Variant.Outlined"
+                          Immediate="true"
+                          OnKeyDown="@OnNameKeyDown"
+                          Disabled="@ViewModel.IsBusy" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" FullWidth="true"
+                       Disabled="@ViewModel.IsBusy" OnClick="OnSearchClicked">
+                @if (ViewModel.IsBusy)
+                {
+                    <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>@L["Searching"]</span>
+                }
+                else
+                {
+                    <span>@L["SearchButtonName"]</span>
+                }
+            </MudButton>
+        }
     </MudPaper>
 
     @if (ViewModel.ErrorMessage is not null)
     {
         <MudAlert Severity="Severity.Warning" Class="mb-4">@ViewModel.ErrorMessage</MudAlert>
+    }
+
+    @if (ViewModel.SearchHits.Count > 0)
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudTable Items="@ViewModel.SearchHits" Hover="true" Dense="true" OnRowClick="OnHitClicked" T="CompanySearchHit">
+                <HeaderContent>
+                    <MudTh>@L["OrgNumberLabel"]</MudTh>
+                    <MudTh>@L["CompanyNameCol"]</MudTh>
+                    <MudTh>@L["CompanyTypeCol", ""].Value.Replace(": ", "")</MudTh>
+                    <MudTh>@L["PostalCityCol"]</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="hit">
+                    <MudTd><code>@hit.OrganizationNumber</code></MudTd>
+                    <MudTd>@hit.Name</MudTd>
+                    <MudTd>@hit.OrganizationFormCode</MudTd>
+                    <MudTd>@hit.PostalCity</MudTd>
+                </RowTemplate>
+            </MudTable>
+            @if (ViewModel.SearchTotalElements > ViewModel.SearchHits.Count)
+            {
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-2 d-block">
+                    @L["SearchPaginationHint", ViewModel.SearchHits.Count, ViewModel.SearchTotalElements]
+                </MudText>
+            }
+        </MudPaper>
     }
 
     @if (ViewModel.Found is { } found)
@@ -74,13 +126,40 @@
     private void OnViewModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         => InvokeAsync(StateHasChanged);
 
+    private void OnSearchModeChanged(bool isNameMode)
+    {
+        ViewModel.IsNameSearchMode = isNameMode;
+        ViewModel.ErrorMessage = null;
+        ViewModel.SearchHits = [];
+        ViewModel.SearchTotalElements = 0;
+        ViewModel.Found = null;
+    }
+
     private async Task OnLookupClicked() => await ViewModel.LookupAsync(CancellationToken.None);
 
-    private async Task OnKeyDown(KeyboardEventArgs e)
+    private async Task OnSearchClicked() => await ViewModel.SearchByNameAsync(CancellationToken.None);
+
+    private async Task OnOrgNumberKeyDown(KeyboardEventArgs e)
     {
         if (e.Key == "Enter" && !ViewModel.IsBusy)
         {
             await ViewModel.LookupAsync(CancellationToken.None);
+        }
+    }
+
+    private async Task OnNameKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !ViewModel.IsBusy)
+        {
+            await ViewModel.SearchByNameAsync(CancellationToken.None);
+        }
+    }
+
+    private async Task OnHitClicked(TableRowClickEventArgs<CompanySearchHit> args)
+    {
+        if (args.Item is not null)
+        {
+            await ViewModel.SelectHitAsync(args.Item, CancellationToken.None);
         }
     }
 

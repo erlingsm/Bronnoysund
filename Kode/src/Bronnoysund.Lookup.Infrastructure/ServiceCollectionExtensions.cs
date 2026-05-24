@@ -82,6 +82,8 @@ public static class ServiceCollectionExtensions
                     cache: sp.GetRequiredService<HybridCache>(),
                     options: sp.GetRequiredService<IOptions<BrregOptions>>(),
                     logger: sp.GetRequiredService<ILogger<CachingCompanyProvider>>()));
+
+            services.AddSingleton<ICompanySearchProvider, BrregCompanySearchProvider>();
         }
 
         // Phase 4 aggregator: parallel calls to every registered provider, per-provider error

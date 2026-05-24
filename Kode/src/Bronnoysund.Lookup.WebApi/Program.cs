@@ -4,6 +4,7 @@ using Bronnoysund.Lookup.Application;
 using Bronnoysund.Lookup.Application.Ports;
 using Bronnoysund.Lookup.Application.Results;
 using Bronnoysund.Lookup.Application.UseCases.LookupCompany;
+using Bronnoysund.Lookup.Application.UseCases.SearchCompaniesByName;
 using Bronnoysund.Lookup.Domain;
 using Bronnoysund.Lookup.Infrastructure;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
@@ -68,6 +69,30 @@ try
                 title: "Brønnøysundregistrene (the Brønnøysund Register Centre) is temporarily unavailable",
                 detail: unav.Message),
             _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/companies", async (
+        string? name,
+        int? size,
+        SearchCompaniesByNameHandler handler,
+        CancellationToken ct) =>
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return Results.BadRequest(new { error = "missing_name", message = "Query parameter 'name' is required." });
+        }
+
+        var result = await handler.HandleAsync(new SearchCompaniesByNameQuery(name, size), ct);
+        return result switch
+        {
+            SearchCompaniesByNameResult.Found f => Results.Ok(f.Result),
+            SearchCompaniesByNameResult.InvalidInput inv => Results.BadRequest(new { error = "invalid_input", message = inv.Message }),
+            SearchCompaniesByNameResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "Brønnøysundregistrene (the Brønnøysund Register Centre) is temporarily unavailable",
+                detail: u.Message),
+            _ => Results.Problem("Unexpected result type."),
         };
     });
 

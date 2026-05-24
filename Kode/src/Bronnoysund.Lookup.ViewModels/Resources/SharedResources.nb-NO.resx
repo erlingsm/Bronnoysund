@@ -43,6 +43,16 @@
   <data name="CompanyTypeRow"><value>Virksomhetsform: {0}</value></data>
   <data name="LanguageFormRow"><value>Målform: {0}</value></data>
 
+  <data name="SearchModeOrgNumber"><value>Organisasjonsnummer</value></data>
+  <data name="SearchModeName"><value>Navn</value></data>
+  <data name="SearchByNameLabel"><value>Virksomhetsnavn</value></data>
+  <data name="SearchByNamePlaceholder"><value>f.eks. Statens vegvesen</value></data>
+  <data name="SearchButtonName"><value>Søk</value></data>
+  <data name="CompanyNameCol"><value>Navn</value></data>
+  <data name="PostalCityCol"><value>Sted</value></data>
+  <data name="SearchPaginationHint"><value>Viser {0} av {1} treff — søk mer presist for å snevre inn.</value></data>
+  <data name="NoHitsForName"><value>Ingen virksomheter funnet med dette navnet.</value></data>
+
   <data name="EnterOrgNumber"><value>Skriv inn et organisasjonsnummer.</value></data>
   <data name="FoundInRegistry"><value>Funnet i Brønnøysundregistrene.</value></data>
   <data name="NotFoundForOrgNumber"><value>Ingen virksomhet med organisasjonsnummer {0} ble funnet.</value></data>

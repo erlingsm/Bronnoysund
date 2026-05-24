@@ -44,6 +44,17 @@
   <data name="CompanyTypeRow"><value>Company Type: {0}</value></data>
   <data name="LanguageFormRow"><value>Language Form: {0}</value></data>
 
+  <!-- Name search -->
+  <data name="SearchModeOrgNumber"><value>Organization number</value></data>
+  <data name="SearchModeName"><value>Name</value></data>
+  <data name="SearchByNameLabel"><value>Company name</value></data>
+  <data name="SearchByNamePlaceholder"><value>e.g. Statens vegvesen</value></data>
+  <data name="SearchButtonName"><value>Search</value></data>
+  <data name="CompanyNameCol"><value>Name</value></data>
+  <data name="PostalCityCol"><value>City</value></data>
+  <data name="SearchPaginationHint"><value>Showing {0} of {1} hits — refine the search to narrow results.</value></data>
+  <data name="NoHitsForName"><value>No companies found matching this name.</value></data>
+
   <!-- Lookup ViewModel messages -->
   <data name="EnterOrgNumber"><value>Enter an organization number.</value></data>
   <data name="FoundInRegistry"><value>Found in the Brønnøysund Register Centre.</value></data>
