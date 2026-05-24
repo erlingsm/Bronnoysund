@@ -175,7 +175,73 @@ Pluss 9 memory-filer som etablerer hand-off-protokoll, arbeidsflyt-konvensjoner 
 
 ---
 
-## Iterasjon 3+ — Senere faser
+## Iterasjon 3 — Blazor 404-fiks + Fase 1 + Fase 3 + docs + GitHub-push (2026-05-24)
+
+### Tidsstempler
+
+| Hendelse | Tidspunkt |
+| --- | --- |
+| Sesjon startet (god morgen) | 2026-05-24 ~09:00 |
+| Blazor 404 fikset (commit `3f0ede9`) | 2026-05-24 09:16 |
+| MAUI Desktop kode commit (`eae058b`) | 2026-05-24 ~09:30 |
+| Speech + MAUI Mobile commit (`7970513`) | 2026-05-24 ~09:55 |
+| README + docs + slnf commit (`6a2e42b`) | 2026-05-24 ~10:10 |
+| GitHub-repo opprettet + push | 2026-05-24 ~10:15 |
+
+### Tidsbruk
+
+| Måling | Verdi |
+| --- | --- |
+| **Total elapsed** | **~1 t 15 min** |
+| Aktiv AI-skrivetid (estimat) | ~50 min |
+| Brukerens reaksjons-tid (estimat) | ~25 min |
+| Faktisk implementasjonskode + dokumentasjon | **~25 nye filer + 5 commits** |
+
+### Artefakter produsert i iterasjon 3
+
+| Type | Detalj |
+| --- | --- |
+| Bug-fiks | Blazor 404 (AddAdditionalAssemblies på MapRazorComponents) |
+| Nye prosjekter | Speech (delt port-prosjekt) + MauiDesktop (Mac Catalyst + Windows) + MauiMobile (iOS + Android) + Speech.Tests |
+| Nye tester | 16 NorskTallParser-tester (alle passerer) — totalt 47 tester nå |
+| Solution Filter-filer | 4 stk: Core, Web, Desktop, Mobile |
+| Dokumentasjon | README.md (rot) + COMMERCIAL-LICENSE.md + LICENSE (AGPL-3.0 fra gnu.org) + 5 install-guider + ide-overview |
+| GitHub | Repo opprettet på <https://github.com/erlingsm/Bronnoysund.Lookup> og pushet |
+
+### Status ved iterasjons-slutt
+
+- **Total kode-base:** 10 .NET-prosjekter + 4 test-prosjekter
+- **Tester:** 47/47 passerer (Domain 21 + Application 5 + Infrastructure 5 + Speech 16)
+- **Fungerer i nettleser:** Blazor Web Server (port 5199) — verifisert HTTP 200 + MudBlazor-rendering
+- **WebApi:** Verifisert mot ekte Brreg + cache-hit
+- **MAUI Desktop + Mobile:** Kode komplett, bygg blokkert av kjent Microsoft-issue (MAUI 10 krever Xcode 26.4 eksakt)
+- **GitHub:** Repository offentlig, README/LICENSE/COMMERCIAL-LICENSE leveres
+- **iOS-app for testers:** Krever Xcode 26.4-fix før vi kan bygge IPA og laste til TestFlight
+
+### Inngangsmateriale i iterasjon 3
+
+- Hand-off fra iterasjon 2 (progress_brreg.md med detaljert blocker-beskrivelse)
+- Brukerens "god morgen, les memory og fortsett"
+
+### Status ved iterasjons-slutt — gjenstående hovedoppgaver
+
+1. **MAUI-build venter på Xcode 26.4-installasjon** (brukerens action) eller MAUI-pakke-oppdatering
+2. **Persistens (SQLite + EF Core)** — kan introduseres når MAUI bygger
+3. **Plan 7 oppgradering** + Dockerfile + Helm for Fase 6 backend
+4. **Presentasjons-skeleton** (statisk HTML i `/Dokumentasjon/Presentasjon/`)
+5. **Verifikasjon i nettleser visuelt** — brukeren kan åpne <http://localhost:5199> og bekrefte at det funker
+
+### Refleksjon
+
+- Hand-off via `progress_brreg.md` fungerte presist — ny agent fant blocker, bestemte løsning, fikset den på 5 minutter
+- Solution filter (.slnf) er fin måte å la ulike IDE-er laste forskjellige deler — Rider får alt, VS Code kan ha bare core
+- Markdown-lint kopiert til alle docs-mapper holder kvaliteten konsekvent
+- GitHub-push var smooth (gh CLI HTTPS-auth var pre-konfigurert)
+- Xcode-versjons-issue er en kjent Microsoft-pain — vil løses ved oppdatering
+
+---
+
+## Iterasjon 4+ — Senere faser
 
 (Plassholder. Hver senere fase får sin egen seksjon med samme struktur.)
 
@@ -187,7 +253,8 @@ Pluss 9 memory-filer som etablerer hand-off-protokoll, arbeidsflyt-konvensjoner 
 | --- | --- | --- | --- | --- |
 | 1: Spesifikasjon v1 | ~3 t 49 min | ~1,5–2 t | ~1–2 t | ✅ Fullført |
 | 2: Fase 0 + Fase 2 WIP | ~6 t 30 min | ~3,5 t | ~3 t | ✅ Fase 0 ferdig, Fase 2 70 %, pauset |
-| **Sum så langt** | **~10 t 19 min** | **~5–5,5 t AI** | **~4–5 t bruker** | — |
+| 3: Blazor-fiks + Fase 1/3 kode + docs + push | ~1 t 15 min | ~50 min | ~25 min | ✅ Web kjørbar, MAUI venter på Xcode |
+| **Sum så langt** | **~11 t 34 min** | **~6 t AI** | **~5 t bruker** | — |
 
 ## Metode-notat (transparens)
 
