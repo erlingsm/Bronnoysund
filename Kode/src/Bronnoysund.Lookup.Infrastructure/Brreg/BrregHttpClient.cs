@@ -9,15 +9,26 @@ using Microsoft.Extensions.Logging;
 namespace Bronnoysund.Lookup.Infrastructure.Brreg;
 
 /// <summary>
-/// Typed HTTP client for the Brreg Enhetsregisteret. Sends GET /enheter/{orgnr}. Returns
-/// null on 404 ("not found" as a business outcome), throws <see cref="BrregUnavailableException"/>
-/// on technical failures (timeout, 5xx after Polly retry, circuit breaker open).
+/// Typed HTTP client for Brreg. Wraps the open Enhetsregisteret endpoints (no auth needed).
+/// All methods return null when the upstream returns 404/410 ("not found" as a business
+/// outcome) and throw <see cref="BrregUnavailableException"/> on technical failures
+/// (timeout, 5xx after Polly retry, circuit breaker open).
 /// </summary>
 internal sealed class BrregHttpClient(HttpClient http, ILogger<BrregHttpClient> logger)
 {
-    public async Task<BrregEnhetDto?> GetEnhetAsync(OrganizationNumber org, CancellationToken ct)
+    public Task<BrregEnhetDto?> GetEnhetAsync(OrganizationNumber org, CancellationToken ct)
+        => GetJsonOrNullAsync<BrregEnhetDto>($"enheter/{org.Value}", org.Value, ct);
+
+    public Task<BrregRollerDto?> GetRollerAsync(OrganizationNumber org, CancellationToken ct)
+        => GetJsonOrNullAsync<BrregRollerDto>($"enheter/{org.Value}/roller", org.Value, ct);
+
+    public Task<BrregUnderenheterPageDto?> GetUnderenheterAsync(OrganizationNumber org, CancellationToken ct)
+        // size=100 covers the long tail; pagination kicks in beyond that — handled here as "first page only" until needed.
+        => GetJsonOrNullAsync<BrregUnderenheterPageDto>($"underenheter?overordnetEnhet={org.Value}&size=100", org.Value, ct);
+
+    private async Task<T?> GetJsonOrNullAsync<T>(string path, string contextValue, CancellationToken ct)
+        where T : class
     {
-        var path = $"enheter/{org.Value}";
         logger.LogDebug("Brreg GET {Path}", path);
 
         try
@@ -26,30 +37,29 @@ internal sealed class BrregHttpClient(HttpClient http, ILogger<BrregHttpClient> 
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                logger.LogInformation("Brreg returned 404 for {OrgNumber}", org.Value);
+                logger.LogInformation("Brreg returned 404 for {Path} ({Context})", path, contextValue);
                 return null;
             }
 
             if (response.StatusCode == HttpStatusCode.Gone)
             {
-                logger.LogInformation("Brreg returned 410 (deleted) for {OrgNumber}", org.Value);
+                logger.LogInformation("Brreg returned 410 (deleted) for {Path} ({Context})", path, contextValue);
                 return null;
             }
 
             response.EnsureSuccessStatusCode();
 
-            var dto = await response.Content.ReadFromJsonAsync<BrregEnhetDto>(ct);
-            return dto;
+            return await response.Content.ReadFromJsonAsync<T>(ct);
         }
         catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
         {
             throw new BrregUnavailableException(
-                $"Brreg did not respond within the timeout for {org.Value}.", ex);
+                $"Brreg did not respond within the timeout for {path} ({contextValue}).", ex);
         }
         catch (HttpRequestException ex)
         {
             throw new BrregUnavailableException(
-                $"Could not contact Brreg for {org.Value}: {ex.Message}", ex);
+                $"Could not contact Brreg for {path} ({contextValue}): {ex.Message}", ex);
         }
     }
 }

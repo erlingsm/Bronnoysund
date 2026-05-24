@@ -24,6 +24,15 @@ internal sealed class BrregEnhetDto
     [JsonPropertyName("maalform")]
     public string? Maalform { get; set; }
 
+    // Bankruptcy data lives on the entity record itself — Brreg flips `konkurs` to true and
+    // populates `konkursdato` when the bankruptcy court has registered the case. There is no
+    // separate "konkursregister" REST endpoint per orgnr; the entity record is the source.
+    [JsonPropertyName("konkurs")]
+    public bool Konkurs { get; set; }
+
+    [JsonPropertyName("konkursdato")]
+    public string? Konkursdato { get; set; }
+
     /// <summary>Map to our domain entity. Returns null if critical fields are missing.</summary>
     public Company? ToDomain()
     {

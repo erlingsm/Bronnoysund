@@ -84,16 +84,31 @@ public static class ServiceCollectionExtensions
                     logger: sp.GetRequiredService<ILogger<CachingCompanyProvider>>()));
         }
 
-        // Aggregator (Phase 0: core-only). Phase 4 replaces this with ParallelCompanyDataAggregator.
-        services.AddSingleton<ICompanyDataAggregator, CoreOnlyAggregator>();
+        // Phase 4 aggregator: parallel calls to every registered provider, per-provider error
+        // isolation via RegistryError. Falls back to stubs for registries we have not yet built.
+        services.AddSingleton<ICompanyDataAggregator, ParallelCompanyDataAggregator>();
 
-        // Stub providers for registries not yet implemented — throw RegistryNotAvailableException.
-        services.AddSingleton<IRolesProvider, NotAvailableRolesProvider>();
+        // Real Brreg-backed providers (Direct mode only — RemoteApi mode goes through the WebApi
+        // which exposes aggregated data via its own /companies/{orgnr}/aggregated endpoint).
+        if (mode == DataSourceMode.Direct)
+        {
+            services.AddSingleton<IRolesProvider, BrregRolesProvider>();
+            services.AddSingleton<ISubUnitsProvider, BrregSubUnitsProvider>();
+            services.AddSingleton<IBankruptcyProvider, BrregBankruptcyProvider>();
+        }
+        else
+        {
+            // Thin Client: register stubs for now — Phase 6 will add RemoteApi adapters for
+            // the aggregated endpoint, which then makes per-provider registrations moot.
+            services.AddSingleton<IRolesProvider, NotAvailableRolesProvider>();
+            services.AddSingleton<ISubUnitsProvider, NotAvailableSubUnitsProvider>();
+            services.AddSingleton<IBankruptcyProvider, NotAvailableBankruptcyProvider>();
+        }
+
+        // Stub providers for registries that require gated access (Maskinporten, AML, commercial).
         services.AddSingleton<IAnnualReportProvider, NotAvailableAnnualReportProvider>();
         services.AddSingleton<IBeneficialOwnerProvider, NotAvailableBeneficialOwnerProvider>();
         services.AddSingleton<IDebtRegisterProvider, NotAvailableDebtRegisterProvider>();
-        services.AddSingleton<IBankruptcyProvider, NotAvailableBankruptcyProvider>();
-        services.AddSingleton<ISubUnitsProvider, NotAvailableSubUnitsProvider>();
         services.AddSingleton<IPersonRolesProvider, NotAvailablePersonRolesProvider>();
 
         return services;

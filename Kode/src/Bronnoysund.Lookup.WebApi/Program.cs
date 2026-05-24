@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
 using Bronnoysund.Lookup.Application;
+using Bronnoysund.Lookup.Application.Ports;
 using Bronnoysund.Lookup.Application.Results;
 using Bronnoysund.Lookup.Application.UseCases.LookupCompany;
+using Bronnoysund.Lookup.Domain;
 using Bronnoysund.Lookup.Infrastructure;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
@@ -67,6 +69,38 @@ try
                 detail: unav.Message),
             _ => Results.Problem("Unexpected result type.")
         };
+    });
+
+    app.MapGet("/companies/{orgnr}/aggregated", async (
+        string orgnr,
+        ICompanyDataAggregator aggregator,
+        CancellationToken ct) =>
+    {
+        if (!OrganizationNumber.TryCreate(orgnr, out var org, out var error))
+        {
+            return Results.BadRequest(new { error = "invalid_input", message = error });
+        }
+
+        var core = await aggregator.CoreOnlyAsync(org, ct);
+        switch (core)
+        {
+            case CompanyLookupResult.NotFound nf:
+                return Results.NotFound(new
+                {
+                    error = "not_found",
+                    message = $"No company with organization number {nf.OrganizationNumber} was found."
+                });
+            case CompanyLookupResult.Unavailable u:
+                return Results.Problem(
+                    statusCode: StatusCodes.Status503ServiceUnavailable,
+                    title: "Brønnøysundregistrene (the Brønnøysund Register Centre) is temporarily unavailable",
+                    detail: u.Message);
+            case CompanyLookupResult.InvalidInput inv:
+                return Results.BadRequest(new { error = "invalid_input", message = inv.Message });
+        }
+
+        var aggregated = await aggregator.AggregateAsync(org, ct);
+        return Results.Ok(aggregated);
     });
 
     app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Bronnoysund.Lookup.WebApi" }));
