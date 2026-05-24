@@ -9,18 +9,20 @@ WORKDIR /src
 
 # Kopier kun csproj-filer først for å utnytte Docker layer-cache
 COPY Directory.Build.props .
-COPY src/Bronnoysund.Lookup.Domain/Bronnoysund.Lookup.Domain.csproj                 src/Bronnoysund.Lookup.Domain/
-COPY src/Bronnoysund.Lookup.Application/Bronnoysund.Lookup.Application.csproj       src/Bronnoysund.Lookup.Application/
-COPY src/Bronnoysund.Lookup.Infrastructure/Bronnoysund.Lookup.Infrastructure.csproj src/Bronnoysund.Lookup.Infrastructure/
-COPY src/Bronnoysund.Lookup.WebApi/Bronnoysund.Lookup.WebApi.csproj                 src/Bronnoysund.Lookup.WebApi/
+COPY src/Bronnoysund.Lookup.Domain/Bronnoysund.Lookup.Domain.csproj                                       src/Bronnoysund.Lookup.Domain/
+COPY src/Bronnoysund.Lookup.Application/Bronnoysund.Lookup.Application.csproj                             src/Bronnoysund.Lookup.Application/
+COPY src/Bronnoysund.Lookup.Infrastructure/Bronnoysund.Lookup.Infrastructure.csproj                       src/Bronnoysund.Lookup.Infrastructure/
+COPY src/Bronnoysund.Lookup.Infrastructure.Persistence/Bronnoysund.Lookup.Infrastructure.Persistence.csproj src/Bronnoysund.Lookup.Infrastructure.Persistence/
+COPY src/Bronnoysund.Lookup.WebApi/Bronnoysund.Lookup.WebApi.csproj                                       src/Bronnoysund.Lookup.WebApi/
 
 RUN dotnet restore src/Bronnoysund.Lookup.WebApi/Bronnoysund.Lookup.WebApi.csproj
 
 # Kopier all kildekode og bygg
-COPY src/Bronnoysund.Lookup.Domain/         src/Bronnoysund.Lookup.Domain/
-COPY src/Bronnoysund.Lookup.Application/    src/Bronnoysund.Lookup.Application/
-COPY src/Bronnoysund.Lookup.Infrastructure/ src/Bronnoysund.Lookup.Infrastructure/
-COPY src/Bronnoysund.Lookup.WebApi/         src/Bronnoysund.Lookup.WebApi/
+COPY src/Bronnoysund.Lookup.Domain/                     src/Bronnoysund.Lookup.Domain/
+COPY src/Bronnoysund.Lookup.Application/                src/Bronnoysund.Lookup.Application/
+COPY src/Bronnoysund.Lookup.Infrastructure/             src/Bronnoysund.Lookup.Infrastructure/
+COPY src/Bronnoysund.Lookup.Infrastructure.Persistence/ src/Bronnoysund.Lookup.Infrastructure.Persistence/
+COPY src/Bronnoysund.Lookup.WebApi/                     src/Bronnoysund.Lookup.WebApi/
 
 RUN dotnet publish src/Bronnoysund.Lookup.WebApi/Bronnoysund.Lookup.WebApi.csproj \
     -c Release \
