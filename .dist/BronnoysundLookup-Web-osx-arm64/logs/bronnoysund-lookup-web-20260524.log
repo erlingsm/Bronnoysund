@@ -1,0 +1,12 @@
+2026-05-24 12:26:42.142 +02:00 [INF] User profile is available. Using '/Users/esm/.aspnet/DataProtection-Keys' as key repository; keys will not be encrypted at rest.
+2026-05-24 12:26:42.180 +02:00 [INF] Bronnoysund.Lookup.BlazorWeb starter på 
+2026-05-24 12:26:42.249 +02:00 [INF] Now listening on: http://localhost:5299
+2026-05-24 12:26:42.250 +02:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-24 12:26:42.250 +02:00 [INF] Hosting environment: Production
+2026-05-24 12:26:42.250 +02:00 [INF] Content root path: /Users/esm/UtviklingPrivat/Brønnøysund/.dist/BronnoysundLookup-Web-osx-arm64
+2026-05-24 12:26:47.422 +02:00 [INF] Request starting HTTP/1.1 GET http://localhost:5299/ - null null
+2026-05-24 12:26:47.436 +02:00 [INF] Executing endpoint '/ (/)'
+2026-05-24 12:26:47.540 +02:00 [INF] Executed endpoint '/ (/)'
+2026-05-24 12:26:47.541 +02:00 [INF] HTTP GET / responded 200 in 105.8888 ms
+2026-05-24 12:26:47.547 +02:00 [INF] Request finished HTTP/1.1 GET http://localhost:5299/ - 200 null text/html; charset=utf-8 126.2115ms
+2026-05-24 12:26:47.572 +02:00 [INF] Application is shutting down...
