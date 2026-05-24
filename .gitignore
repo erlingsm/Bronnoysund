@@ -1,2 +1,7 @@
 .DS_Store
+
 # Operating-system-spesifikke filer som ikke skal i repo
+
+# Interne arbeidsdokumenter — kun lokale, aldri på GitHub
+Oppdrag/
+Plan/
