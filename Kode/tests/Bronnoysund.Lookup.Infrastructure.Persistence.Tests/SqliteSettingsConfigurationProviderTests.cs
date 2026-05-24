@@ -9,11 +9,11 @@ namespace Bronnoysund.Lookup.Infrastructure.Persistence.Tests;
 public sealed class SqliteSettingsConfigurationProviderTests
 {
     [Fact]
-    public async Task AddSqliteSettings_overstyrer_appsettings_json_verdier_etter_reload()
+    public async Task AddSqliteSettings_OverridesAppSettingsJsonValuesAfterReload()
     {
         await using var harness = await SettingsRepositoryReloadHarness.CreateAsync(null!);
 
-        // Bygg en config der appsettings.json sier https://default/ men SQLite-laget er på toppen.
+        // Build a config where appsettings.json says https://default/ but the SQLite layer is on top.
         var inMemoryDefaults = new Dictionary<string, string?>
         {
             ["Brreg:BaseUrl"] = "https://default/",
@@ -23,10 +23,10 @@ public sealed class SqliteSettingsConfigurationProviderTests
             .AddSqliteSettings(() => harness.DbPath)
             .Build();
 
-        // Før noe er skrevet til DB: defaultverdien gjelder.
+        // Before anything is written to the DB: the default value applies.
         config["Brreg:BaseUrl"].Should().Be("https://default/");
 
-        // Skriv via repo (som internt kaller harness.Configuration.Reload(), men vår config er en annen instans).
+        // Write via the repo (which internally calls harness.Configuration.Reload(), but our config is a different instance).
         await harness.Repo.SetAsync("Brreg:BaseUrl", "https://example.com/", "string", default);
         config.Reload();
 
@@ -34,7 +34,7 @@ public sealed class SqliteSettingsConfigurationProviderTests
     }
 
     [Fact]
-    public async Task Load_returnerer_tom_data_naar_db_ikke_finnes()
+    public async Task Load_ReturnsEmptyData_WhenDbDoesNotExist()
     {
         var nonExistentPath = Path.Combine(Path.GetTempPath(), $"never-{Guid.NewGuid():N}.db");
         var config = new ConfigurationBuilder()

@@ -3,15 +3,15 @@
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Entities;
 
 /// <summary>
-/// Persistent cache-entry. GZip-komprimert. LRU-evicted ved overskridelse av maks-størrelse.
-/// Brukes som L2 bak HybridCache (L1 = in-memory).
+/// Persistent cache entry. GZip-compressed. LRU-evicted when the max size is exceeded.
+/// Used as L2 behind HybridCache (L1 = in-memory).
 /// </summary>
 public sealed class CacheEntry
 {
-    public required string Key { get; init; }                    // PK, f.eks. "org:919300388"
-    public required byte[] Value { get; init; }                  // GZip-komprimert av GzipHybridCacheSerializer over
-    public required int SizeBytes { get; init; }                 // = Value.Length, for max-size-beregning
+    public required string Key { get; init; }                    // PK, e.g. "org:919300388"
+    public required byte[] Value { get; init; }                  // GZip-compressed by GzipHybridCacheSerializer above
+    public required int SizeBytes { get; init; }                 // = Value.Length, for the max-size calculation
     public required DateTimeOffset StoredAt { get; init; }
     public required DateTimeOffset ExpiresAt { get; init; }
-    public required DateTimeOffset LastAccessedAt { get; set; }  // Oppdateres ved hver read (for LRU)
+    public required DateTimeOffset LastAccessedAt { get; set; }  // Updated on every read (for LRU)
 }

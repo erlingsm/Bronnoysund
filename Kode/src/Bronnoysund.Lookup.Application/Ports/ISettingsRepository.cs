@@ -5,8 +5,8 @@ namespace Bronnoysund.Lookup.Application.Ports;
 public sealed record AppSettingItem(string Key, string Value, string DataType, DateTimeOffset UpdatedAt);
 
 /// <summary>
-/// Bruker-overstyrte settings (Brreg-URL, cache-størrelse, retention osv).
-/// Endring trigger IOptionsMonitor.OnChange via SqliteSettingsConfigurationProvider.
+/// User-overridden settings (Brreg URL, cache size, retention, etc.).
+/// Changes trigger IOptionsMonitor.OnChange via SqliteSettingsConfigurationProvider.
 /// </summary>
 public interface ISettingsRepository
 {

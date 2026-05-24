@@ -2,7 +2,7 @@
 
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Entities;
 
-/// <summary>Bookmark — selskap brukeren har markert som favoritt.</summary>
+/// <summary>Bookmark — company the user has marked as a favorite.</summary>
 public sealed class FavoriteCompany
 {
     public required string OrgNumber { get; init; }

@@ -7,9 +7,9 @@ using Microsoft.Extensions.Caching.Hybrid;
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Cache;
 
 /// <summary>
-/// Wrapper rundt en inner IHybridCacheSerializer som GZip-komprimerer payload. Brukes for
-/// både L1 (in-memory) og L2 (SQLite via IDistributedCache) — sparer minne og diskplass
-/// på Brreg-respons (~50 % reduksjon). CPU-koste &lt; 1 ms per entry.
+/// Wrapper around an inner IHybridCacheSerializer that GZip-compresses the payload. Used for
+/// both L1 (in-memory) and L2 (SQLite via IDistributedCache) — saves memory and disk space
+/// on Brreg responses (~50 % reduction). CPU cost &lt; 1 ms per entry.
 /// </summary>
 internal sealed class GzipHybridCacheSerializer<T>(IHybridCacheSerializer<T> inner) : IHybridCacheSerializer<T>
 {
@@ -37,8 +37,8 @@ internal sealed class GzipHybridCacheSerializer<T>(IHybridCacheSerializer<T> inn
 }
 
 /// <summary>
-/// Factory som HybridCache slår opp via DI for å finne en serializer for type T.
-/// Wrapper alt i Gzip uavhengig av type.
+/// Factory that HybridCache resolves via DI to find a serializer for type T.
+/// Wraps everything in Gzip regardless of type.
 /// </summary>
 internal sealed class GzipHybridCacheSerializerFactory : IHybridCacheSerializerFactory
 {

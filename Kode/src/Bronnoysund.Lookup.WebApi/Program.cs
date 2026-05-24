@@ -54,7 +54,7 @@ try
             CompanyLookupResult.NotFound nf => Results.NotFound(new
             {
                 error = "not_found",
-                message = $"Fant ingen virksomhet med organisasjonsnummer {nf.OrganizationNumber}."
+                message = $"No company with organization number {nf.OrganizationNumber} was found."
             }),
             CompanyLookupResult.InvalidInput inv => Results.BadRequest(new
             {
@@ -63,25 +63,25 @@ try
             }),
             CompanyLookupResult.Unavailable unav => Results.Problem(
                 statusCode: StatusCodes.Status503ServiceUnavailable,
-                title: "Brønnøysundregistrene er midlertidig utilgjengelig",
+                title: "Brønnøysundregistrene (the Brønnøysund Register Centre) is temporarily unavailable",
                 detail: unav.Message),
-            _ => Results.Problem("Uventet resultat-type.")
+            _ => Results.Problem("Unexpected result type.")
         };
     });
 
     app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Bronnoysund.Lookup.WebApi" }));
 
-    Log.Information("Bronnoysund.Lookup.WebApi starter");
+    Log.Information("Bronnoysund.Lookup.WebApi starting");
     app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Bronnoysund.Lookup.WebApi krasjet ved oppstart");
+    Log.Fatal(ex, "Bronnoysund.Lookup.WebApi crashed during startup");
 }
 finally
 {
     Log.CloseAndFlush();
 }
 
-/// <summary>Markør-klasse så Microsoft.AspNetCore.Mvc.Testing kan finne entry-assembly.</summary>
+/// <summary>Marker class so Microsoft.AspNetCore.Mvc.Testing can find the entry assembly.</summary>
 public partial class Program;

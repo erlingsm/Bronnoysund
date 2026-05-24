@@ -3,18 +3,18 @@
 namespace Bronnoysund.Lookup.Infrastructure.Persistence;
 
 /// <summary>
-/// Cross-platform-port for hvor SQLite-fila skal lagres. Plattform-spesifikke
-/// implementasjoner:
-///   - MAUI: FileSystem.AppDataDirectory  (iOS app-sandbox, Android app-private, Mac/Win AppData)
+/// Cross-platform port for where the SQLite file should be stored. Platform-specific
+/// implementations:
+///   - MAUI: FileSystem.AppDataDirectory  (iOS app sandbox, Android app-private, Mac/Win AppData)
 ///   - Server: SpecialFolder.LocalApplicationData
-///   - WebApi (sky): konfigurerbar via appsettings (typisk /data/bronnoysund.db montert volum)
+///   - WebApi (cloud): configurable via appsettings (typically a mounted /data/bronnoysund.db volume)
 /// </summary>
 public interface IDatabasePathProvider
 {
     string GetDatabaseFilePath();
 }
 
-/// <summary>Default-impl for server-/WebApi-kontekst (ikke MAUI). Mac+Win+Linux.</summary>
+/// <summary>Default implementation for server / WebApi contexts (non-MAUI). Mac+Win+Linux.</summary>
 public sealed class DefaultDatabasePathProvider : IDatabasePathProvider
 {
     public string GetDatabaseFilePath()

@@ -9,9 +9,9 @@ using Microsoft.Extensions.Logging;
 namespace Bronnoysund.Lookup.Infrastructure.Brreg;
 
 /// <summary>
-/// Typed HTTP-klient mot Brreg Enhetsregisteret. Sender GET /enheter/{orgnr}. Returnerer
-/// null ved 404 ("ikke funnet" som forretningsfeil), kaster <see cref="BrregUnavailableException"/>
-/// ved tekniske feil (timeout, 5xx etter Polly-retry, circuit breaker open).
+/// Typed HTTP client for the Brreg Enhetsregisteret. Sends GET /enheter/{orgnr}. Returns
+/// null on 404 ("not found" as a business outcome), throws <see cref="BrregUnavailableException"/>
+/// on technical failures (timeout, 5xx after Polly retry, circuit breaker open).
 /// </summary>
 internal sealed class BrregHttpClient(HttpClient http, ILogger<BrregHttpClient> logger)
 {
@@ -26,13 +26,13 @@ internal sealed class BrregHttpClient(HttpClient http, ILogger<BrregHttpClient> 
 
             if (response.StatusCode == HttpStatusCode.NotFound)
             {
-                logger.LogInformation("Brreg returnerte 404 for {OrgNumber}", org.Value);
+                logger.LogInformation("Brreg returned 404 for {OrgNumber}", org.Value);
                 return null;
             }
 
             if (response.StatusCode == HttpStatusCode.Gone)
             {
-                logger.LogInformation("Brreg returnerte 410 (slettet) for {OrgNumber}", org.Value);
+                logger.LogInformation("Brreg returned 410 (deleted) for {OrgNumber}", org.Value);
                 return null;
             }
 
@@ -44,12 +44,12 @@ internal sealed class BrregHttpClient(HttpClient http, ILogger<BrregHttpClient> 
         catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
         {
             throw new BrregUnavailableException(
-                $"Brreg svarte ikke innen tidsfristen for {org.Value}.", ex);
+                $"Brreg did not respond within the timeout for {org.Value}.", ex);
         }
         catch (HttpRequestException ex)
         {
             throw new BrregUnavailableException(
-                $"Kunne ikke kontakte Brreg for {org.Value}: {ex.Message}", ex);
+                $"Could not contact Brreg for {org.Value}: {ex.Message}", ex);
         }
     }
 }

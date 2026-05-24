@@ -16,12 +16,12 @@ namespace Bronnoysund.Lookup.Infrastructure.Persistence;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registrerer BronnoysundDbContext + SQLite + repositories + persistent cache (L2) +
-    /// vedlikeholds-jobber. Brukeren av extension-metoden må registrere IDatabasePathProvider
-    /// på forhånd (DefaultDatabasePathProvider i WebApi/Blazor, MauiDatabasePathProvider i MAUI).
+    /// Registers BronnoysundDbContext + SQLite + repositories + persistent cache (L2) +
+    /// maintenance jobs. The caller of this extension method must register IDatabasePathProvider
+    /// up front (DefaultDatabasePathProvider in WebApi/Blazor, MauiDatabasePathProvider in MAUI).
     ///
-    /// Skjema opprettes via EnsureCreatedAsync ved oppstart. Skal byttes til proper code-first
-    /// migrations når vi gjør første schema-endring etter at brukere har data på disk.
+    /// The schema is created via EnsureCreatedAsync at startup. To be replaced with proper code-first
+    /// migrations once we make the first schema change after users have data on disk.
     /// </summary>
     public static IServiceCollection AddBronnoysundPersistence(
         this IServiceCollection services,
@@ -53,8 +53,8 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Oppretter SQLite-fil + skjema hvis fila ikke finnes. Kall fra Program.cs eller
-    /// MauiProgram.cs etter Build(): <c>await app.Services.InitializeBronnoysundPersistenceAsync()</c>.
+    /// Creates the SQLite file + schema if the file does not exist. Call from Program.cs or
+    /// MauiProgram.cs after Build(): <c>await app.Services.InitializeBronnoysundPersistenceAsync()</c>.
     /// </summary>
     public static async Task InitializeBronnoysundPersistenceAsync(this IServiceProvider services, CancellationToken ct = default)
     {

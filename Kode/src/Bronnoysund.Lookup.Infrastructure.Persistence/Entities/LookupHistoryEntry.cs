@@ -3,8 +3,8 @@
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Entities;
 
 /// <summary>
-/// En historisk rad — hvert orgnr-oppslag som brukeren har gjort.
-/// Ikke-favoritter slettes automatisk etter <c>Persistence:History:RetentionDays</c> dager.
+/// A history row — every organization-number lookup the user has performed.
+/// Non-favorites are automatically deleted after <c>Persistence:History:RetentionDays</c> days.
 /// </summary>
 public sealed class LookupHistoryEntry
 {

@@ -5,8 +5,8 @@ using Bronnoysund.Lookup.Application.Dtos;
 namespace Bronnoysund.Lookup.Application.Results;
 
 /// <summary>
-/// Type-safe diskriminert union for resultatet av et selskaps-oppslag. Unngår exceptions for
-/// forretningsfeil (404, valideringsfeil) — kun tekniske feil kastes som exceptions.
+/// Type-safe discriminated union for the result of a company lookup. Avoids exceptions for
+/// business outcomes (404, validation errors) — only technical failures are thrown as exceptions.
 /// </summary>
 public abstract record CompanyLookupResult
 {

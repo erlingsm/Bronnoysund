@@ -13,7 +13,7 @@ public sealed class GzipHybridCacheSerializerTests
     private sealed record Sample(string Name, int Age, string[] Tags);
 
     [Fact]
-    public void Roundtrip_returnerer_identisk_objekt()
+    public void Roundtrip_ReturnsIdenticalObject()
     {
         var factory = new GzipHybridCacheSerializerFactory();
         factory.TryCreateSerializer<Sample>(out var serializer).Should().BeTrue();
@@ -27,7 +27,7 @@ public sealed class GzipHybridCacheSerializerTests
     }
 
     [Fact]
-    public void Komprimerer_repeterende_data_under_uncomprimert_str_else()
+    public void CompressesRepetitiveData_BelowUncompressedSize()
     {
         var factory = new GzipHybridCacheSerializerFactory();
         factory.TryCreateSerializer<string>(out var serializer).Should().BeTrue();
@@ -37,7 +37,7 @@ public sealed class GzipHybridCacheSerializerTests
         var buffer = new ArrayBufferWriter<byte>();
         serializer!.Serialize(repeated, buffer);
 
-        // 2000 like tegn skal komprimere til langt under 100 bytes.
+        // 2000 identical characters should compress to far below 100 bytes.
         buffer.WrittenCount.Should().BeLessThan(100);
     }
 }

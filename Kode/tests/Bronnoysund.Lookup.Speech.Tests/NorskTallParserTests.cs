@@ -11,12 +11,12 @@ public class NorskTallParserTests
     [Theory]
     [InlineData("ni en ni tre null null tre åtte åtte", "919300388")]
     [InlineData("ni ett ni tre null null tre åtte åtte", "919300388")]
-    [InlineData("ni en ni tre null null tre otte otte", "919300388")] // diakritikk-fri "otte"
+    [InlineData("ni en ni tre null null tre otte otte", "919300388")] // diacritic-free "otte"
     [InlineData("nine one nine three zero zero three eight eight", "919300388")]
-    [InlineData("919300388", "919300388")] // ren sifferstreng
-    [InlineData("919 300 388", "919300388")] // mellomrom-separert
-    [InlineData("ni-en-ni-tre-null-null-tre-åtte-åtte", "919300388")] // bindestrek
-    public void Norske_Sifferord_Mappes_Til_Siffer(string input, string expected)
+    [InlineData("919300388", "919300388")] // plain digit string
+    [InlineData("919 300 388", "919300388")] // space-separated
+    [InlineData("ni-en-ni-tre-null-null-tre-åtte-åtte", "919300388")] // hyphen
+    public void NorwegianDigitWords_MapToDigits(string input, string expected)
     {
         var ok = NorskTallParser.TryParseDigits(input, out var digits);
         ok.Should().BeTrue();
@@ -28,7 +28,7 @@ public class NorskTallParserTests
     [InlineData("null", "0")]
     [InlineData("syv", "7")]
     [InlineData("sju", "7")]
-    public void Delvise_Tall_Mappes_Korrekt(string input, string expected)
+    public void PartialNumbers_MapCorrectly(string input, string expected)
     {
         NorskTallParser.TryParseDigits(input, out var digits).Should().BeTrue();
         digits.Should().Be(expected);
@@ -36,9 +36,9 @@ public class NorskTallParserTests
 
     [Theory]
     [InlineData("hei verden")]
-    [InlineData("ni en hundre")] // "hundre" støttes ikke i siffer-mode
+    [InlineData("ni en hundre")] // "hundre" is not supported in digit mode
     [InlineData("artisan consulting as")]
-    public void Ukjente_Ord_Returnerer_False(string input)
+    public void UnknownWords_ReturnFalse(string input)
     {
         NorskTallParser.TryParseDigits(input, out _).Should().BeFalse();
     }
@@ -46,7 +46,7 @@ public class NorskTallParserTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Tom_Input_Returnerer_False(string input)
+    public void EmptyInput_ReturnsFalse(string input)
     {
         NorskTallParser.TryParseDigits(input, out _).Should().BeFalse();
     }

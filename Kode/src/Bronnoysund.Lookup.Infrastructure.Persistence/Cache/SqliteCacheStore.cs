@@ -9,9 +9,9 @@ using Microsoft.Extensions.Options;
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Cache;
 
 /// <summary>
-/// IDistributedCache backed by SQLite. Brukes som L2 bak HybridCache (L1 = memory).
-/// Verdier er allerede GZip-komprimert i serializer-laget (GzipHybridCacheSerializer),
-/// så vi lagrer bytes som de er. LastAccessedAt oppdateres ved hver Get for LRU.
+/// IDistributedCache backed by SQLite. Used as L2 behind HybridCache (L1 = memory).
+/// Values are already GZip-compressed in the serializer layer (GzipHybridCacheSerializer),
+/// so we store the bytes as-is. LastAccessedAt is updated on every Get for LRU.
 /// </summary>
 internal sealed class SqliteCacheStore(
     IServiceScopeFactory scopes,

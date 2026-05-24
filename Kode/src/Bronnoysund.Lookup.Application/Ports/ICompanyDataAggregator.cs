@@ -7,21 +7,21 @@ using Bronnoysund.Lookup.Domain;
 namespace Bronnoysund.Lookup.Application.Ports;
 
 /// <summary>
-/// Orkestrerer parallelle oppslag mot flere offentlige registre for ett organisasjonsnummer.
-/// Detaljert i /Plan/15-Register-aggregator.md.
+/// Orchestrates parallel lookups against multiple public registries for one organization number.
+/// Detailed in /Plan/15-Register-aggregator.md.
 /// </summary>
 public interface ICompanyDataAggregator
 {
-    /// <summary>Hent all tilgjengelig info i parallell. Delvise svar mulig — feilende providers gir markører.</summary>
+    /// <summary>Fetch all available info in parallel. Partial responses are allowed — failing providers leave markers.</summary>
     Task<AggregatedCompanyResponse> AggregateAsync(OrganizationNumber org, CancellationToken ct);
 
-    /// <summary>Hent kun kjerne (Brreg Enhetsregisteret). Brukes der full aggregering ikke trengs.</summary>
+    /// <summary>Fetch only the core (Brreg Enhetsregisteret). Used where full aggregation is not needed.</summary>
     Task<CompanyLookupResult> CoreOnlyAsync(OrganizationNumber org, CancellationToken ct);
 }
 
 /// <summary>
-/// Aggregert respons med data fra flere registre. Hver nested-egenskap kan være null (ikke hentet/feilet).
-/// Errors-listen indikerer per-provider feil.
+/// Aggregated response with data from multiple registries. Each nested property may be null (not fetched / failed).
+/// The Errors list indicates per-provider failures.
 /// </summary>
 public sealed record AggregatedCompanyResponse(
     CompanyResponse Core,

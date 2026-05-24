@@ -5,8 +5,8 @@ namespace Bronnoysund.Lookup.Application.Ports;
 public sealed record RegisterEndpointItem(string Name, string BaseUrl, bool IsEnabled, DateTimeOffset UpdatedAt);
 
 /// <summary>
-/// Konfigurerbare URL-er per register. Brukeren kan endre Brreg-URL eller slå av et register
-/// uten å oppdatere appen.
+/// Configurable URLs per registry. The user can change the Brreg URL or turn off a registry
+/// without updating the app.
 /// </summary>
 public interface IRegisterEndpointsRepository
 {

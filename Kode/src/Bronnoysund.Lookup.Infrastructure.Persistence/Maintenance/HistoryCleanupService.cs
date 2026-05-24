@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Maintenance;
 
-/// <summary>Sletter ikke-favoritt-historikk eldre enn RetentionDays.</summary>
+/// <summary>Deletes non-favorite history older than RetentionDays.</summary>
 internal sealed class HistoryCleanupService(
     BronnoysundDbContext db,
     IOptionsMonitor<PersistenceOptions> opts,
@@ -19,6 +19,6 @@ internal sealed class HistoryCleanupService(
             .Where(h => !h.IsFavorite && h.SearchedAt < threshold)
             .ExecuteDeleteAsync(ct);
         if (deleted > 0)
-            log.LogInformation("History cleanup: slettet {Count} ikke-favoritt-entries eldre enn {Threshold:O}", deleted, threshold);
+            log.LogInformation("History cleanup: deleted {Count} non-favorite entries older than {Threshold:O}", deleted, threshold);
     }
 }

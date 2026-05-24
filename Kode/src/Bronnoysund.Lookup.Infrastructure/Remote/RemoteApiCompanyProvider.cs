@@ -11,8 +11,8 @@ using Microsoft.Extensions.Logging;
 namespace Bronnoysund.Lookup.Infrastructure.Remote;
 
 /// <summary>
-/// ICompanyProvider-adapter som kaller VÅR egen Web API (i sky) i stedet for Brreg direkte.
-/// Brukes når appen kjøres som Thin Client — typisk for subscription-versjon i app-stores.
+/// ICompanyProvider adapter that calls OUR own Web API (in the cloud) instead of Brreg directly.
+/// Used when the app runs as a Thin Client — typically for the subscription version in app stores.
 /// </summary>
 internal sealed class RemoteApiCompanyProvider(
     HttpClient http,
@@ -42,16 +42,16 @@ internal sealed class RemoteApiCompanyProvider(
 
             var dto = await response.Content.ReadFromJsonAsync<CompanyResponse>(ct);
             return dto is null
-                ? new CompanyLookupResult.Unavailable("Remote API returnerte tom respons.")
+                ? new CompanyLookupResult.Unavailable("Remote API returned an empty response.")
                 : new CompanyLookupResult.Found(dto);
         }
         catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
         {
-            return new CompanyLookupResult.Unavailable($"Remote API svarte ikke i tide: {ex.Message}");
+            return new CompanyLookupResult.Unavailable($"Remote API did not respond in time: {ex.Message}");
         }
         catch (HttpRequestException ex)
         {
-            return new CompanyLookupResult.Unavailable($"Kunne ikke kontakte Remote API: {ex.Message}");
+            return new CompanyLookupResult.Unavailable($"Could not contact the Remote API: {ex.Message}");
         }
     }
 }

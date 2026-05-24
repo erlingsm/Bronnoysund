@@ -3,18 +3,18 @@
 namespace Bronnoysund.Lookup.Application.Ports;
 
 /// <summary>
-/// Eksport/import av brukerinnstillinger for å flytte mellom enheter.
-/// JSON-formatet er versjonert så fremtidige skjema-endringer kan migreres.
+/// Export/import of user settings to move between devices.
+/// The JSON format is versioned so future schema changes can be migrated.
 /// </summary>
 public interface ISettingsBackup
 {
-    /// <summary>Returnerer alle settings som JSON-payload klar for fil-lagring.</summary>
+    /// <summary>Returns all settings as a JSON payload ready for file storage.</summary>
     Task<string> ExportAsync(CancellationToken ct);
 
     /// <summary>
-    /// Leser payload og upserter alle nøkler. Eksisterende nøkler som ikke nevnes i payload
-    /// beholdes (merge). Kaster <see cref="InvalidSettingsBackupException"/> ved ugyldig JSON
-    /// eller ukjent versjon.
+    /// Reads the payload and upserts all keys. Existing keys not mentioned in the payload
+    /// are retained (merge). Throws <see cref="InvalidSettingsBackupException"/> on invalid JSON
+    /// or unknown version.
     /// </summary>
     Task ImportAsync(string json, CancellationToken ct);
 }

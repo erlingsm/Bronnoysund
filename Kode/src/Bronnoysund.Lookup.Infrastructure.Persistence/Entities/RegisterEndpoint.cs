@@ -3,8 +3,8 @@
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Entities;
 
 /// <summary>
-/// Konfigurerbar URL per register (Brreg, Gjeldsregisteret, UK Companies House, ...).
-/// Brukeren kan endre disse hvis API-er flyttes uten å oppdatere appen.
+/// Configurable URL per registry (Brreg, Gjeldsregisteret, UK Companies House, ...).
+/// The user can change these if APIs move, without updating the app.
 /// </summary>
 public sealed class RegisterEndpoint
 {

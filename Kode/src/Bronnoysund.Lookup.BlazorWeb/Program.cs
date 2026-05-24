@@ -47,7 +47,7 @@ try
     builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
     builder.Services.AddBronnoysundPersistence(builder.Configuration);
 
-    // ViewModels — transient (en per komponent-instans)
+    // ViewModels — transient (one per component instance)
     builder.Services.AddTransient<CompanyLookupViewModel>();
 
     var app = builder.Build();
@@ -70,12 +70,12 @@ try
         .AddInteractiveServerRenderMode()
         .AddAdditionalAssemblies(typeof(Bronnoysund.Lookup.Components.Pages.Lookup).Assembly);
 
-    Log.Information("Bronnoysund.Lookup.BlazorWeb starter på {Urls}", string.Join(", ", app.Urls));
+    Log.Information("Bronnoysund.Lookup.BlazorWeb starting on {Urls}", string.Join(", ", app.Urls));
     app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "Bronnoysund.Lookup.BlazorWeb krasjet ved oppstart");
+    Log.Fatal(ex, "Bronnoysund.Lookup.BlazorWeb crashed during startup");
 }
 finally
 {

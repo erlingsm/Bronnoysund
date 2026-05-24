@@ -8,7 +8,7 @@ namespace Bronnoysund.Lookup.Infrastructure.Persistence.Tests;
 public sealed class FavoritesRepositoryTests
 {
     [Fact]
-    public async Task UpsertAsync_legger_til_ny_og_oppdaterer_eksisterende()
+    public async Task UpsertAsync_AddsNew_AndUpdatesExisting()
     {
         using var test = new TestDb();
         var repo = new FavoritesRepository(test.Db);
@@ -26,7 +26,7 @@ public sealed class FavoritesRepositoryTests
     }
 
     [Fact]
-    public async Task RemoveAsync_sletter_favoritt()
+    public async Task RemoveAsync_DeletesFavorite()
     {
         using var test = new TestDb();
         var repo = new FavoritesRepository(test.Db);
@@ -38,7 +38,7 @@ public sealed class FavoritesRepositoryTests
     }
 
     [Fact]
-    public async Task ListAsync_returnerer_sortert_pa_navn()
+    public async Task ListAsync_ReturnsSortedByName()
     {
         using var test = new TestDb();
         var repo = new FavoritesRepository(test.Db);

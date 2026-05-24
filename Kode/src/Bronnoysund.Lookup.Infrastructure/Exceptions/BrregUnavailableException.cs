@@ -3,7 +3,7 @@
 namespace Bronnoysund.Lookup.Infrastructure.Exceptions;
 
 /// <summary>
-/// Kastes når Brreg-API er midlertidig utilgjengelig — timeout, 5xx, circuit breaker open, osv.
+/// Thrown when the Brreg API is temporarily unavailable — timeout, 5xx, circuit breaker open, etc.
 /// </summary>
 public sealed class BrregUnavailableException(string message, Exception? inner = null)
     : Exception(message, inner);

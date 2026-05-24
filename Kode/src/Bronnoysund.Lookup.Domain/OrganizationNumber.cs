@@ -3,26 +3,26 @@
 namespace Bronnoysund.Lookup.Domain;
 
 /// <summary>
-/// Norsk organisasjonsnummer som DDD value object. Selv-validerende: en eksisterende
-/// instans er alltid et gyldig 9-sifret orgnr som passerer MOD11-kontroll og starter på 8 eller 9.
+/// Norwegian organization number as a DDD value object. Self-validating: an existing
+/// instance is always a valid 9-digit org. number that passes the MOD11 check and starts with 8 or 9.
 /// </summary>
 /// <remarks>
-/// MOD11-formelen er beskrevet av Brønnøysundregistrene:
+/// The MOD11 formula is described by Brønnøysundregistrene:
 /// https://www.brreg.no/om-oss/registrene-vare/om-enhetsregisteret/organisasjonsnummeret/
-/// Vekter [3,2,7,6,5,4,3,2] anvendes på siffer 1-8 fra venstre, sum mod 11 gir kontrollsiffer (siffer 9) = 11 - rest.
-/// Hvis rest = 0 -> kontrollsiffer = 0. Hvis rest = 1 -> orgnr er ugyldig (kontrollsiffer kunne blitt 10).
+/// Weights [3,2,7,6,5,4,3,2] are applied to digits 1-8 from the left, sum mod 11 gives the check digit (digit 9) = 11 - remainder.
+/// If remainder = 0 -> check digit = 0. If remainder = 1 -> the org. number is invalid (the check digit would have been 10).
 /// </remarks>
 public readonly record struct OrganizationNumber
 {
     private static readonly int[] Mod11Weights = [3, 2, 7, 6, 5, 4, 3, 2];
 
-    /// <summary>Normalisert form: 9 siffer uten mellomrom eller separatorer.</summary>
+    /// <summary>Normalized form: 9 digits with no whitespace or separators.</summary>
     public string Value { get; }
 
     private OrganizationNumber(string value) => Value = value;
 
     /// <summary>
-    /// Forsøk å lage et orgnr. Returnerer false ved ugyldig input og setter feilbeskrivelse.
+    /// Try to build an organization number. Returns false on invalid input and sets an error description.
     /// </summary>
     public static bool TryCreate(string? raw, out OrganizationNumber value, out string? error)
     {
@@ -30,7 +30,7 @@ public readonly record struct OrganizationNumber
 
         if (string.IsNullOrWhiteSpace(raw))
         {
-            error = "Organisasjonsnummer kan ikke være tomt.";
+            error = "Organization number cannot be empty.";
             return false;
         }
 
@@ -38,25 +38,25 @@ public readonly record struct OrganizationNumber
 
         if (normalized.Length != 9)
         {
-            error = $"Organisasjonsnummer må være nøyaktig 9 siffer (fikk {normalized.Length}).";
+            error = $"Organization number must be exactly 9 digits (got {normalized.Length}).";
             return false;
         }
 
         if (!normalized.All(char.IsDigit))
         {
-            error = "Organisasjonsnummer kan kun inneholde tall.";
+            error = "Organization number can only contain digits.";
             return false;
         }
 
         if (normalized[0] != '8' && normalized[0] != '9')
         {
-            error = "Organisasjonsnummer må starte med 8 eller 9.";
+            error = "Organization number must start with 8 or 9.";
             return false;
         }
 
         if (!IsValidMod11(normalized))
         {
-            error = "Organisasjonsnummer har ugyldig kontrollsiffer (MOD11).";
+            error = "Organization number has an invalid MOD11 check digit.";
             return false;
         }
 
@@ -65,7 +65,7 @@ public readonly record struct OrganizationNumber
         return true;
     }
 
-    /// <summary>Lag et orgnr eller kast <see cref="ArgumentException"/> ved ugyldig input.</summary>
+    /// <summary>Build an organization number or throw <see cref="ArgumentException"/> on invalid input.</summary>
     public static OrganizationNumber Create(string raw)
     {
         if (!TryCreate(raw, out var value, out var error))
@@ -75,7 +75,7 @@ public readonly record struct OrganizationNumber
         return value;
     }
 
-    /// <summary>Fjerner whitespace og vanlige separatorer (mellomrom, bindestrek, punktum).</summary>
+    /// <summary>Removes whitespace and common separators (space, hyphen, period).</summary>
     private static string Normalize(string raw)
     {
         var sb = new System.Text.StringBuilder(raw.Length);
@@ -100,7 +100,7 @@ public readonly record struct OrganizationNumber
         var remainder = sum % 11;
         if (remainder == 1)
         {
-            return false; // Kontrollsiffer ville blitt 10 — ugyldig
+            return false; // Check digit would have been 10 — invalid
         }
         var expectedCheckDigit = remainder == 0 ? 0 : 11 - remainder;
         var actualCheckDigit = nineDigits[8] - '0';

@@ -2,5 +2,5 @@
 
 namespace Bronnoysund.Lookup.Application.UseCases.LookupCompany;
 
-/// <summary>Forespørsel om å slå opp et selskap basert på et orgnr-input (rå streng).</summary>
+/// <summary>Request to look up a company based on an organization-number input (raw string).</summary>
 public sealed record LookupCompanyQuery(string OrganizationNumberInput);

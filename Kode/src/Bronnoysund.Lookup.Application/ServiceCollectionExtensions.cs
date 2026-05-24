@@ -10,9 +10,9 @@ namespace Bronnoysund.Lookup.Application;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registrerer alle Application-lag-tjenester: use case handlers og validators.
-    /// Krever at Infrastructure har registrert porter (ICompanyProvider osv.) på forhånd
-    /// eller etterpå — DI-rekkefølgen er irrelevant for resolve.
+    /// Registers all Application-layer services: use case handlers and validators.
+    /// Requires that Infrastructure has registered ports (ICompanyProvider etc.) either before
+    /// or after — the DI order is irrelevant for resolve.
     /// </summary>
     public static IServiceCollection AddBronnoysundApplication(this IServiceCollection services)
     {

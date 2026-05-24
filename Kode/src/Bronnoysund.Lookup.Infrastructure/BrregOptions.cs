@@ -3,8 +3,8 @@
 namespace Bronnoysund.Lookup.Infrastructure;
 
 /// <summary>
-/// Konfigurasjon for Brreg-integrasjonen. Bindes mot "Brreg"-seksjonen i appsettings.json
-/// via IOptions{T}. Standardverdiene speiler Brreg sin offisielle API.
+/// Configuration for the Brreg integration. Bound to the "Brreg" section in appsettings.json
+/// via IOptions{T}. The default values mirror Brreg's official API.
 /// </summary>
 public sealed class BrregOptions
 {

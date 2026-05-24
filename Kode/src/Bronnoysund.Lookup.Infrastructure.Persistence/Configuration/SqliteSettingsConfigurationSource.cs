@@ -6,17 +6,17 @@ using Microsoft.Extensions.Configuration;
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
 
 /// <summary>
-/// IConfigurationSource som leser bruker-overstyrte settings fra AppSettings-tabellen.
-/// Legges TIL etter appsettings.json så DB-verdier overstyrer fil-defaults.
+/// IConfigurationSource that reads user-overridden settings from the AppSettings table.
+/// Added AFTER appsettings.json so DB values override the file defaults.
 ///
-/// Bruk via <see cref="ConfigurationBuilderExtensions.AddSqliteSettings"/>.
+/// Use via <see cref="ConfigurationBuilderExtensions.AddSqliteSettings"/>.
 /// </summary>
 public sealed class SqliteSettingsConfigurationSource : IConfigurationSource
 {
     private readonly Func<string> _databasePathFactory;
 
-    /// <summary>DB-path resolves lazily — providers bygges før IDatabasePathProvider er
-    /// tilgjengelig i DI, så vi tar inn en factory som leser fra det som er klart da.</summary>
+    /// <summary>DB path resolves lazily — providers are built before IDatabasePathProvider is
+    /// available in DI, so we take a factory that reads from whatever is ready at that point.</summary>
     public SqliteSettingsConfigurationSource(Func<string> databasePathFactory)
     {
         _databasePathFactory = databasePathFactory;
@@ -39,8 +39,8 @@ public sealed class SqliteSettingsConfigurationProvider(Func<string> databasePat
         }
         catch
         {
-            // DI er ikke klart ennå (typisk ved første Load før app.Build()) — la base sin
-            // tomme Data stå. Reload kalles senere fra SettingsRepository når DB finnes.
+            // DI is not ready yet (typically on the first Load before app.Build()) — leave base's
+            // empty Data in place. Reload is called later from SettingsRepository once the DB exists.
             Data = data;
             return;
         }
@@ -62,13 +62,13 @@ public sealed class SqliteSettingsConfigurationProvider(Func<string> databasePat
             {
                 var key = reader.GetString(0);
                 var value = reader.GetString(1);
-                // AppSettings bruker IConfiguration-syntax direkte (Brreg:BaseUrl, Persistence:Cache:MaxSizeMB).
+                // AppSettings uses IConfiguration syntax directly (Brreg:BaseUrl, Persistence:Cache:MaxSizeMB).
                 data[key] = value;
             }
         }
         catch (SqliteException)
         {
-            // Tabellen finnes ikke ennå (EnsureCreated ikke kjørt). OK — Data forblir tom.
+            // The table does not exist yet (EnsureCreated has not run). OK — Data stays empty.
         }
 
         Data = data;
@@ -78,9 +78,9 @@ public sealed class SqliteSettingsConfigurationProvider(Func<string> databasePat
 public static class ConfigurationBuilderExtensions
 {
     /// <summary>
-    /// Legger til SQLite-backed brukerinnstillinger på toppen av eksisterende sources.
-    /// DB-pathen leveres som callback fordi vi typisk vil resolve den fra DI (IDatabasePathProvider)
-    /// først etter at services er bygget.
+    /// Adds SQLite-backed user settings on top of the existing sources.
+    /// The DB path is supplied as a callback because we typically want to resolve it from DI
+    /// (IDatabasePathProvider) only after services have been built.
     /// </summary>
     public static IConfigurationBuilder AddSqliteSettings(
         this IConfigurationBuilder builder,

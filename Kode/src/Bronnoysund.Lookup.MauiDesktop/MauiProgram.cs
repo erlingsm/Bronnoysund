@@ -40,8 +40,8 @@ public static class MauiProgram
 #endif
 
 		var app = builder.Build();
-		// SQLite-fil + skjema opprettes blokkerende ved oppstart. Fil-IO går raskt;
-		// alternativet (lazy i hver repository) gjør koden mer kompleks for marginal vinning.
+		// The SQLite file + schema is created blockingly at startup. File IO is fast;
+		// the alternative (lazy in each repository) makes the code more complex for marginal gain.
 		app.Services.InitializeBronnoysundPersistenceAsync().GetAwaiter().GetResult();
 		return app;
 	}

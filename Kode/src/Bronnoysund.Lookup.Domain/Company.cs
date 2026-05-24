@@ -3,8 +3,8 @@
 namespace Bronnoysund.Lookup.Domain;
 
 /// <summary>
-/// Norsk virksomhet identifisert ved sitt organisasjonsnummer.
-/// Domeneentitet med immutable struktur (record). Identitet = <see cref="OrganizationNumber"/>.
+/// Norwegian entity identified by its organization number.
+/// Domain entity with an immutable structure (record). Identity = <see cref="OrganizationNumber"/>.
 /// </summary>
 public sealed record Company(
     OrganizationNumber OrganizationNumber,

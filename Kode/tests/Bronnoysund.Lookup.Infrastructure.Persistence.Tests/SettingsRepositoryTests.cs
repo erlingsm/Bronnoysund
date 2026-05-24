@@ -11,7 +11,7 @@ public sealed class SettingsRepositoryTests
     private static IConfiguration EmptyConfig() => new ConfigurationBuilder().Build();
 
     [Fact]
-    public async Task SetAsync_oppretter_og_oppdaterer_eksisterende_med_ny_timestamp()
+    public async Task SetAsync_CreatesNewAndUpdatesExistingWithFreshTimestamp()
     {
         using var test = new TestDb();
         var repo = new SettingsRepository(test.Db, EmptyConfig());
@@ -29,7 +29,7 @@ public sealed class SettingsRepositoryTests
     }
 
     [Fact]
-    public async Task GetAllAsync_returnerer_alle_settings_sortert()
+    public async Task GetAllAsync_ReturnsAllSettingsSorted()
     {
         using var test = new TestDb();
         var repo = new SettingsRepository(test.Db, EmptyConfig());
@@ -42,7 +42,7 @@ public sealed class SettingsRepositoryTests
     }
 
     [Fact]
-    public async Task SetAsync_trigger_IConfigurationRoot_Reload_slik_at_options_oppdateres()
+    public async Task SetAsync_TriggersIConfigurationRootReload_SoBoundOptionsRefresh()
     {
         using var test = new TestDb();
         await using var session = await SettingsRepositoryReloadHarness.CreateAsync(test.Db);

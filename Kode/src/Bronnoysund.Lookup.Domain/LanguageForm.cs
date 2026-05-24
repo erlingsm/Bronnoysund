@@ -3,7 +3,7 @@
 namespace Bronnoysund.Lookup.Domain;
 
 /// <summary>
-/// Norsk målform (skriftspråk) en virksomhet er registrert med, jf. Brreg-feltet "maalform".
+/// Norwegian written-language form (målform) an entity is registered with, per the Brreg field "maalform".
 /// </summary>
 public enum LanguageForm
 {

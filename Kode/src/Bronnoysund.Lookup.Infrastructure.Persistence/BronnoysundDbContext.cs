@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bronnoysund.Lookup.Infrastructure.Persistence;
 
 /// <summary>
-/// EF Core DbContext for lokal SQLite. Inneholder 5 tabeller for søkehistorikk,
-/// favoritter, persistent cache, brukerinnstillinger og konfigurerbare register-endepunkter.
-/// Detaljert spesifikasjon: /Plan/13-Persistens-og-cache.md
+/// EF Core DbContext for local SQLite. Contains 5 tables for search history,
+/// favorites, persistent cache, user settings, and configurable registry endpoints.
+/// Detailed specification: /Plan/13-Persistens-og-cache.md
 /// </summary>
 public sealed class BronnoysundDbContext(DbContextOptions<BronnoysundDbContext> options) : DbContext(options)
 {
@@ -21,8 +21,8 @@ public sealed class BronnoysundDbContext(DbContextOptions<BronnoysundDbContext> 
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        // SQLite har ikke native DateTimeOffset; lagre som int64-ticks så Where/ExecuteDelete
-        // kan sammenlignes serverside (uten denne knekker LRU-eviction og history-cleanup).
+        // SQLite has no native DateTimeOffset; store as int64 ticks so that Where/ExecuteDelete
+        // can be compared server-side (without this, LRU eviction and history cleanup break).
         configurationBuilder.Properties<DateTimeOffset>()
             .HaveConversion<DateTimeOffsetToBinaryConverter>();
         base.ConfigureConventions(configurationBuilder);

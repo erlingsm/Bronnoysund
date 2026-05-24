@@ -14,8 +14,8 @@ using Xunit;
 namespace Bronnoysund.Lookup.Infrastructure.Tests;
 
 /// <summary>
-/// Integrasjons-tester for BrregHttpClient som verifiserer HTTP-håndtering uten å nå
-/// reell Brreg-tjeneste. WireMock.Net mocker /enheter/{orgnr}-respons.
+/// Integration tests for BrregHttpClient that verify HTTP handling without hitting
+/// the real Brreg service. WireMock.Net mocks the /enheter/{orgnr} response.
 /// </summary>
 public class BrregHttpClientIntegrationTests : IDisposable
 {
@@ -32,7 +32,7 @@ public class BrregHttpClientIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task Status200MedJson_ReturnererDto()
+    public async Task Status200WithJson_ReturnsDto()
     {
         const string body = """
             {
@@ -56,7 +56,7 @@ public class BrregHttpClientIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task Status404_ReturnererNull()
+    public async Task Status404_ReturnsNull()
     {
         _wireMock.Given(Request.Create().WithPath("/enheter/919300388").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(404));
@@ -67,7 +67,7 @@ public class BrregHttpClientIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task Status410Gone_ReturnererNull()
+    public async Task Status410Gone_ReturnsNull()
     {
         _wireMock.Given(Request.Create().WithPath("/enheter/919300388").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(410));
@@ -78,7 +78,7 @@ public class BrregHttpClientIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task Status500_KasterBrregUnavailable()
+    public async Task Status500_ThrowsBrregUnavailable()
     {
         _wireMock.Given(Request.Create().WithPath("/enheter/919300388").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(500));
@@ -89,7 +89,7 @@ public class BrregHttpClientIntegrationTests : IDisposable
     }
 
     [Fact]
-    public async Task DtoMappingTilDomain_FungererForBokmål()
+    public async Task DtoMappingToDomain_WorksForBokmal()
     {
         var dto = new BrregEnhetDto
         {

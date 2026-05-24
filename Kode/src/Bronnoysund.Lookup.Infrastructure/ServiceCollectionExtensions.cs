@@ -17,9 +17,9 @@ namespace Bronnoysund.Lookup.Infrastructure;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registrerer all Infrastructure. Velger mellom Fat Client (Direct mot Brreg) eller
-    /// Thin Client (RemoteApi mot vår sky-WebApi) basert på <c>DataSource:Mode</c> i config.
-    /// HybridCache + decorator-kjede er felles uavhengig av modus.
+    /// Registers all Infrastructure. Chooses between Fat Client (Direct against Brreg) or
+    /// Thin Client (RemoteApi against our cloud WebApi) based on <c>DataSource:Mode</c> in config.
+    /// HybridCache + the decorator chain are shared regardless of mode.
     /// </summary>
     public static IServiceCollection AddBronnoysundInfrastructure(
         this IServiceCollection services,
@@ -41,14 +41,14 @@ public static class ServiceCollectionExtensions
 
         if (mode == DataSourceMode.RemoteApi)
         {
-            // Thin Client — kall vår egen WebApi i sky
+            // Thin Client — call our own WebApi in the cloud
             services.AddHttpClient<RemoteApiCompanyProvider>((sp, http) =>
             {
                 var opts = sp.GetRequiredService<IOptions<RemoteApiOptions>>().Value;
                 if (string.IsNullOrWhiteSpace(opts.BaseUrl))
                 {
                     throw new InvalidOperationException(
-                        "DataSource:Mode=RemoteApi krever at RemoteApi:BaseUrl er satt i konfigurasjon.");
+                        "DataSource:Mode=RemoteApi requires RemoteApi:BaseUrl to be set in configuration.");
                 }
                 http.BaseAddress = new Uri(opts.BaseUrl);
                 http.Timeout = opts.RequestTimeout;
@@ -65,7 +65,7 @@ public static class ServiceCollectionExtensions
         }
         else
         {
-            // Fat Client — kall Brreg direkte
+            // Fat Client — call Brreg directly
             services.AddHttpClient<BrregHttpClient>((sp, http) =>
             {
                 var opts = sp.GetRequiredService<IOptions<BrregOptions>>().Value;
@@ -84,10 +84,10 @@ public static class ServiceCollectionExtensions
                     logger: sp.GetRequiredService<ILogger<CachingCompanyProvider>>()));
         }
 
-        // Aggregator (Fase 0: kjerne-only). Fase 4 erstatter med ParallelCompanyDataAggregator.
+        // Aggregator (Phase 0: core-only). Phase 4 replaces this with ParallelCompanyDataAggregator.
         services.AddSingleton<ICompanyDataAggregator, CoreOnlyAggregator>();
 
-        // Stub-providers for ikke-implementerte registre — kaster RegistryNotAvailableException.
+        // Stub providers for registries not yet implemented — throw RegistryNotAvailableException.
         services.AddSingleton<IRolesProvider, NotAvailableRolesProvider>();
         services.AddSingleton<IAnnualReportProvider, NotAvailableAnnualReportProvider>();
         services.AddSingleton<IBeneficialOwnerProvider, NotAvailableBeneficialOwnerProvider>();

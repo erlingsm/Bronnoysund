@@ -11,11 +11,11 @@ using Microsoft.Extensions.Options;
 namespace Bronnoysund.Lookup.Infrastructure.Caching;
 
 /// <summary>
-/// Decorator rundt en annen <see cref="ICompanyProvider"/> som bruker HybridCache for
-/// å unngå unødvendige kall mot Brreg. Cache-key er "org:{orgnr}", TTL fra
-/// <see cref="BrregOptions"/>. Vi pakker <see cref="CompanyLookupResult"/> i en konkret
-/// record (<see cref="CachedLookup"/>) før serialisering — HybridCache + System.Text.Json
-/// støtter ikke polymorf serialisering av diskriminerte unioner uten ekstra konfig.
+/// Decorator around another <see cref="ICompanyProvider"/> that uses HybridCache to
+/// avoid unnecessary calls to Brreg. The cache key is "org:{orgnr}", with TTL from
+/// <see cref="BrregOptions"/>. We wrap <see cref="CompanyLookupResult"/> in a concrete
+/// record (<see cref="CachedLookup"/>) before serialization — HybridCache + System.Text.Json
+/// do not support polymorphic serialization of discriminated unions without extra config.
 /// </summary>
 internal sealed class CachingCompanyProvider(
     ICompanyProvider inner,
@@ -45,8 +45,8 @@ internal sealed class CachingCompanyProvider(
 }
 
 /// <summary>
-/// Cache-vennlig flat representasjon av et <see cref="CompanyLookupResult"/>.
-/// Bare ett av feltene er ikke-null per instans.
+/// Cache-friendly flat representation of a <see cref="CompanyLookupResult"/>.
+/// Only one of the fields is non-null per instance.
 /// </summary>
 public sealed record CachedLookup(
     CompanyResponse? Found,

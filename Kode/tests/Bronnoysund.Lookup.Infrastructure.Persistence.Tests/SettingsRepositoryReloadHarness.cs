@@ -9,9 +9,9 @@ using Microsoft.Extensions.Configuration;
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Tests;
 
 /// <summary>
-/// Sett opp en ekte (fil-basert) SQLite + en IConfigurationRoot med SqliteSettingsConfigurationProvider,
-/// slik at vi kan verifisere at SetAsync.Reload() fanges opp av config-laget. In-memory ":memory:"
-/// fungerer ikke her fordi configuration-provideren åpner sin egen connection.
+/// Set up a real (file-based) SQLite + an IConfigurationRoot with SqliteSettingsConfigurationProvider,
+/// so we can verify that SetAsync.Reload() is picked up by the config layer. In-memory ":memory:"
+/// does not work here because the configuration provider opens its own connection.
 /// </summary>
 internal sealed class SettingsRepositoryReloadHarness : IAsyncDisposable
 {

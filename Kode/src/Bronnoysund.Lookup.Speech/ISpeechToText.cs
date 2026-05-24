@@ -2,16 +2,16 @@
 
 namespace Bronnoysund.Lookup.Speech;
 
-/// <summary>Port for on-device tale-til-tekst. Plattform-spesifikke adapters i Speech.Maui/Speech.Web.</summary>
+/// <summary>Port for on-device speech-to-text. Platform-specific adapters in Speech.Maui/Speech.Web.</summary>
 public interface ISpeechToText
 {
     bool IsAvailable { get; }
 
-    /// <summary>Lytt etter tale på språk (f.eks. "nb-NO") og returner gjenkjent tekst (null = avbrutt/feilet).</summary>
+    /// <summary>Listen for speech in language (e.g. "nb-NO") and return the recognized text (null = cancelled/failed).</summary>
     Task<string?> ListenAsync(string languageCode, CancellationToken ct);
 }
 
-/// <summary>Port for on-device tekst-til-tale.</summary>
+/// <summary>Port for on-device text-to-speech.</summary>
 public interface ITextToSpeech
 {
     bool IsAvailable { get; }

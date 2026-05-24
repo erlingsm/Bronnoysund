@@ -7,9 +7,9 @@ using Microsoft.Extensions.Options;
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Cache;
 
 /// <summary>
-/// 1) Slett utløpte cache-entries.
-/// 2) Hvis totalstørrelse &gt; MaxSizeMB: slett LRU-entries til vi er under 90 % av maks.
-/// Kjøres periodisk av PersistenceMaintenanceHostedService.
+/// 1) Delete expired cache entries.
+/// 2) If total size &gt; MaxSizeMB: delete LRU entries until we are below 90 % of max.
+/// Run periodically by PersistenceMaintenanceHostedService.
 /// </summary>
 internal sealed class CacheEvictionService(
     BronnoysundDbContext db,

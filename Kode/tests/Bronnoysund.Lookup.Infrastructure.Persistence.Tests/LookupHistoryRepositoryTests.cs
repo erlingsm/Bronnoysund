@@ -10,7 +10,7 @@ namespace Bronnoysund.Lookup.Infrastructure.Persistence.Tests;
 public sealed class LookupHistoryRepositoryTests
 {
     [Fact]
-    public async Task AddAsync_lagrer_med_gzippet_payload_som_round_trippes_ved_lesing()
+    public async Task AddAsync_StoresGzippedPayload_RoundTrippedOnRead()
     {
         using var test = new TestDb();
         var repo = new LookupHistoryRepository(test.Db, TestOptions.Of(new()));
@@ -25,7 +25,7 @@ public sealed class LookupHistoryRepositoryTests
     }
 
     [Fact]
-    public async Task ListRecentAsync_sorterer_nyeste_forst()
+    public async Task ListRecentAsync_SortsNewestFirst()
     {
         using var test = new TestDb();
         var repo = new LookupHistoryRepository(test.Db, TestOptions.Of(new()));
@@ -41,7 +41,7 @@ public sealed class LookupHistoryRepositoryTests
     }
 
     [Fact]
-    public async Task SetFavoriteAsync_oppdaterer_flagget()
+    public async Task SetFavoriteAsync_UpdatesTheFlag()
     {
         using var test = new TestDb();
         var repo = new LookupHistoryRepository(test.Db, TestOptions.Of(new()));
@@ -55,7 +55,7 @@ public sealed class LookupHistoryRepositoryTests
     }
 
     [Fact]
-    public async Task ClearNonFavoritesAsync_beholder_favoritter_og_sletter_gamle_ikke_favoritter()
+    public async Task ClearNonFavoritesAsync_KeepsFavorites_DeletesOldNonFavorites()
     {
         using var test = new TestDb();
         var opts = new PersistenceOptions { History = new() { RetentionDays = 1 } };

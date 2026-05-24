@@ -11,7 +11,7 @@ namespace Bronnoysund.Lookup.Infrastructure.Persistence.Tests;
 public sealed class SqliteCacheStoreTests
 {
     [Fact]
-    public async Task SetAsync_lagrer_og_GetAsync_returnerer_samme_bytes()
+    public async Task SetAsync_Stores_AndGetAsync_ReturnsSameBytes()
     {
         await using var fixture = new CacheFixture();
 
@@ -26,7 +26,7 @@ public sealed class SqliteCacheStoreTests
     }
 
     [Fact]
-    public async Task GetAsync_returnerer_null_for_utlopt_entry()
+    public async Task GetAsync_ReturnsNull_ForExpiredEntry()
     {
         await using var fixture = new CacheFixture();
 
@@ -41,7 +41,7 @@ public sealed class SqliteCacheStoreTests
     }
 
     [Fact]
-    public async Task GetAsync_oppdaterer_LastAccessedAt()
+    public async Task GetAsync_UpdatesLastAccessedAt()
     {
         await using var fixture = new CacheFixture();
 
@@ -59,7 +59,7 @@ public sealed class SqliteCacheStoreTests
     }
 
     [Fact]
-    public async Task RemoveAsync_sletter_entry()
+    public async Task RemoveAsync_DeletesEntry()
     {
         await using var fixture = new CacheFixture();
 
@@ -71,8 +71,8 @@ public sealed class SqliteCacheStoreTests
 }
 
 /// <summary>
-/// In-memory SQLite + ServiceProvider med scoped BronnoysundDbContext slik at SqliteCacheStore
-/// kan creScope() på samme måte som i prod.
+/// In-memory SQLite + ServiceProvider with a scoped BronnoysundDbContext so that SqliteCacheStore
+/// can CreateScope() the same way as in prod.
 /// </summary>
 internal sealed class CacheFixture : IAsyncDisposable
 {

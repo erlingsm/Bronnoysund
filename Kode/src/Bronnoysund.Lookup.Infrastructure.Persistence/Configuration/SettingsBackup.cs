@@ -23,7 +23,7 @@ internal sealed class SettingsBackup(ISettingsRepository settings) : ISettingsBa
     public async Task ImportAsync(string json, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(json))
-            throw new InvalidSettingsBackupException("Backup-payload er tom.");
+            throw new InvalidSettingsBackupException("Backup payload is empty.");
 
         BackupPayload? payload;
         try
@@ -32,16 +32,16 @@ internal sealed class SettingsBackup(ISettingsRepository settings) : ISettingsBa
         }
         catch (JsonException ex)
         {
-            throw new InvalidSettingsBackupException($"Ugyldig JSON: {ex.Message}");
+            throw new InvalidSettingsBackupException($"Invalid JSON: {ex.Message}");
         }
 
         if (payload is null)
-            throw new InvalidSettingsBackupException("Backup-payload er null etter deserialisering.");
+            throw new InvalidSettingsBackupException("Backup payload is null after deserialization.");
         if (payload.Version != CurrentVersion)
             throw new InvalidSettingsBackupException(
-                $"Ukjent backup-versjon {payload.Version}; støtter {CurrentVersion}.");
+                $"Unknown backup version {payload.Version}; supports {CurrentVersion}.");
         if (payload.Settings is null)
-            throw new InvalidSettingsBackupException("Backup mangler 'Settings'-felt.");
+            throw new InvalidSettingsBackupException("Backup is missing the 'Settings' field.");
 
         foreach (var (key, entry) in payload.Settings)
         {

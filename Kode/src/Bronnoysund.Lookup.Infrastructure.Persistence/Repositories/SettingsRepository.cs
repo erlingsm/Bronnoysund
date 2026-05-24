@@ -52,9 +52,9 @@ internal sealed class SettingsRepository(
     }
 
     /// <summary>
-    /// Trigger IConfigurationRoot.Reload() slik at SqliteSettingsConfigurationProvider
-    /// leser tabellen på nytt og IOptionsMonitor.OnChange fyrer for alle bundne options.
-    /// No-op hvis IConfiguration ikke er en IConfigurationRoot (testing).
+    /// Trigger IConfigurationRoot.Reload() so that SqliteSettingsConfigurationProvider
+    /// reads the table again and IOptionsMonitor.OnChange fires for all bound options.
+    /// No-op if IConfiguration is not an IConfigurationRoot (testing).
     /// </summary>
     private void TriggerConfigReload()
     {

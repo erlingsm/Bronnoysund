@@ -5,9 +5,9 @@ using System.Text;
 namespace Bronnoysund.Lookup.Speech.Parsing;
 
 /// <summary>
-/// Konverterer norsk talt tall-tekst (siffer-for-siffer) til en streng av siffer.
-/// Eksempel: "ni en ni tre null null tre åtte åtte" → "919300388".
-/// Støtter engelske tall-ord også (one/two/...) som backup om talegjenkjenning bytter språk.
+/// Converts spoken Norwegian number text (digit-by-digit) to a string of digits.
+/// Example: "ni en ni tre null null tre åtte åtte" → "919300388".
+/// Also supports English number words (one/two/...) as a backup if speech recognition switches language.
 /// </summary>
 public static class NorskTallParser
 {
@@ -27,9 +27,9 @@ public static class NorskTallParser
         };
 
     /// <summary>
-    /// Forsøk å parse en streng som siffer-for-siffer-uttale. Returnerer true hvis alle tokens
-    /// kunne mappes til siffer, og setter <paramref name="digits"/> til den sammensatte strengen.
-    /// Tomme strenger og bare-tall-strenger godtas direkte.
+    /// Try to parse a string as digit-by-digit pronunciation. Returns true if all tokens
+    /// could be mapped to digits, and sets <paramref name="digits"/> to the concatenated string.
+    /// Empty strings and digit-only strings are accepted directly.
     /// </summary>
     public static bool TryParseDigits(string input, out string digits)
     {
@@ -49,7 +49,7 @@ public static class NorskTallParser
                 continue;
             }
 
-            // Hvis tokenet allerede er en sekvens av siffer, ta dem som-er.
+            // If the token is already a sequence of digits, take them as-is.
             if (token.All(char.IsDigit))
             {
                 sb.Append(token);
@@ -62,7 +62,7 @@ public static class NorskTallParser
                 continue;
             }
 
-            // Ukjent ord — kan ikke tolkes som siffer-tale.
+            // Unknown word — cannot be interpreted as digit speech.
             return false;
         }
 

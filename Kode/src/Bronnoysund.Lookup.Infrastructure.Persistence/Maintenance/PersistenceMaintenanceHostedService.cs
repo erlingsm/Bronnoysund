@@ -9,9 +9,9 @@ using Microsoft.Extensions.Options;
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Maintenance;
 
 /// <summary>
-/// Kjører HistoryCleanupService + CacheEvictionService periodisk (default hver 6. time).
-/// Også én gang ved oppstart for å rydde fra forrige kjøring. Trenger ikke å være kontinuerlig
-/// i MAUI-prosesser; hosted services kjører bare så lenge IHost er aktiv, som er hele app-livet.
+/// Runs HistoryCleanupService + CacheEvictionService periodically (default every 6 hours).
+/// Also runs once at startup to clean up from the previous run. Does not need to be continuous
+/// in MAUI processes; hosted services only run as long as IHost is active, which is the entire app lifetime.
 /// </summary>
 internal sealed class PersistenceMaintenanceHostedService(
     IServiceScopeFactory scopes,

@@ -10,8 +10,8 @@ using Microsoft.Extensions.Logging;
 namespace Bronnoysund.Lookup.Infrastructure.Brreg;
 
 /// <summary>
-/// Adapter som implementerer <see cref="ICompanyProvider"/> via Brreg Enhetsregisteret.
-/// Mapper Brreg-DTOen til vår domeneentitet og deretter til engelsk-felt
+/// Adapter that implements <see cref="ICompanyProvider"/> via the Brreg Enhetsregisteret.
+/// Maps the Brreg DTO to our domain entity and then to the English-field
 /// <see cref="CompanyResponse"/>.
 /// </summary>
 internal sealed class BrregCompanyProvider(
@@ -31,9 +31,9 @@ internal sealed class BrregCompanyProvider(
             var domain = dto.ToDomain();
             if (domain is null)
             {
-                logger.LogWarning("Brreg returnerte respons for {OrgNumber} men mappingen ga ikke en gyldig Company", org.Value);
+                logger.LogWarning("Brreg returned a response for {OrgNumber} but mapping did not produce a valid Company", org.Value);
                 return new CompanyLookupResult.Unavailable(
-                    "Brreg returnerte en uventet respons-struktur.");
+                    "Brreg returned an unexpected response structure.");
             }
 
             var response = new CompanyResponse(
@@ -46,7 +46,7 @@ internal sealed class BrregCompanyProvider(
         }
         catch (BrregUnavailableException ex)
         {
-            logger.LogWarning(ex, "Brreg utilgjengelig for {OrgNumber}", org.Value);
+            logger.LogWarning(ex, "Brreg unavailable for {OrgNumber}", org.Value);
             return new CompanyLookupResult.Unavailable(ex.Message);
         }
     }

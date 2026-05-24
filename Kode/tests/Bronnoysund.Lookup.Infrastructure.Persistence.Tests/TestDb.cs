@@ -8,8 +8,8 @@ using Microsoft.Extensions.Options;
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Tests;
 
 /// <summary>
-/// Helper for per-test in-memory SQLite — hver test får en isolert DB.
-/// Connection holdes åpen for hele test-levetiden så :memory: ikke nullstilles.
+/// Helper for per-test in-memory SQLite — each test gets an isolated DB.
+/// The connection is kept open for the entire test lifetime so :memory: is not reset.
 /// </summary>
 internal sealed class TestDb : IDisposable
 {

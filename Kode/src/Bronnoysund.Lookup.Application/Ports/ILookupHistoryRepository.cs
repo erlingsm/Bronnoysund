@@ -2,7 +2,7 @@
 
 namespace Bronnoysund.Lookup.Application.Ports;
 
-/// <summary>Snapshot av et tidligere oppslag. ResultJson er rå CompanyResponse JSON (eller null hvis ikke funnet).</summary>
+/// <summary>Snapshot of a previous lookup. ResultJson is raw CompanyResponse JSON (or null if not found).</summary>
 public sealed record LookupHistoryItem(
     int Id,
     string? OrgNumber,
@@ -11,7 +11,7 @@ public sealed record LookupHistoryItem(
     string? ResultJson,
     bool IsFavorite);
 
-/// <summary>Søkehistorikk. Ikke-favoritter slettes etter retention; favoritter beholdes for alltid.</summary>
+/// <summary>Search history. Non-favorites are deleted after retention; favorites are kept forever.</summary>
 public interface ILookupHistoryRepository
 {
     Task AddAsync(string? orgNumber, string searchTerm, string? resultJson, CancellationToken ct);

@@ -3,14 +3,14 @@
 namespace Bronnoysund.Lookup.Infrastructure.Remote;
 
 /// <summary>
-/// Konfigurasjon for å bytte fra Fat Client (direkte Brreg-kall) til Thin Client (kall
-/// mot vår egen Web API som ligger i sky). Bindes mot "RemoteApi"-seksjonen i appsettings.
+/// Configuration for switching from Fat Client (direct Brreg calls) to Thin Client (calls
+/// against our own Web API hosted in the cloud). Bound to the "RemoteApi" section in appsettings.
 /// </summary>
 public sealed class RemoteApiOptions
 {
     public const string SectionName = "RemoteApi";
 
-    /// <summary>Base-URL til vår Bronnoysund.Lookup.WebApi som ligger i sky.</summary>
+    /// <summary>Base URL of our Bronnoysund.Lookup.WebApi hosted in the cloud.</summary>
     public string BaseUrl { get; set; } = string.Empty;
 
     public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(10);
@@ -19,11 +19,11 @@ public sealed class RemoteApiOptions
 }
 
 /// <summary>
-/// Velger om appen kjører som Fat Client (Direct = Brreg direkte) eller Thin Client (RemoteApi = mot sky).
-/// Settes via "DataSource:Mode" i konfig.
+/// Selects whether the app runs as Fat Client (Direct = Brreg directly) or Thin Client (RemoteApi = against the cloud).
+/// Set via "DataSource:Mode" in config.
 /// </summary>
 public enum DataSourceMode
 {
-    Direct = 0,    // Fat Client — kaller Brreg direkte
-    RemoteApi = 1, // Thin Client — kaller vår Web API i sky
+    Direct = 0,    // Fat Client — calls Brreg directly
+    RemoteApi = 1, // Thin Client — calls our Web API in the cloud
 }

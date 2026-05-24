@@ -7,9 +7,9 @@ using Bronnoysund.Lookup.Domain;
 namespace Bronnoysund.Lookup.Infrastructure.Aggregation;
 
 /// <summary>
-/// Aggregator-implementasjon for Fase 0 — kaller kun <see cref="ICompanyProvider"/> (kjernen).
-/// Fase 4 introduserer ParallelCompanyDataAggregator som kaller alle providers parallelt.
-/// Detaljer: /Plan/15-Register-aggregator.md
+/// Aggregator implementation for Phase 0 — only calls <see cref="ICompanyProvider"/> (the core).
+/// Phase 4 introduces ParallelCompanyDataAggregator which calls all providers in parallel.
+/// Details: /Plan/15-Register-aggregator.md
 /// </summary>
 internal sealed class CoreOnlyAggregator(ICompanyProvider company) : ICompanyDataAggregator
 {
@@ -26,13 +26,13 @@ internal sealed class CoreOnlyAggregator(ICompanyProvider company) : ICompanyDat
                 Debt: null,
                 Bankruptcy: null,
                 SubUnits: null,
-                Errors: [new RegistryError("aggregator", "Fase 0: kun kjerne implementert. Flere registre kommer i Fase 4.")]
+                Errors: [new RegistryError("aggregator", "Phase 0: only the core registry is implemented. More registries arrive in Phase 4.")]
             );
         }
 
         throw new InvalidOperationException(
-            $"AggregateAsync krever et Found-resultat. Fikk {result.GetType().Name}. " +
-            "Kall CoreOnlyAsync først for å sjekke status.");
+            $"AggregateAsync requires a Found result. Got {result.GetType().Name}. " +
+            "Call CoreOnlyAsync first to check the status.");
     }
 
     public Task<CompanyLookupResult> CoreOnlyAsync(OrganizationNumber org, CancellationToken ct)

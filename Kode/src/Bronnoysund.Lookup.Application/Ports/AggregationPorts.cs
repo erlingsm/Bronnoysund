@@ -4,10 +4,10 @@ using Bronnoysund.Lookup.Domain;
 
 namespace Bronnoysund.Lookup.Application.Ports;
 
-// Aggregator-porter for parallelle oppslag mot flere offentlige registre.
-// Detaljert spesifikasjon: /Plan/15-Register-aggregator.md
-// I Fase 0 etableres kun interfacene; faktiske implementasjoner kommer i Fase 4
-// med unntak av ICompanyProvider (kjerne) som har full impl allerede.
+// Aggregator ports for parallel lookups against multiple public registries.
+// Detailed specification: /Plan/15-Register-aggregator.md
+// In Phase 0 only the interfaces are established; actual implementations arrive in Phase 4
+// with the exception of ICompanyProvider (core) which already has a full implementation.
 
 public interface IRolesProvider
 {
@@ -44,7 +44,7 @@ public interface IPersonRolesProvider
     Task<PersonRolesResponse?> GetByPersonAsync(PersonIdentifier person, CancellationToken ct);
 }
 
-// Placeholder-records for fremtidige registre. Utvides i Fase 4 med faktiske felter.
+// Placeholder records for future registries. Extended in Phase 4 with the real fields.
 
 public sealed record RolesResponse(IReadOnlyList<Role> Roles);
 public sealed record Role(string PersonName, DateOnly? DateOfBirth, string RoleType);

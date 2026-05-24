@@ -5,8 +5,8 @@ using Bronnoysund.Lookup.Infrastructure.Persistence;
 namespace Bronnoysund.Lookup.MauiDesktop;
 
 /// <summary>
-/// MAUI database-path provider — bruker FileSystem.AppDataDirectory som er plattform-riktig
-/// per host (iOS app-sandbox, Android private storage, Mac/Win AppData).
+/// MAUI database path provider — uses FileSystem.AppDataDirectory which is platform-correct
+/// per host (iOS app sandbox, Android private storage, Mac/Win AppData).
 /// </summary>
 internal sealed class MauiDatabasePathProvider : IDatabasePathProvider
 {

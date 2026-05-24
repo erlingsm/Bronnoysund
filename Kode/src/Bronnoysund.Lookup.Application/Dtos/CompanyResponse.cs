@@ -3,7 +3,7 @@
 namespace Bronnoysund.Lookup.Application.Dtos;
 
 /// <summary>
-/// Engelsk-felt respons for org.nr-oppslag, jf. opprinnelig oppgavekrav.
+/// English-field response for organization-number lookups, per the original task requirements.
 /// </summary>
 public sealed record CompanyResponse(
     string OrganizationNumber,

@@ -6,8 +6,8 @@ using Bronnoysund.Lookup.Domain;
 namespace Bronnoysund.Lookup.Application.Ports;
 
 /// <summary>
-/// Henter kjernedata for en virksomhet (Brreg Enhetsregisteret).
-/// Adapter-implementasjon i Infrastructure-laget.
+/// Fetches the core data for an entity (Brreg Enhetsregisteret).
+/// Adapter implementation lives in the Infrastructure layer.
 /// </summary>
 public interface ICompanyProvider
 {

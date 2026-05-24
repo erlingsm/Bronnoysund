@@ -13,7 +13,7 @@ public sealed class SettingsBackupTests
     private static IConfiguration EmptyConfig() => new ConfigurationBuilder().Build();
 
     [Fact]
-    public async Task Export_og_Import_round_tripper_alle_settings()
+    public async Task ExportAndImport_RoundTripsAllSettings()
     {
         using var sourceDb = new TestDb();
         var sourceRepo = new SettingsRepository(sourceDb.Db, EmptyConfig());
@@ -35,7 +35,7 @@ public sealed class SettingsBackupTests
     }
 
     [Fact]
-    public async Task Import_kaster_pa_ugyldig_json()
+    public async Task Import_ThrowsOnInvalidJson()
     {
         using var db = new TestDb();
         var backup = new SettingsBackup(new SettingsRepository(db.Db, EmptyConfig()));
@@ -46,7 +46,7 @@ public sealed class SettingsBackupTests
     }
 
     [Fact]
-    public async Task Import_kaster_pa_ukjent_versjon()
+    public async Task Import_ThrowsOnUnknownVersion()
     {
         using var db = new TestDb();
         var backup = new SettingsBackup(new SettingsRepository(db.Db, EmptyConfig()));
@@ -59,7 +59,7 @@ public sealed class SettingsBackupTests
     }
 
     [Fact]
-    public async Task Import_merger_med_eksisterende_settings()
+    public async Task Import_MergesWithExistingSettings()
     {
         using var db = new TestDb();
         var repo = new SettingsRepository(db.Db, EmptyConfig());

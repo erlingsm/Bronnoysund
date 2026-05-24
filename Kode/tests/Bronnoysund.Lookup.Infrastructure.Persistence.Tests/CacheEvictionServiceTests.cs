@@ -11,7 +11,7 @@ namespace Bronnoysund.Lookup.Infrastructure.Persistence.Tests;
 public sealed class CacheEvictionServiceTests
 {
     [Fact]
-    public async Task EvictIfNeededAsync_sletter_utlopte_entries()
+    public async Task EvictIfNeededAsync_DeletesExpiredEntries()
     {
         using var test = new TestDb();
         var opts = new PersistenceOptions { Cache = new() { MaxSizeMB = 100 } };
@@ -30,12 +30,12 @@ public sealed class CacheEvictionServiceTests
     }
 
     [Fact]
-    public async Task EvictIfNeededAsync_LRU_sletter_oldest_til_under_90pct_av_max()
+    public async Task EvictIfNeededAsync_LRU_DeletesOldestUntilUnder90PercentOfMax()
     {
         using var test = new TestDb();
-        // 1 KB max → target = 921 bytes. Hver entry er ~500 bytes payload.
+        // 1 KB max → target = 921 bytes. Each entry is ~500 bytes payload.
         var opts = new PersistenceOptions { Cache = new() { MaxSizeMB = 0 } };
-        // Vi setter MaxSizeMB=0 så max = 0 bytes → enhver entry overskrider og hele cachen evictes.
+        // We set MaxSizeMB=0 so max = 0 bytes → any entry exceeds it and the entire cache is evicted.
         var svc = new CacheEvictionService(test.Db, TestOptions.Of(opts), NullLogger<CacheEvictionService>.Instance);
 
         var now = DateTimeOffset.UtcNow;
@@ -48,14 +48,14 @@ public sealed class CacheEvictionServiceTests
         await svc.EvictIfNeededAsync(default);
 
         var remaining = await test.Db.CacheEntries.Select(c => c.Key).ToListAsync();
-        remaining.Should().BeEmpty(); // max=0 evicter alt
+        remaining.Should().BeEmpty(); // max=0 evicts everything
     }
 
     [Fact]
-    public async Task EvictIfNeededAsync_beholder_nyeste_naar_kun_eldste_ma_evictes()
+    public async Task EvictIfNeededAsync_KeepsNewestWhenOnlyOldestNeedToBeEvicted()
     {
         using var test = new TestDb();
-        // 1 MB max → target = ~944 KB. Hver entry er 500 KB. Tre entries = 1500 KB > 1 MB.
+        // 1 MB max → target = ~944 KB. Each entry is 500 KB. Three entries = 1500 KB > 1 MB.
         var opts = new PersistenceOptions { Cache = new() { MaxSizeMB = 1 } };
         var svc = new CacheEvictionService(test.Db, TestOptions.Of(opts), NullLogger<CacheEvictionService>.Instance);
 

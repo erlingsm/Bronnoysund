@@ -6,9 +6,9 @@ using Bronnoysund.Lookup.Domain;
 namespace Bronnoysund.Lookup.Infrastructure.Brreg;
 
 /// <summary>
-/// JSON-kontrakt for én enhet fra Brreg Enhetsregisteret. Norske feltnavn matcher
-/// /enhetsregisteret/api/enheter/{orgnr}-responsen. Vi mapper til engelsk-felt DTOer i
-/// applikasjonslaget.
+/// JSON contract for a single entity from the Brreg Enhetsregisteret. Norwegian field names
+/// match the /enhetsregisteret/api/enheter/{orgnr} response. We map to English-field DTOs in
+/// the application layer.
 /// </summary>
 internal sealed class BrregEnhetDto
 {
@@ -24,7 +24,7 @@ internal sealed class BrregEnhetDto
     [JsonPropertyName("maalform")]
     public string? Maalform { get; set; }
 
-    /// <summary>Map til vår domeneentitet. Returnerer null hvis kritiske felter mangler.</summary>
+    /// <summary>Map to our domain entity. Returns null if critical fields are missing.</summary>
     public Company? ToDomain()
     {
         if (string.IsNullOrWhiteSpace(Organisasjonsnummer) || string.IsNullOrWhiteSpace(Navn))

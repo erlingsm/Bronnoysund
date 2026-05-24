@@ -23,7 +23,7 @@ public class LookupCompanyHandlerTests
     }
 
     [Fact]
-    public async Task GyldigOrgnr_KallerProvider_OgReturnererFound()
+    public async Task ValidOrgNumber_CallsProvider_AndReturnsFound()
     {
         var expected = new CompanyResponse("919300388", "Equinor ASA", "AS", "Bokmål");
         _provider.LookupAsync(Arg.Any<OrganizationNumber>(), Arg.Any<CancellationToken>())
@@ -36,7 +36,7 @@ public class LookupCompanyHandlerTests
     }
 
     [Fact]
-    public async Task UgyldigOrgnr_ReturnererInvalidInput_UtenÅKalleProvider()
+    public async Task InvalidOrgNumber_ReturnsInvalidInput_WithoutCallingProvider()
     {
         var result = await _sut.HandleAsync(new LookupCompanyQuery("12345"), CancellationToken.None);
 
@@ -45,7 +45,7 @@ public class LookupCompanyHandlerTests
     }
 
     [Fact]
-    public async Task TomtInput_ReturnererInvalidInput()
+    public async Task EmptyInput_ReturnsInvalidInput()
     {
         var result = await _sut.HandleAsync(new LookupCompanyQuery(""), CancellationToken.None);
 
@@ -53,7 +53,7 @@ public class LookupCompanyHandlerTests
     }
 
     [Fact]
-    public async Task GyldigOrgnrMenProviderReturnererNotFound_PropagererNotFound()
+    public async Task ValidOrgNumberButProviderReturnsNotFound_PropagatesNotFound()
     {
         _provider.LookupAsync(Arg.Any<OrganizationNumber>(), Arg.Any<CancellationToken>())
             .Returns(new CompanyLookupResult.NotFound("919300388"));
@@ -65,14 +65,14 @@ public class LookupCompanyHandlerTests
     }
 
     [Fact]
-    public async Task GyldigOrgnrMenProviderReturnererUnavailable_PropagererUnavailable()
+    public async Task ValidOrgNumberButProviderReturnsUnavailable_PropagatesUnavailable()
     {
         _provider.LookupAsync(Arg.Any<OrganizationNumber>(), Arg.Any<CancellationToken>())
-            .Returns(new CompanyLookupResult.Unavailable("Brreg er nede."));
+            .Returns(new CompanyLookupResult.Unavailable("Brreg is down."));
 
         var result = await _sut.HandleAsync(new LookupCompanyQuery("919300388"), CancellationToken.None);
 
         result.Should().BeOfType<CompanyLookupResult.Unavailable>()
-            .Which.Message.Should().Be("Brreg er nede.");
+            .Which.Message.Should().Be("Brreg is down.");
     }
 }
