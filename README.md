@@ -27,8 +27,11 @@ Brreg-integrasjon, Clean Architecture og MAUI/Blazor er **kjent terreng** som li
 
 Samme kompilerte app (Web, Desktop, Mobile) kan kjøre i to moduser, valgt via konfigurasjon:
 
-- **Fat Client** (default — gratis, App Store/Google Play): Brreg-oppslag direkte fra enheten. Ingen brukerkonto, fungerer offline med cache. Dekker MVP.
-- **Thin Client** (Subscription via Azure-sky): rikere funksjonalitet som krever sentralisert tilgang — regnskap via Maskinporten, eierregister, andre land (UK, FR, DE, ...), synkronisering av favoritter mellom enheter.
+- **Fat Client** (default — gratis, App Store/Google Play): Brreg-oppslag direkte fra enheten. Ingen brukerkonto, fungerer offline med cache. Dekker MVP. Leveres i flere innpakninger:
+  - **MAUI Desktop** — native app for Mac + Windows (`.app` / `.exe`)
+  - **MAUI Mobile** — native app for iOS + Android (inkl. iPad og Android-tablets)
+  - **Blazor Web Server portable** — kjørbar `.exe`/binary for Mac/Win/Linux som starter Kestrel og åpner i nettleser (USB-stick-vennlig)
+- **Thin Client** (Subscription via Azure-sky): rikere funksjonalitet som krever sentralisert tilgang — regnskap via Maskinporten, eierregister, andre land (UK, FR, DE, USA, ...), synkronisering av favoritter mellom enheter.
 
 Bytte er én linje i `appsettings.json`: `"DataSource": { "Mode": "Direct" }` eller `"RemoteApi"`. Detaljer + sammenligningsmatrise i [docs/fat-vs-thin-client.md](docs/fat-vs-thin-client.md).
 

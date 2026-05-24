@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bronnoysund.Lookup.Speech",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bronnoysund.Lookup.Speech.Tests", "tests\Bronnoysund.Lookup.Speech.Tests\Bronnoysund.Lookup.Speech.Tests.csproj", "{6488EF3D-238E-444E-ADE6-3A74FFAAA153}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bronnoysund.Lookup.Infrastructure.Persistence", "src\Bronnoysund.Lookup.Infrastructure.Persistence\Bronnoysund.Lookup.Infrastructure.Persistence.csproj", "{2FE975C7-3F4F-48C1-99FA-C70D3A196502}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -213,6 +215,18 @@ Global
 		{6488EF3D-238E-444E-ADE6-3A74FFAAA153}.Release|x64.Build.0 = Release|Any CPU
 		{6488EF3D-238E-444E-ADE6-3A74FFAAA153}.Release|x86.ActiveCfg = Release|Any CPU
 		{6488EF3D-238E-444E-ADE6-3A74FFAAA153}.Release|x86.Build.0 = Release|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Debug|x64.Build.0 = Debug|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Debug|x86.Build.0 = Debug|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Release|x64.ActiveCfg = Release|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Release|x64.Build.0 = Release|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Release|x86.ActiveCfg = Release|Any CPU
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -232,5 +246,6 @@ Global
 		{DA0E119F-5163-4F6C-B2FF-27384EFBFD6C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{425E3998-DDC8-4EA7-B7C0-0AB8CC991E16} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{6488EF3D-238E-444E-ADE6-3A74FFAAA153} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{2FE975C7-3F4F-48C1-99FA-C70D3A196502} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
