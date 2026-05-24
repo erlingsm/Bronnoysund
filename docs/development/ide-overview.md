@@ -91,10 +91,10 @@ dotnet run --project src/Bronnoysund.Lookup.WebApi
 
 ## Linter
 
-Markdown-filer i `Plan/` og `Dokumentasjon/` skal være lint-rene:
+Markdown-filer i repoet skal være lint-rene:
 
 ```bash
-npx markdownlint-cli2 "Plan/*.md" "Dokumentasjon/*.md"
+npx markdownlint-cli2 "**/*.md"
 ```
 
 Forventet output: `Summary: 0 error(s)`.

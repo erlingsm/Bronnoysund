@@ -88,4 +88,4 @@ Når demo-fase er ferdig:
 3. Submit for review
 4. Apple-review tar 24–48 timer for første versjon
 
-App Store-listing ligger som todo i [Plan/10-Distribusjon-og-portability.md](../../Plan/10-Distribusjon-og-portability.md).
+App Store-listing er planlagt som senere milepæl.

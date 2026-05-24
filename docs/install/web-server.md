@@ -120,4 +120,4 @@ Server-process leser denne automatisk når `ASPNETCORE_ENVIRONMENT=Production`.
 
 ## Senere — Kubernetes-deployment
 
-Når Fase 6 er ferdig (se [Plan/07-Fase6-Sentral-backend-opsjonell.md](../../Plan/07-Fase6-Sentral-backend-opsjonell.md)) tilbys også Dockerfile og Helm-chart for AWS EKS / Azure AKS-deployment.
+Når en sentralisert backend-fase er ferdig vil vi også tilby Dockerfile og Helm-chart for AWS EKS / Azure AKS-deployment.

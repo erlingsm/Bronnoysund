@@ -45,9 +45,6 @@ Brreg-integrasjon, Clean Architecture og MAUI/Blazor er **kjent terreng** som li
   ├── *.slnf                   — Solution Filter: Core, Web, Desktop, Mobile
   ├── src/                     — alle prosjekter
   └── tests/                   — alle test-prosjekter
-/Plan/                         — 16 plan-filer (overordnet + faser + tverrgående)
-/Dokumentasjon/                — Tidsbruk-logg, Leseliste, presentasjons-skeleton
-/Oppdrag/                      — opprinnelig oppgavebrief (kun lokal kopi)
 /docs/                         — installasjons- og utvikler-dokumentasjon
 ```
 
@@ -59,11 +56,10 @@ Brreg-integrasjon, Clean Architecture og MAUI/Blazor er **kjent terreng** som li
 | Sette opp Web på en webserver | [docs/install/web-server.md](docs/install/web-server.md) |
 | Kjøre Desktop på Mac/Windows | [docs/install/desktop.md](docs/install/desktop.md) |
 | Installere Android-appen | [docs/install/android.md](docs/install/android.md) |
-| Installere iOS-appen via TestFlight | [docs/install/ios.md](docs/install/ios.md) |
-| Forstå arkitekturen | [Plan/08-Patterns-og-arkitekturbegrunnelser.md](Plan/08-Patterns-og-arkitekturbegrunnelser.md) |
+| Installere iOS-appen (iPhone og iPad) via TestFlight | [docs/install/ios.md](docs/install/ios.md) |
+| Forstå arkitekturen | [docs/architecture.md](docs/architecture.md) |
 | Åpne i Rider / VS / VS Code | [docs/development/ide-overview.md](docs/development/ide-overview.md) |
-| Se kildehenvisninger | [Plan/09-Tredjepartskode-og-kreditering.md](Plan/09-Tredjepartskode-og-kreditering.md) |
-| Lære meg opp på teknologiene | [Dokumentasjon/Leseliste.md](Dokumentasjon/Leseliste.md) |
+| Se kildehenvisninger | [docs/credits.md](docs/credits.md) |
 
 ## Bygg og test lokalt
 
@@ -107,7 +103,7 @@ Inspirasjon (ikke kopiert kode — vi har bygget alt selv for kontroll over lise
 - [storbukas/norsk-validator](https://github.com/storbukas/norsk-validator) (MIT)
 - [SindreMA/Blazor-Brønnøysundregistrene](https://github.com/SindreMA/Blazor-Br-nn-ysundregistrene)
 
-Komplett liste i [Plan/09-Tredjepartskode-og-kreditering.md](Plan/09-Tredjepartskode-og-kreditering.md).
+Komplett liste i [docs/credits.md](docs/credits.md).
 
 ## Eier
 
