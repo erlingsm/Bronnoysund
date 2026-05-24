@@ -80,6 +80,10 @@ open -a "Android Studio" Watch/Android/BronnoysundWear/
 | Git og PR | VS Code eller terminal |
 | SQLite-inspeksjon | DB Browser for SQLite (gratis app) eller Rider DataGrip-plugin |
 
+## Praktisk debugging-guide
+
+For konkret oppskrift på hvordan kjøre/debugge hver del — Web, Desktop, iOS, Android — se [debugging.md](debugging.md).
+
 ## Bygg fra terminal (ingen IDE nødvendig)
 
 ```bash
