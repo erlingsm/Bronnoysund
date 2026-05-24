@@ -29,6 +29,7 @@ try
 
     builder.Services.AddBronnoysundApplication();
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
+    builder.Services.AddLocalization();
     builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
     builder.Services.AddBronnoysundPersistence(builder.Configuration);
     builder.Services.AddProblemDetails();

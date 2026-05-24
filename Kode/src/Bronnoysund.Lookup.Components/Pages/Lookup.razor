@@ -1,22 +1,21 @@
 @page "/"
 @page "/lookup"
-@using MudBlazor
-@using Bronnoysund.Lookup.ViewModels
 @inject CompanyLookupViewModel ViewModel
+@inject IStringLocalizer<SharedResources> L
 @implements IDisposable
 
-<PageTitle>Bronnoysund Lookup</PageTitle>
+<PageTitle>@L["LookupTitle"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
-    <MudText Typo="Typo.h4" GutterBottom="true">Bronnoysund Lookup</MudText>
+    <MudText Typo="Typo.h4" GutterBottom="true">@L["LookupTitle"]</MudText>
     <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
-        Slå opp norske virksomheter i Enhetsregisteret. Skriv organisasjonsnummer (9 siffer, starter på 8 eller 9).
+        @L["LookupDescription"]
     </MudText>
 
     <MudPaper Class="pa-4 mb-4" Elevation="2">
         <MudTextField @bind-Value="ViewModel.OrgNumberInput"
-                      Label="Organisasjonsnummer"
-                      Placeholder="f.eks. 919300388"
+                      Label="@L["OrgNumberLabel"]"
+                      Placeholder="@L["OrgNumberPlaceholder"]"
                       Variant="Variant.Outlined"
                       Immediate="true"
                       OnKeyDown="@OnKeyDown"
@@ -30,11 +29,11 @@
             @if (ViewModel.IsBusy)
             {
                 <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                <span>Søker…</span>
+                <span>@L["Searching"]</span>
             }
             else
             {
-                <span>Slå opp</span>
+                <span>@L["SearchButton"]</span>
             }
         </MudButton>
     </MudPaper>
@@ -50,11 +49,11 @@
             <MudText Typo="Typo.h6" Class="mb-3">@found.OrganizationName</MudText>
             <MudList T="string" Dense="true">
                 <MudListItem T="string" Icon="@Icons.Material.Filled.Numbers"
-                             Text="@($"Organization Number: {found.OrganizationNumber}")" />
+                             Text="@L["OrgNumberRow", found.OrganizationNumber]" />
                 <MudListItem T="string" Icon="@Icons.Material.Filled.Business"
-                             Text="@($"Company Type: {found.CompanyType}")" />
+                             Text="@L["CompanyTypeRow", found.CompanyType]" />
                 <MudListItem T="string" Icon="@Icons.Material.Filled.Language"
-                             Text="@($"Language Form: {found.LanguageForm}")" />
+                             Text="@L["LanguageFormRow", found.LanguageForm]" />
             </MudList>
             @if (ViewModel.StatusMessage is not null)
             {

@@ -27,6 +27,7 @@ public static class MauiProgram
 
 		builder.Services.AddMauiBlazorWebView();
 		builder.Services.AddMudServices();
+		builder.Services.AddLocalization();
 		builder.Services.AddBronnoysundApplication();
 		builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
 		builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);

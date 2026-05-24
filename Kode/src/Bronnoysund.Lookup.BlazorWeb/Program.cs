@@ -31,6 +31,15 @@ try
     builder.Services.AddRazorComponents()
         .AddInteractiveServerComponents();
 
+    builder.Services.AddLocalization();
+    var supportedCultures = new[] { "en", "nb-NO", "nn-NO" };
+    builder.Services.Configure<Microsoft.AspNetCore.Builder.RequestLocalizationOptions>(opts =>
+    {
+        opts.SetDefaultCulture("en")
+            .AddSupportedCultures(supportedCultures)
+            .AddSupportedUICultures(supportedCultures);
+    });
+
     builder.Services.AddMudServices();
 
     builder.Services.AddBronnoysundApplication();
@@ -54,6 +63,7 @@ try
     }
 
     app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+    app.UseRequestLocalization();
     app.UseAntiforgery();
     app.MapStaticAssets();
     app.MapRazorComponents<App>()

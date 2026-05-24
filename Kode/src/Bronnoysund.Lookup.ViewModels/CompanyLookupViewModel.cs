@@ -3,16 +3,17 @@
 using Bronnoysund.Lookup.Application.Dtos;
 using Bronnoysund.Lookup.Application.Results;
 using Bronnoysund.Lookup.Application.UseCases.LookupCompany;
+using Bronnoysund.Lookup.ViewModels.Resources;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Localization;
 
 namespace Bronnoysund.Lookup.ViewModels;
 
-/// <summary>
-/// Delt ViewModel for selskaps-oppslag. Brukes fra både MAUI (Hybrid) og Blazor Web.
-/// Bygger på CommunityToolkit.Mvvm sine source generators (ObservableProperty + RelayCommand).
-/// </summary>
-public sealed partial class CompanyLookupViewModel(LookupCompanyHandler handler) : ObservableObject
+/// <summary>Shared lookup view-model used by MAUI Blazor Hybrid and Blazor Web.</summary>
+public sealed partial class CompanyLookupViewModel(
+    LookupCompanyHandler handler,
+    IStringLocalizer<SharedResources> localizer) : ObservableObject
 {
     [ObservableProperty]
     public partial string OrgNumberInput { get; set; } = string.Empty;
@@ -34,7 +35,7 @@ public sealed partial class CompanyLookupViewModel(LookupCompanyHandler handler)
     {
         if (string.IsNullOrWhiteSpace(OrgNumberInput))
         {
-            ErrorMessage = "Skriv inn et organisasjonsnummer.";
+            ErrorMessage = localizer["EnterOrgNumber"];
             return;
         }
 
@@ -50,16 +51,16 @@ public sealed partial class CompanyLookupViewModel(LookupCompanyHandler handler)
             {
                 case CompanyLookupResult.Found f:
                     Found = f.Company;
-                    StatusMessage = "Funnet i Brønnøysundregistrene.";
+                    StatusMessage = localizer["FoundInRegistry"];
                     break;
                 case CompanyLookupResult.NotFound nf:
-                    ErrorMessage = $"Ingen virksomhet med organisasjonsnummer {nf.OrganizationNumber} ble funnet.";
+                    ErrorMessage = localizer["NotFoundForOrgNumber", nf.OrganizationNumber];
                     break;
                 case CompanyLookupResult.InvalidInput inv:
                     ErrorMessage = inv.Message;
                     break;
                 case CompanyLookupResult.Unavailable u:
-                    ErrorMessage = $"Brønnøysundregistrene er midlertidig utilgjengelig: {u.Message}";
+                    ErrorMessage = localizer["RegistryUnavailable", u.Message];
                     break;
             }
         }

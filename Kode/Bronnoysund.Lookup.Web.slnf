@@ -15,7 +15,8 @@
       "tests\\Bronnoysund.Lookup.Application.Tests\\Bronnoysund.Lookup.Application.Tests.csproj",
       "tests\\Bronnoysund.Lookup.Infrastructure.Tests\\Bronnoysund.Lookup.Infrastructure.Tests.csproj",
       "tests\\Bronnoysund.Lookup.Infrastructure.Persistence.Tests\\Bronnoysund.Lookup.Infrastructure.Persistence.Tests.csproj",
-      "tests\\Bronnoysund.Lookup.Speech.Tests\\Bronnoysund.Lookup.Speech.Tests.csproj"
+      "tests\\Bronnoysund.Lookup.Speech.Tests\\Bronnoysund.Lookup.Speech.Tests.csproj",
+      "tests\\Bronnoysund.Lookup.ViewModels.Tests\\Bronnoysund.Lookup.ViewModels.Tests.csproj"
     ]
   }
 }
