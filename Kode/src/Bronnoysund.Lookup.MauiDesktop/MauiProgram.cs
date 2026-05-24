@@ -1,4 +1,10 @@
-﻿using Microsoft.Extensions.Logging;
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
+
+using Bronnoysund.Lookup.Application;
+using Bronnoysund.Lookup.Infrastructure;
+using Bronnoysund.Lookup.ViewModels;
+using Microsoft.Extensions.Logging;
+using MudBlazor.Services;
 
 namespace Bronnoysund.Lookup.MauiDesktop;
 
@@ -15,6 +21,10 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView();
+		builder.Services.AddMudServices();
+		builder.Services.AddBronnoysundApplication();
+		builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
+		builder.Services.AddTransient<CompanyLookupViewModel>();
 
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();

@@ -9,6 +9,14 @@
         <_RequireXcode>false</_RequireXcode>
         <MtouchExtraArgs>--nodevcodeshare</MtouchExtraArgs>
 
+        <!-- Mac Catalyst Release: deaktiver IL-link/trimming.
+             Blazor Hybrid bruker reflection til å finne Razor-komponenter; trimmer fjerner
+             nødvendige assemblies og appen krasjer ved oppstart med SIGABRT i load_aot_module.
+             MacCatalyst krever PublishTrimmed=true (SDK-tvang), så MtouchLink=None er måten
+             å slå av trimming på alle assemblies. Trade-off: bundle blir ~2x større, men
+             nødvendig for at appen skal starte. -->
+        <MtouchLink Condition="$(TargetFramework.Contains('-maccatalyst'))">None</MtouchLink>
+
         <!-- Note for MacCatalyst:
             The default runtime is maccatalyst-x64, except in Release config, in which case the default is maccatalyst-x64;maccatalyst-arm64.
             When specifying both architectures, use the plural <RuntimeIdentifiers> instead of the singular <RuntimeIdentifier>.
