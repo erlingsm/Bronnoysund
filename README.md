@@ -23,6 +23,15 @@ Min rolle som menneske:
 
 Brreg-integrasjon, Clean Architecture og MAUI/Blazor er **kjent terreng** som ligger godt dokumentert på GitHub, Microsoft Learn og StackOverflow. AI er produktivt på den type oppgaver. Min menneskelige rolle er domene-research, arkitekturvalg, kritisk gjennomgang og retnings-endringer — det AI ikke gjør alene.
 
+## To driftsmoduser — én kodebase
+
+Samme kompilerte app (Web, Desktop, Mobile) kan kjøre i to moduser, valgt via konfigurasjon:
+
+- **Fat Client** (default — gratis, App Store/Google Play): Brreg-oppslag direkte fra enheten. Ingen brukerkonto, fungerer offline med cache. Dekker MVP.
+- **Thin Client** (Subscription via Azure-sky): rikere funksjonalitet som krever sentralisert tilgang — regnskap via Maskinporten, eierregister, andre land (UK, FR, DE, ...), synkronisering av favoritter mellom enheter.
+
+Bytte er én linje i `appsettings.json`: `"DataSource": { "Mode": "Direct" }` eller `"RemoteApi"`. Detaljer + sammenligningsmatrise i [docs/fat-vs-thin-client.md](docs/fat-vs-thin-client.md).
+
 ## Status
 
 | Fase | Status | Tester | Kjørbar |
@@ -33,7 +42,7 @@ Brreg-integrasjon, Clean Architecture og MAUI/Blazor er **kjent terreng** som li
 | Fase 3 — MAUI Mobile + Voice | 🟡 Grunnlag + Speech-prosjekter | 16 passerer | Se [docs/install/ios.md](docs/install/ios.md) |
 | Fase 4 — Register-aggregator | 📋 Planlagt (Brreg-Roller, Regnskap, Eiere via parallelle oppslag) | — | — |
 | Fase 5 — Watch (Swift + Kotlin) | 📋 Planlagt (kun parret telefon) | — | — |
-| Fase 6 — Sentral backend (Kubernetes) | 📋 Planlagt (klar for AWS/Azure) | — | — |
+| Fase 6 — Sky (Azure Container Apps) | 🟢 Dockerfile + CI/CD klar; deploy via [docs/install/azure-deploy.md](docs/install/azure-deploy.md) | — | — |
 
 **Totalt 47 tester passerer.** Hele løsningen er linter-ren og lover SPDX-headers i alle kildefiler.
 
@@ -52,8 +61,11 @@ Brreg-integrasjon, Clean Architecture og MAUI/Blazor er **kjent terreng** som li
 
 | Jeg vil ... | Se |
 | --- | --- |
+| Forstå Fat vs Thin Client (gratis vs subscription) | [docs/fat-vs-thin-client.md](docs/fat-vs-thin-client.md) |
 | Kjøre Web-versjonen på Mac/PC | [docs/install/web-standalone.md](docs/install/web-standalone.md) |
 | Sette opp Web på en webserver | [docs/install/web-server.md](docs/install/web-server.md) |
+| Deploye til Azure Container Apps (Oslo) | [docs/install/azure-deploy.md](docs/install/azure-deploy.md) |
+| Sette opp GitHub Actions CI/CD | [docs/development/cicd-github-actions.md](docs/development/cicd-github-actions.md) |
 | Kjøre Desktop på Mac/Windows | [docs/install/desktop.md](docs/install/desktop.md) |
 | Installere Android-appen | [docs/install/android.md](docs/install/android.md) |
 | Installere iOS-appen (iPhone og iPad) via TestFlight | [docs/install/ios.md](docs/install/ios.md) |
