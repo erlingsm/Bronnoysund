@@ -1,0 +1,232 @@
+@page "/settings"
+@using MudBlazor
+@using Bronnoysund.Lookup.Application.Ports
+@inject ISettingsRepository SettingsRepo
+@inject ISettingsBackup Backup
+@inject ISnackbar Snackbar
+
+<PageTitle>Innstillinger — Bronnoysund Lookup</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">Innstillinger</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        Bruker-overstyringer av appsettings.json. Endringer trigger live-reload via IOptionsMonitor — ingen restart.
+        Nøkler bruker IConfiguration-syntax (f.eks. <code>Brreg:BaseUrl</code>, <code>Persistence:Cache:MaxSizeMB</code>).
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudToolBar Dense="true" Gutters="false" Class="mb-2">
+            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary"
+                       OnClick="OnAddClicked">Ny nøkkel</MudButton>
+            <MudSpacer />
+            <MudButton StartIcon="@Icons.Material.Filled.Download" OnClick="OnExportClicked">Eksporter</MudButton>
+            <MudButton StartIcon="@Icons.Material.Filled.Upload" OnClick="OnImportOpenClicked">Importer</MudButton>
+            <MudButton StartIcon="@Icons.Material.Filled.RestartAlt" Color="Color.Warning"
+                       OnClick="OnResetClicked">Tilbakestill</MudButton>
+        </MudToolBar>
+
+        @if (_loading)
+        {
+            <MudProgressLinear Indeterminate="true" />
+        }
+        else if (_settings.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Class="my-2">
+                Ingen brukerinnstillinger ennå. Default-verdier fra appsettings.json brukes.
+            </MudAlert>
+        }
+        else
+        {
+            <MudTable Items="@_settings" Dense="true" Hover="true" Class="mt-2">
+                <HeaderContent>
+                    <MudTh>Nøkkel</MudTh>
+                    <MudTh>Verdi</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh Style="width: 1%">Handlinger</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="row">
+                    <MudTd DataLabel="Nøkkel"><code>@row.Key</code></MudTd>
+                    <MudTd DataLabel="Verdi">
+                        <MudTextField @bind-Value="row.EditedValue" Variant="Variant.Text" Margin="Margin.Dense" />
+                    </MudTd>
+                    <MudTd DataLabel="Type">@row.DataType</MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Save" Size="Size.Small" Color="Color.Primary"
+                                       Disabled="@(row.EditedValue == row.OriginalValue)"
+                                       OnClick="@(() => SaveRowAsync(row))" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                                       OnClick="@(() => DeleteRowAsync(row))" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        }
+    </MudPaper>
+</MudContainer>
+
+@if (_addOpen)
+{
+    <MudOverlay Visible="true" DarkBackground="true" Absolute="false">
+        <MudPaper Class="pa-4" Style="width: 480px; max-width: 90vw;">
+            <MudText Typo="Typo.h6" GutterBottom="true">Ny innstilling</MudText>
+            <MudTextField @bind-Value="_newKey" Label="Nøkkel" Variant="Variant.Outlined" Class="mb-2"
+                          Placeholder="f.eks. Brreg:BaseUrl" />
+            <MudTextField @bind-Value="_newValue" Label="Verdi" Variant="Variant.Outlined" Class="mb-2" />
+            <MudSelect @bind-Value="_newDataType" Label="Type" Variant="Variant.Outlined" Class="mb-3">
+                <MudSelectItem Value="@("string")">string</MudSelectItem>
+                <MudSelectItem Value="@("int")">int</MudSelectItem>
+                <MudSelectItem Value="@("bool")">bool</MudSelectItem>
+                <MudSelectItem Value="@("double")">double</MudSelectItem>
+                <MudSelectItem Value="@("timespan")">timespan</MudSelectItem>
+            </MudSelect>
+            <MudStack Row="true" Justify="Justify.FlexEnd">
+                <MudButton OnClick="@(() => _addOpen = false)">Avbryt</MudButton>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="OnAddConfirmedAsync">Legg til</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@if (_exportOpen)
+{
+    <MudOverlay Visible="true" DarkBackground="true" Absolute="false">
+        <MudPaper Class="pa-4" Style="width: 640px; max-width: 95vw;">
+            <MudText Typo="Typo.h6" GutterBottom="true">Eksportert JSON</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                Kopier teksten under og lagre i en fil for å flytte innstillinger til en annen enhet.
+            </MudText>
+            <MudTextField @bind-Value="_exportJson" Lines="14" Variant="Variant.Outlined" ReadOnly="true" />
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+                <MudButton OnClick="@(() => _exportOpen = false)">Lukk</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@if (_importOpen)
+{
+    <MudOverlay Visible="true" DarkBackground="true" Absolute="false">
+        <MudPaper Class="pa-4" Style="width: 640px; max-width: 95vw;">
+            <MudText Typo="Typo.h6" GutterBottom="true">Importer JSON</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                Lim inn en eksportert payload. Eksisterende nøkler overskrives; ukjente nøkler beholdes.
+            </MudText>
+            <MudTextField @bind-Value="_importJson" Lines="14" Variant="Variant.Outlined" />
+            <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-3">
+                <MudButton OnClick="@(() => _importOpen = false)">Avbryt</MudButton>
+                <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="OnImportConfirmedAsync">Importer</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@code {
+    private sealed class SettingRow
+    {
+        public required string Key { get; init; }
+        public required string OriginalValue { get; set; }
+        public string EditedValue { get; set; } = "";
+        public required string DataType { get; init; }
+    }
+
+    private bool _loading = true;
+    private List<SettingRow> _settings = [];
+
+    private bool _addOpen;
+    private string _newKey = "";
+    private string _newValue = "";
+    private string _newDataType = "string";
+
+    private bool _exportOpen;
+    private string _exportJson = "";
+
+    private bool _importOpen;
+    private string _importJson = "";
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        var all = await SettingsRepo.GetAllAsync(default);
+        _settings = all.Select(s => new SettingRow
+        {
+            Key = s.Key,
+            OriginalValue = s.Value,
+            EditedValue = s.Value,
+            DataType = s.DataType,
+        }).ToList();
+        _loading = false;
+    }
+
+    private async Task SaveRowAsync(SettingRow row)
+    {
+        await SettingsRepo.SetAsync(row.Key, row.EditedValue, row.DataType, default);
+        row.OriginalValue = row.EditedValue;
+        Snackbar.Add($"Lagret {row.Key}", Severity.Success);
+    }
+
+    private async Task DeleteRowAsync(SettingRow row)
+    {
+        await SettingsRepo.RemoveAsync(row.Key, default);
+        _settings.Remove(row);
+        Snackbar.Add($"Slettet {row.Key} — bruker default fra appsettings.json", Severity.Info);
+    }
+
+    private void OnAddClicked()
+    {
+        _newKey = "";
+        _newValue = "";
+        _newDataType = "string";
+        _addOpen = true;
+    }
+
+    private async Task OnAddConfirmedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newKey))
+        {
+            Snackbar.Add("Nøkkel kan ikke være tom", Severity.Warning);
+            return;
+        }
+        await SettingsRepo.SetAsync(_newKey, _newValue, _newDataType, default);
+        _addOpen = false;
+        await LoadAsync();
+        Snackbar.Add($"La til {_newKey}", Severity.Success);
+    }
+
+    private async Task OnExportClicked()
+    {
+        _exportJson = await Backup.ExportAsync(default);
+        _exportOpen = true;
+    }
+
+    private void OnImportOpenClicked()
+    {
+        _importJson = "";
+        _importOpen = true;
+    }
+
+    private async Task OnImportConfirmedAsync()
+    {
+        try
+        {
+            await Backup.ImportAsync(_importJson, default);
+            _importOpen = false;
+            await LoadAsync();
+            Snackbar.Add("Importert", Severity.Success);
+        }
+        catch (InvalidSettingsBackupException ex)
+        {
+            Snackbar.Add($"Import feilet: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnResetClicked()
+    {
+        foreach (var row in _settings.ToList())
+        {
+            await SettingsRepo.RemoveAsync(row.Key, default);
+        }
+        _settings.Clear();
+        Snackbar.Add("Alle innstillinger fjernet — bruker defaults fra appsettings.json", Severity.Info);
+    }
+}

@@ -3,10 +3,13 @@
 using Bronnoysund.Lookup.Application.Ports;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Bronnoysund.Lookup.Infrastructure.Persistence.Repositories;
 
-internal sealed class SettingsRepository(BronnoysundDbContext db) : ISettingsRepository
+internal sealed class SettingsRepository(
+    BronnoysundDbContext db,
+    IConfiguration configuration) : ISettingsRepository
 {
     public async Task<AppSettingItem?> GetAsync(string key, CancellationToken ct)
     {
@@ -39,10 +42,23 @@ internal sealed class SettingsRepository(BronnoysundDbContext db) : ISettingsRep
             existing.UpdatedAt = DateTimeOffset.UtcNow;
         }
         await db.SaveChangesAsync(ct);
+        TriggerConfigReload();
     }
 
     public async Task RemoveAsync(string key, CancellationToken ct)
     {
         await db.AppSettings.Where(s => s.Key == key).ExecuteDeleteAsync(ct);
+        TriggerConfigReload();
+    }
+
+    /// <summary>
+    /// Trigger IConfigurationRoot.Reload() slik at SqliteSettingsConfigurationProvider
+    /// leser tabellen på nytt og IOptionsMonitor.OnChange fyrer for alle bundne options.
+    /// No-op hvis IConfiguration ikke er en IConfigurationRoot (testing).
+    /// </summary>
+    private void TriggerConfigReload()
+    {
+        if (configuration is IConfigurationRoot root)
+            root.Reload();
     }
 }

@@ -4,6 +4,7 @@ using Bronnoysund.Lookup.Application;
 using Bronnoysund.Lookup.BlazorWeb.Components;
 using Bronnoysund.Lookup.Infrastructure;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
+using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
 using Bronnoysund.Lookup.ViewModels;
 using MudBlazor.Services;
 using Serilog;
@@ -16,6 +17,9 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+
+    var dbPathProvider = new DefaultDatabasePathProvider();
+    builder.Configuration.AddSqliteSettings(() => dbPathProvider.GetDatabaseFilePath());
 
     builder.Host.UseSerilog((ctx, services, cfg) => cfg
         .ReadFrom.Configuration(ctx.Configuration)
@@ -31,7 +35,7 @@ try
 
     builder.Services.AddBronnoysundApplication();
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
-    builder.Services.AddSingleton<IDatabasePathProvider, DefaultDatabasePathProvider>();
+    builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
     builder.Services.AddBronnoysundPersistence(builder.Configuration);
 
     // ViewModels — transient (en per komponent-instans)

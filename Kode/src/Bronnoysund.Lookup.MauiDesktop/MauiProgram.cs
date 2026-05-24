@@ -3,6 +3,7 @@
 using Bronnoysund.Lookup.Application;
 using Bronnoysund.Lookup.Infrastructure;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
+using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
 using Bronnoysund.Lookup.ViewModels;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
@@ -21,11 +22,14 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
 			});
 
+		var dbPathProvider = new MauiDatabasePathProvider();
+		builder.Configuration.AddSqliteSettings(() => dbPathProvider.GetDatabaseFilePath());
+
 		builder.Services.AddMauiBlazorWebView();
 		builder.Services.AddMudServices();
 		builder.Services.AddBronnoysundApplication();
 		builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
-		builder.Services.AddSingleton<IDatabasePathProvider, MauiDatabasePathProvider>();
+		builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
 		builder.Services.AddBronnoysundPersistence(builder.Configuration);
 		builder.Services.AddTransient<CompanyLookupViewModel>();
 

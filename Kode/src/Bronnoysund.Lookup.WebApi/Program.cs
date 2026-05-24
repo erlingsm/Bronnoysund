@@ -5,6 +5,7 @@ using Bronnoysund.Lookup.Application.Results;
 using Bronnoysund.Lookup.Application.UseCases.LookupCompany;
 using Bronnoysund.Lookup.Infrastructure;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
+using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -16,6 +17,9 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
+    var dbPathProvider = new DefaultDatabasePathProvider();
+    builder.Configuration.AddSqliteSettings(() => dbPathProvider.GetDatabaseFilePath());
+
     builder.Host.UseSerilog((ctx, services, cfg) => cfg
         .ReadFrom.Configuration(ctx.Configuration)
         .ReadFrom.Services(services)
@@ -25,7 +29,7 @@ try
 
     builder.Services.AddBronnoysundApplication();
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
-    builder.Services.AddSingleton<IDatabasePathProvider, DefaultDatabasePathProvider>();
+    builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
     builder.Services.AddBronnoysundPersistence(builder.Configuration);
     builder.Services.AddProblemDetails();
 

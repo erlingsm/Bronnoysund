@@ -78,6 +78,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Bronnoysund.Lookup.Application\Bronnoysund.Lookup.Application.csproj" />
       <ProjectReference Include="..\Bronnoysund.Lookup.Infrastructure\Bronnoysund.Lookup.Infrastructure.csproj" />
+      <ProjectReference Include="..\Bronnoysund.Lookup.Infrastructure.Persistence\Bronnoysund.Lookup.Infrastructure.Persistence.csproj" />
       <ProjectReference Include="..\Bronnoysund.Lookup.Components\Bronnoysund.Lookup.Components.csproj" />
       <ProjectReference Include="..\Bronnoysund.Lookup.ViewModels\Bronnoysund.Lookup.ViewModels.csproj" />
       <ProjectReference Include="..\Bronnoysund.Lookup.Speech\Bronnoysund.Lookup.Speech.csproj" />

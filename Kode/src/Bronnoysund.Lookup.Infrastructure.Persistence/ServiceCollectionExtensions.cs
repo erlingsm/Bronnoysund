@@ -2,6 +2,7 @@
 
 using Bronnoysund.Lookup.Application.Ports;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Cache;
+using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Maintenance;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFavoritesRepository, FavoritesRepository>();
         services.AddScoped<ISettingsRepository, SettingsRepository>();
         services.AddScoped<IRegisterEndpointsRepository, RegisterEndpointsRepository>();
+        services.AddScoped<ISettingsBackup, SettingsBackup>();
 
         services.AddSingleton<IDistributedCache, SqliteCacheStore>();
         services.AddSingleton<IHybridCacheSerializerFactory, GzipHybridCacheSerializerFactory>();
