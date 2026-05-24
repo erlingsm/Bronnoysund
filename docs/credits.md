@@ -33,6 +33,21 @@ Vi har bygget alt selv for å beholde full kontroll over lisens, vedlikehold og 
 - **Krediteres:** Data fra Brønnøysundregistrene, lisensiert under NLOD 2.0
 - **API-dokumentasjon:** <https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/>
 
+### Brønnøysundregistrenes egne åpen kildekode-prosjekter
+
+Vår implementasjon er forankret mot følgende ressurser publisert av Brreg:
+
+- **OpenAPI-spesifikasjoner:** <https://github.com/brreg/openAPI> (MIT) — vi kan regenerere DTOs herfra ved behov
+- **Hoved-dokumentasjonshub:** <https://brreg.github.io/docs/apidokumentasjon/> — autoritativ kilde for endpoints og felter
+- **Maskinporten-integrasjonsveiledning:** <https://brreg.github.io/docs/apidokumentasjon/integrasjon-maskinporten/mp-integrasjonsveiledning/> — følges trinn-for-trinn ved Fase 4 (Roller-API med fnr)
+- **Reference-app for Maskinporten-integrasjon (Java):** <https://github.com/brreg/refapp-integrasjon> — arkitektur-mønster vi følger i .NET-implementasjonen
+
+### Maskinporten (Digdir)
+
+- **Konsumentguide:** <https://docs.digdir.no/docs/Maskinporten/maskinporten_guide_apikonsument.html>
+- **Samarbeidsportalen** (klient-registrering): <https://samarbeid.digdir.no/>
+- **.NET-bibliotek vi planlegger å bruke:** [KS FIKS Maskinporten-klient](https://github.com/ks-no/fiks-maskinporten-client-dotnet) (Apache-2.0)
+
 ## Litteratur — verifiserbare henvisninger
 
 Disclaimer: Sidetall varierer mellom utgaver — vi gir kapittel-henvisning som mer stabil referanse. Direkte sitater er parafrasert konservativt for å unngå feilsitering. **Verifiser mot originalen.**
