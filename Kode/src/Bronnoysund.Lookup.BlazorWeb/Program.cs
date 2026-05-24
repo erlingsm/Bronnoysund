@@ -47,7 +47,9 @@ try
     app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
     app.UseAntiforgery();
     app.MapStaticAssets();
-    app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+    app.MapRazorComponents<App>()
+        .AddInteractiveServerRenderMode()
+        .AddAdditionalAssemblies(typeof(Bronnoysund.Lookup.Components.Pages.Lookup).Assembly);
 
     Log.Information("Bronnoysund.Lookup.BlazorWeb starter på {Urls}", string.Join(", ", app.Urls));
     app.Run();
