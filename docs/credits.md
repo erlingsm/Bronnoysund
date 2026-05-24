@@ -44,9 +44,15 @@ Vår implementasjon er forankret mot følgende ressurser publisert av Brreg:
 
 ### Maskinporten (Digdir)
 
-- **Konsumentguide:** <https://docs.digdir.no/docs/Maskinporten/maskinporten_guide_apikonsument.html>
+Vår Maskinporten-klient er **egen implementasjon** skrevet fra bunnen for å unngå
+lisens-kompleksitet med AGPL + kommersiell dobbel lisens. Vi følger Digdirs
+offisielle guide og krediterer kilder vi har lest:
+
+- **Digdir konsumentguide** (autoritativ kilde): <https://docs.digdir.no/docs/Maskinporten/maskinporten_guide_apikonsument.html>
 - **Samarbeidsportalen** (klient-registrering): <https://samarbeid.digdir.no/>
-- **.NET-bibliotek vi planlegger å bruke:** [KS FIKS Maskinporten-klient](https://github.com/ks-no/fiks-maskinporten-client-dotnet) (Apache-2.0)
+- **Brreg integrasjonsveiledning:** <https://brreg.github.io/docs/apidokumentasjon/integrasjon-maskinporten/mp-integrasjonsveiledning/>
+- **KS FIKS Maskinporten-klient** som referansebibliotek for sanity-check (vi bruker
+  ikke koden direkte): <https://github.com/ks-no/fiks-maskinporten-client-dotnet> (Apache-2.0)
 
 ## Litteratur — verifiserbare henvisninger
 
