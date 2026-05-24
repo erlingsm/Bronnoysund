@@ -1,0 +1,19 @@
+{
+  "solution": {
+    "path": "Bronnoysund.Lookup.sln",
+    "projects": [
+      "src\\Bronnoysund.Lookup.Domain\\Bronnoysund.Lookup.Domain.csproj",
+      "src\\Bronnoysund.Lookup.Application\\Bronnoysund.Lookup.Application.csproj",
+      "src\\Bronnoysund.Lookup.Infrastructure\\Bronnoysund.Lookup.Infrastructure.csproj",
+      "src\\Bronnoysund.Lookup.WebApi\\Bronnoysund.Lookup.WebApi.csproj",
+      "src\\Bronnoysund.Lookup.Components\\Bronnoysund.Lookup.Components.csproj",
+      "src\\Bronnoysund.Lookup.ViewModels\\Bronnoysund.Lookup.ViewModels.csproj",
+      "src\\Bronnoysund.Lookup.Speech\\Bronnoysund.Lookup.Speech.csproj",
+      "src\\Bronnoysund.Lookup.BlazorWeb\\Bronnoysund.Lookup.BlazorWeb.csproj",
+      "tests\\Bronnoysund.Lookup.Domain.Tests\\Bronnoysund.Lookup.Domain.Tests.csproj",
+      "tests\\Bronnoysund.Lookup.Application.Tests\\Bronnoysund.Lookup.Application.Tests.csproj",
+      "tests\\Bronnoysund.Lookup.Infrastructure.Tests\\Bronnoysund.Lookup.Infrastructure.Tests.csproj",
+      "tests\\Bronnoysund.Lookup.Speech.Tests\\Bronnoysund.Lookup.Speech.Tests.csproj"
+    ]
+  }
+}
