@@ -2,6 +2,7 @@
 
 using Bronnoysund.Lookup.Infrastructure.Persistence.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Bronnoysund.Lookup.Infrastructure.Persistence;
 
@@ -17,6 +18,15 @@ public sealed class BronnoysundDbContext(DbContextOptions<BronnoysundDbContext> 
     public DbSet<CacheEntry> CacheEntries => Set<CacheEntry>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
     public DbSet<RegisterEndpoint> RegisterEndpoints => Set<RegisterEndpoint>();
+
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        // SQLite har ikke native DateTimeOffset; lagre som int64-ticks så Where/ExecuteDelete
+        // kan sammenlignes serverside (uten denne knekker LRU-eviction og history-cleanup).
+        configurationBuilder.Properties<DateTimeOffset>()
+            .HaveConversion<DateTimeOffsetToBinaryConverter>();
+        base.ConfigureConventions(configurationBuilder);
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

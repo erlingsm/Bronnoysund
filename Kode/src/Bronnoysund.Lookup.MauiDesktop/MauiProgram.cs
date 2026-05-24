@@ -2,6 +2,7 @@
 
 using Bronnoysund.Lookup.Application;
 using Bronnoysund.Lookup.Infrastructure;
+using Bronnoysund.Lookup.Infrastructure.Persistence;
 using Bronnoysund.Lookup.ViewModels;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
@@ -24,6 +25,8 @@ public static class MauiProgram
 		builder.Services.AddMudServices();
 		builder.Services.AddBronnoysundApplication();
 		builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
+		builder.Services.AddSingleton<IDatabasePathProvider, MauiDatabasePathProvider>();
+		builder.Services.AddBronnoysundPersistence(builder.Configuration);
 		builder.Services.AddTransient<CompanyLookupViewModel>();
 
 #if DEBUG
@@ -31,6 +34,10 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
+		var app = builder.Build();
+		// SQLite-fil + skjema opprettes blokkerende ved oppstart. Fil-IO går raskt;
+		// alternativet (lazy i hver repository) gjør koden mer kompleks for marginal vinning.
+		app.Services.InitializeBronnoysundPersistenceAsync().GetAwaiter().GetResult();
+		return app;
 	}
 }

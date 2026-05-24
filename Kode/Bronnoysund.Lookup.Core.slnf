@@ -5,10 +5,12 @@
       "src\\Bronnoysund.Lookup.Domain\\Bronnoysund.Lookup.Domain.csproj",
       "src\\Bronnoysund.Lookup.Application\\Bronnoysund.Lookup.Application.csproj",
       "src\\Bronnoysund.Lookup.Infrastructure\\Bronnoysund.Lookup.Infrastructure.csproj",
+      "src\\Bronnoysund.Lookup.Infrastructure.Persistence\\Bronnoysund.Lookup.Infrastructure.Persistence.csproj",
       "src\\Bronnoysund.Lookup.WebApi\\Bronnoysund.Lookup.WebApi.csproj",
       "tests\\Bronnoysund.Lookup.Domain.Tests\\Bronnoysund.Lookup.Domain.Tests.csproj",
       "tests\\Bronnoysund.Lookup.Application.Tests\\Bronnoysund.Lookup.Application.Tests.csproj",
-      "tests\\Bronnoysund.Lookup.Infrastructure.Tests\\Bronnoysund.Lookup.Infrastructure.Tests.csproj"
+      "tests\\Bronnoysund.Lookup.Infrastructure.Tests\\Bronnoysund.Lookup.Infrastructure.Tests.csproj",
+      "tests\\Bronnoysund.Lookup.Infrastructure.Persistence.Tests\\Bronnoysund.Lookup.Infrastructure.Persistence.Tests.csproj"
     ]
   }
 }

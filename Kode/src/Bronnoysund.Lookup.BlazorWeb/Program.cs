@@ -3,6 +3,7 @@
 using Bronnoysund.Lookup.Application;
 using Bronnoysund.Lookup.BlazorWeb.Components;
 using Bronnoysund.Lookup.Infrastructure;
+using Bronnoysund.Lookup.Infrastructure.Persistence;
 using Bronnoysund.Lookup.ViewModels;
 using MudBlazor.Services;
 using Serilog;
@@ -30,11 +31,15 @@ try
 
     builder.Services.AddBronnoysundApplication();
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
+    builder.Services.AddSingleton<IDatabasePathProvider, DefaultDatabasePathProvider>();
+    builder.Services.AddBronnoysundPersistence(builder.Configuration);
 
     // ViewModels — transient (en per komponent-instans)
     builder.Services.AddTransient<CompanyLookupViewModel>();
 
     var app = builder.Build();
+
+    await app.Services.InitializeBronnoysundPersistenceAsync();
 
     app.UseSerilogRequestLogging();
 

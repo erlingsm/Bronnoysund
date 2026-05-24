@@ -9,8 +9,8 @@ namespace Bronnoysund.Lookup.Infrastructure.Persistence.Entities;
 public sealed class CacheEntry
 {
     public required string Key { get; init; }                    // PK, f.eks. "org:919300388"
-    public required byte[] ValueGzip { get; init; }
-    public required int DecompressedSizeBytes { get; init; }     // For maks-størrelse-beregning
+    public required byte[] Value { get; init; }                  // GZip-komprimert av GzipHybridCacheSerializer over
+    public required int SizeBytes { get; init; }                 // = Value.Length, for max-size-beregning
     public required DateTimeOffset StoredAt { get; init; }
     public required DateTimeOffset ExpiresAt { get; init; }
     public required DateTimeOffset LastAccessedAt { get; set; }  // Oppdateres ved hver read (for LRU)

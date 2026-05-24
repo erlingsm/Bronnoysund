@@ -4,6 +4,7 @@ using Bronnoysund.Lookup.Application;
 using Bronnoysund.Lookup.Application.Results;
 using Bronnoysund.Lookup.Application.UseCases.LookupCompany;
 using Bronnoysund.Lookup.Infrastructure;
+using Bronnoysund.Lookup.Infrastructure.Persistence;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -24,9 +25,13 @@ try
 
     builder.Services.AddBronnoysundApplication();
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
+    builder.Services.AddSingleton<IDatabasePathProvider, DefaultDatabasePathProvider>();
+    builder.Services.AddBronnoysundPersistence(builder.Configuration);
     builder.Services.AddProblemDetails();
 
     var app = builder.Build();
+
+    await app.Services.InitializeBronnoysundPersistenceAsync();
 
     app.UseSerilogRequestLogging();
     app.UseExceptionHandler();
