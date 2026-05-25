@@ -1,0 +1,39 @@
+{{ .Chart.Name }} {{ .Chart.AppVersion }} installed as release {{ .Release.Name }} in namespace {{ .Release.Namespace }}.
+
+Resources created:
+  Deployment    {{ include "bronnoysund-lookup.fullname" . }}     (replicas: {{ if .Values.autoscaling.enabled }}{{ .Values.autoscaling.minReplicas }}..{{ .Values.autoscaling.maxReplicas }} via HPA{{ else }}{{ .Values.replicaCount }}{{ end }})
+  Service       {{ include "bronnoysund-lookup.fullname" . }}     ({{ .Values.service.type }} on port {{ .Values.service.port }})
+  ConfigMap     {{ include "bronnoysund-lookup.fullname" . }}-config
+  {{- if .Values.secretEnv }}
+  Secret        {{ include "bronnoysund-lookup.fullname" . }}-secret
+  {{- end }}
+  {{- if .Values.autoscaling.enabled }}
+  HPA           {{ include "bronnoysund-lookup.fullname" . }}     (CPU {{ .Values.autoscaling.targetCPUUtilizationPercentage }}% / mem {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}%)
+  {{- end }}
+  {{- if .Values.persistence.enabled }}
+  PVC           {{ include "bronnoysund-lookup.fullname" . }}-data ({{ .Values.persistence.size }})
+  {{- end }}
+  {{- if .Values.ingress.enabled }}
+  Ingress       {{ include "bronnoysund-lookup.fullname" . }}     ({{ (index .Values.ingress.hosts 0).host }})
+  {{- end }}
+
+Try it out:
+  kubectl --namespace {{ .Release.Namespace }} rollout status deployment/{{ include "bronnoysund-lookup.fullname" . }}
+{{- if .Values.ingress.enabled }}
+  curl https://{{ (index .Values.ingress.hosts 0).host }}/health
+  curl https://{{ (index .Values.ingress.hosts 0).host }}/companies/974760843
+{{- else if contains "LoadBalancer" .Values.service.type }}
+  export EXTERNAL_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "bronnoysund-lookup.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  curl http://$EXTERNAL_IP/health
+{{- else }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "bronnoysund-lookup.fullname" . }} 8080:{{ .Values.service.port }}
+  # then in another shell:
+  curl http://localhost:8080/health
+  curl http://localhost:8080/companies/974760843
+{{- end }}
+
+Sample endpoints:
+  /health                                    health probe
+  /companies/974760843                       single org-number lookup (Riksrevisjonen)
+  /companies/974760843/aggregated            parallel multi-registry response
+  /companies?name=Statens+vegvesen&size=10   free-text name search

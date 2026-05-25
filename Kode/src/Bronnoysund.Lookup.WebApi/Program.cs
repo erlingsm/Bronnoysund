@@ -30,6 +30,15 @@ try
         .WriteTo.Console()
         .WriteTo.File("logs/bronnoysund-lookup-.log", rollingInterval: RollingInterval.Day));
 
+    // Application Insights — opt-in: only wires up if APPLICATIONINSIGHTS_CONNECTION_STRING is set.
+    // Locally and in tests it stays inactive; Container Apps env-var enables it in production.
+    var aiConnection = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+        ?? builder.Configuration["ApplicationInsights:ConnectionString"];
+    if (!string.IsNullOrWhiteSpace(aiConnection))
+    {
+        builder.Services.AddApplicationInsightsTelemetry(opts => opts.ConnectionString = aiConnection);
+    }
+
     builder.Services.AddBronnoysundApplication();
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
     builder.Services.AddLocalization();
