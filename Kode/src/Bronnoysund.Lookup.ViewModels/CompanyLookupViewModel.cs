@@ -2,7 +2,6 @@
 
 using Bronnoysund.Lookup.Application.Dtos;
 using Bronnoysund.Lookup.Application.Ports;
-using Bronnoysund.Lookup.Application.Results;
 using Bronnoysund.Lookup.Application.UseCases.LookupCompany;
 using Bronnoysund.Lookup.Application.UseCases.SearchCompaniesByName;
 using Bronnoysund.Lookup.ViewModels.Resources;
@@ -12,9 +11,12 @@ using Microsoft.Extensions.Localization;
 
 namespace Bronnoysund.Lookup.ViewModels;
 
-/// <summary>Shared lookup view-model used by MAUI Blazor Hybrid and Blazor Web.</summary>
+/// <summary>
+/// Shared lookup view-model used by MAUI Blazor Hybrid and Blazor Web. Drives both
+/// org-number lookups (single + aggregated multi-registry) and name searches.
+/// </summary>
 public sealed partial class CompanyLookupViewModel(
-    LookupCompanyHandler lookupHandler,
+    LookupAggregatedCompanyHandler aggregatedHandler,
     SearchCompaniesByNameHandler searchHandler,
     IStringLocalizer<SharedResources> localizer) : ObservableObject
 {
@@ -31,8 +33,13 @@ public sealed partial class CompanyLookupViewModel(
     [ObservableProperty]
     public partial bool IsBusy { get; set; }
 
+    /// <summary>Core company payload — the four MVP fields plus the additional open Brreg fields.</summary>
     [ObservableProperty]
     public partial CompanyResponse? Found { get; set; }
+
+    /// <summary>Full aggregated payload including roles, sub-units, bankruptcy, errors per provider.</summary>
+    [ObservableProperty]
+    public partial AggregatedCompanyResponse? Aggregated { get; set; }
 
     [ObservableProperty]
     public partial string? ErrorMessage { get; set; }
@@ -60,20 +67,21 @@ public sealed partial class CompanyLookupViewModel(
 
         try
         {
-            var result = await lookupHandler.HandleAsync(new LookupCompanyQuery(OrgNumberInput), ct);
+            var result = await aggregatedHandler.HandleAsync(new LookupCompanyQuery(OrgNumberInput), ct);
             switch (result)
             {
-                case CompanyLookupResult.Found f:
-                    Found = f.Company;
+                case AggregatedLookupResult.Found f:
+                    Found = f.Data.Core;
+                    Aggregated = f.Data;
                     StatusMessage = localizer["FoundInRegistry"];
                     break;
-                case CompanyLookupResult.NotFound nf:
+                case AggregatedLookupResult.NotFound nf:
                     ErrorMessage = localizer["NotFoundForOrgNumber", nf.OrganizationNumber];
                     break;
-                case CompanyLookupResult.InvalidInput inv:
+                case AggregatedLookupResult.InvalidInput inv:
                     ErrorMessage = inv.Message;
                     break;
-                case CompanyLookupResult.Unavailable u:
+                case AggregatedLookupResult.Unavailable u:
                     ErrorMessage = localizer["RegistryUnavailable", u.Message];
                     break;
             }
@@ -129,6 +137,7 @@ public sealed partial class CompanyLookupViewModel(
         ErrorMessage = null;
         StatusMessage = null;
         Found = null;
+        Aggregated = null;
         SearchHits = [];
         SearchTotalElements = 0;
     }

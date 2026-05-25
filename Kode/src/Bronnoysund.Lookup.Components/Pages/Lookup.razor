@@ -1,12 +1,14 @@
 @page "/"
 @page "/lookup"
+@using System.Globalization
 @inject CompanyLookupViewModel ViewModel
 @inject IStringLocalizer<SharedResources> L
+@inject NavigationManager Nav
 @implements IDisposable
 
 <PageTitle>@L["LookupTitle"]</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
     <MudText Typo="Typo.h4" GutterBottom="true">@L["LookupTitle"]</MudText>
     <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
         @L["LookupDescription"]
@@ -97,16 +99,105 @@
 
     @if (ViewModel.Found is { } found)
     {
-        <MudPaper Class="pa-4" Elevation="3">
-            <MudText Typo="Typo.h6" Class="mb-3">@found.OrganizationName</MudText>
-            <MudList T="string" Dense="true">
-                <MudListItem T="string" Icon="@Icons.Material.Filled.Numbers"
-                             Text="@L["OrgNumberRow", found.OrganizationNumber]" />
-                <MudListItem T="string" Icon="@Icons.Material.Filled.Business"
-                             Text="@L["CompanyTypeRow", found.CompanyType]" />
-                <MudListItem T="string" Icon="@Icons.Material.Filled.Language"
-                             Text="@L["LanguageFormRow", found.LanguageForm]" />
-            </MudList>
+        <MudPaper Class="pa-4 mb-3" Elevation="3">
+            <MudText Typo="Typo.h5" Class="mb-1">@found.OrganizationName</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                <code>@found.OrganizationNumber</code> · @found.CompanyType · @found.LanguageForm
+            </MudText>
+
+            @if (ViewModel.Aggregated?.Bankruptcy is { IsBankrupt: true } bankruptcy)
+            {
+                <MudAlert Severity="Severity.Error" Class="mb-3">
+                    @(bankruptcy.Declared is { } d
+                        ? L["BankruptcyAlert", d.ToString("d", CultureInfo.CurrentUICulture)]
+                        : L["BankruptcyAlertNoDate"])
+                </MudAlert>
+            }
+
+            @* Contact section *@
+            @if (HasContact(found))
+            {
+                <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">@L["ContactSection"]</MudText>
+                <MudList T="string" Dense="true">
+                    @if (found.BusinessAddress is { } addr && FormatAddress(addr) is { } addrLine)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.LocationOn"
+                                     Text="@($"{L["AddressLabel"]}: {addrLine}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(found.Website))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Public"
+                                     Text="@($"{L["WebsiteLabel"]}: {found.Website}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(found.Email))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Email"
+                                     Text="@($"{L["EmailLabel"]}: {found.Email}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(found.Phone))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Phone"
+                                     Text="@($"{L["PhoneLabel"]}: {found.Phone}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(found.MobilePhone))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.PhoneIphone"
+                                     Text="@($"{L["MobileLabel"]}: {found.MobilePhone}")" />
+                    }
+                </MudList>
+            }
+
+            @* Activity section *@
+            @if (HasActivity(found))
+            {
+                <MudText Typo="Typo.subtitle1" Class="mt-3 mb-1">@L["ActivitySection"]</MudText>
+                <MudList T="string" Dense="true">
+                    @if (found.PrimaryIndustry is { } industry)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Category"
+                                     Text="@($"{L["IndustryLabel"]}: {industry.Code} — {industry.Description}")" />
+                    }
+                    @if (found.EmployeeCount is { } emp)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.People"
+                                     Text="@($"{L["EmployeesLabel"]}: {emp}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(found.SectorDescription))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.AccountBalance"
+                                     Text="@($"{L["SectorLabel"]}: {found.SectorDescription}")" />
+                    }
+                </MudList>
+            }
+
+            @* Lifecycle section *@
+            @if (HasDates(found))
+            {
+                <MudText Typo="Typo.subtitle1" Class="mt-3 mb-1">@L["DatesSection"]</MudText>
+                <MudList T="string" Dense="true">
+                    @if (found.FoundingDate is { } founded)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Cake"
+                                     Text="@($"{L["FoundingDateLabel"]}: {founded.ToString("d", CultureInfo.CurrentUICulture)}")" />
+                    }
+                    @if (found.RegisteredDate is { } reg)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.HowToReg"
+                                     Text="@($"{L["RegisteredDateLabel"]}: {reg.ToString("d", CultureInfo.CurrentUICulture)}")" />
+                    }
+                    @if (found.RegisteredInVatRegistry is { } vat)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Receipt"
+                                     Text="@($"{L["VatRegistryLabel"]}: {(vat ? L["YesValue"] : L["NoValue"])}")" />
+                    }
+                    @if (found.RegisteredInBusinessRegistry is { } biz)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Business"
+                                     Text="@($"{L["BusinessRegistryLabel"]}: {(biz ? L["YesValue"] : L["NoValue"])}")" />
+                    }
+                </MudList>
+            }
+
             @if (ViewModel.StatusMessage is not null)
             {
                 <MudText Typo="Typo.caption" Color="Color.Success" Class="mt-3 d-block">
@@ -114,13 +205,75 @@
                 </MudText>
             }
         </MudPaper>
+
+        @if (ViewModel.Aggregated?.Roles is { Roles: var roles } && roles.Count > 0)
+        {
+            <MudPaper Class="pa-4 mb-3" Elevation="2">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">@L["RolesSection"]</MudText>
+                <MudTable Items="@roles" Dense="true" Hover="true" T="Role">
+                    <HeaderContent>
+                        <MudTh>@L["RolesPerson"]</MudTh>
+                        <MudTh>@L["RolesRoleType"]</MudTh>
+                        <MudTh>@L["RolesBirthDate"]</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="role">
+                        <MudTd>@role.PersonName</MudTd>
+                        <MudTd>@role.RoleType</MudTd>
+                        <MudTd>@(role.DateOfBirth?.ToString("d", CultureInfo.CurrentUICulture) ?? "")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        }
+
+        @if (ViewModel.Aggregated?.SubUnits is { SubUnits: var subUnits } && subUnits.Count > 0)
+        {
+            <MudPaper Class="pa-4 mb-3" Elevation="2">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">
+                    @L["SubUnitsSection"] (@subUnits.Count)
+                </MudText>
+                <MudList T="string" Dense="true">
+                    @foreach (var sub in subUnits)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.AccountTree"
+                                     Text="@($"{sub.Name} — {sub.OrganizationNumber}")" />
+                    }
+                </MudList>
+            </MudPaper>
+        }
+
+        @if (ViewModel.Aggregated?.Errors is { Count: > 0 } errors)
+        {
+            <MudPaper Class="pa-4 mb-3" Elevation="2">
+                <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="mb-2">
+                    @L["RegistryErrorsSection"]
+                </MudText>
+                <MudList T="string" Dense="true">
+                    @foreach (var err in errors)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Warning"
+                                     Text="@L["RegistryErrorRow", err.RegistryName, err.Message]" />
+                    }
+                </MudList>
+            </MudPaper>
+        }
     }
 </MudContainer>
 
 @code {
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         ViewModel.PropertyChanged += OnViewModelChanged;
+
+        // Allow deep-linking to a specific company via ?orgnr=974760843. Useful for sharing
+        // direct links and for taking deterministic screenshots.
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var orgnr = query["orgnr"];
+        if (!string.IsNullOrWhiteSpace(orgnr))
+        {
+            ViewModel.OrgNumberInput = orgnr;
+            await ViewModel.LookupAsync(CancellationToken.None);
+        }
     }
 
     private void OnViewModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -133,6 +286,7 @@
         ViewModel.SearchHits = [];
         ViewModel.SearchTotalElements = 0;
         ViewModel.Found = null;
+        ViewModel.Aggregated = null;
     }
 
     private async Task OnLookupClicked() => await ViewModel.LookupAsync(CancellationToken.None);
@@ -161,6 +315,36 @@
         {
             await ViewModel.SelectHitAsync(args.Item, CancellationToken.None);
         }
+    }
+
+    private static bool HasContact(CompanyResponse c) =>
+        c.BusinessAddress is not null
+        || !string.IsNullOrWhiteSpace(c.Website)
+        || !string.IsNullOrWhiteSpace(c.Email)
+        || !string.IsNullOrWhiteSpace(c.Phone)
+        || !string.IsNullOrWhiteSpace(c.MobilePhone);
+
+    private static bool HasActivity(CompanyResponse c) =>
+        c.PrimaryIndustry is not null
+        || c.EmployeeCount is not null
+        || !string.IsNullOrWhiteSpace(c.SectorDescription);
+
+    private static bool HasDates(CompanyResponse c) =>
+        c.FoundingDate is not null
+        || c.RegisteredDate is not null
+        || c.RegisteredInVatRegistry is not null
+        || c.RegisteredInBusinessRegistry is not null;
+
+    private static string? FormatAddress(PostalAddress a)
+    {
+        var parts = new[]
+        {
+            a.StreetAddress,
+            string.Join(" ", new[] { a.PostalCode, a.City }.Where(p => !string.IsNullOrWhiteSpace(p))),
+            a.Country,
+        }.Where(p => !string.IsNullOrWhiteSpace(p));
+        var joined = string.Join(", ", parts);
+        return string.IsNullOrWhiteSpace(joined) ? null : joined;
     }
 
     public void Dispose()

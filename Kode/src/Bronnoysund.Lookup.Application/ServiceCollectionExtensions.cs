@@ -18,6 +18,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddBronnoysundApplication(this IServiceCollection services)
     {
         services.AddTransient<LookupCompanyHandler>();
+        services.AddTransient<LookupAggregatedCompanyHandler>();
         services.AddTransient<SearchCompaniesByNameHandler>();
         services.AddValidatorsFromAssemblyContaining<OrganizationNumberValidator>();
         return services;
