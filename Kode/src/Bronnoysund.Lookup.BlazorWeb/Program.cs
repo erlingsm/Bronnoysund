@@ -5,6 +5,8 @@ using Bronnoysund.Lookup.Application.Ports;
 using Bronnoysund.Lookup.BlazorWeb.Adapters;
 using Bronnoysund.Lookup.BlazorWeb.Components;
 using Bronnoysund.Lookup.Infrastructure;
+using Bronnoysund.Lookup.Speech;
+using Bronnoysund.Lookup.Speech.Web;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
 using Bronnoysund.Lookup.ViewModels;
@@ -49,6 +51,7 @@ try
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
     builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
     builder.Services.AddBronnoysundPersistence(builder.Configuration);
+    builder.Services.AddBronnoysundSpeech();
 
     // Per-circuit so two browser tabs at different sizes don't share layout state.
     // Replace() rather than Add(): AddBronnoysundApplication already TryAdd'd the Desktop
@@ -56,6 +59,12 @@ try
     // same container, so we swap the descriptor outright.
     builder.Services.RemoveAll<IDeviceLayout>();
     builder.Services.AddScoped<IDeviceLayout, WebDeviceLayout>();
+
+    // Speech adapters are also per-circuit because IJSRuntime is scoped.
+    builder.Services.RemoveAll<ISpeechToText>();
+    builder.Services.RemoveAll<ITextToSpeech>();
+    builder.Services.AddScoped<ISpeechToText, WebSpeechToText>();
+    builder.Services.AddScoped<ITextToSpeech, WebTextToSpeech>();
 
     // ViewModels — transient (one per component instance)
     builder.Services.AddTransient<CompanyLookupViewModel>();

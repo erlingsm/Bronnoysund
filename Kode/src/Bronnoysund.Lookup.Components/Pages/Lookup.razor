@@ -5,6 +5,8 @@
 @inject IStringLocalizer<SharedResources> L
 @inject NavigationManager Nav
 @inject IDeviceLayout DeviceLayout
+@inject ITextToSpeech TextToSpeech
+@inject ISnackbar Snackbar
 @implements IDisposable
 
 <PageTitle>@L["LookupTitle"]</PageTitle>
@@ -23,13 +25,20 @@
 
         @if (!ViewModel.IsNameSearchMode)
         {
-            <MudTextField @bind-Value="ViewModel.OrgNumberInput"
-                          Label="@L["OrgNumberLabel"]"
-                          Placeholder="@L["OrgNumberPlaceholder"]"
-                          Variant="Variant.Outlined"
-                          Immediate="true"
-                          OnKeyDown="@OnOrgNumberKeyDown"
-                          Disabled="@ViewModel.IsBusy" />
+            <div class="d-flex align-center" style="gap: 0.5rem;">
+                <MudTextField @bind-Value="ViewModel.OrgNumberInput"
+                              Label="@L["OrgNumberLabel"]"
+                              Placeholder="@L["OrgNumberPlaceholder"]"
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              OnKeyDown="@OnOrgNumberKeyDown"
+                              Disabled="@ViewModel.IsBusy"
+                              Class="flex-grow-1" />
+                <VoiceInputButton Disabled="@ViewModel.IsBusy"
+                                  OnOrgNumberRecognized="OnVoiceOrgnr"
+                                  OnNameRecognized="OnVoiceName"
+                                  OnRecognitionFailed="OnVoiceFailed" />
+            </div>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" FullWidth="true"
                        Disabled="@ViewModel.IsBusy" OnClick="OnLookupClicked">
                 @if (ViewModel.IsBusy)
@@ -45,13 +54,20 @@
         }
         else
         {
-            <MudTextField @bind-Value="ViewModel.NameQueryInput"
-                          Label="@L["SearchByNameLabel"]"
-                          Placeholder="@L["SearchByNamePlaceholder"]"
-                          Variant="Variant.Outlined"
-                          Immediate="true"
-                          OnKeyDown="@OnNameKeyDown"
-                          Disabled="@ViewModel.IsBusy" />
+            <div class="d-flex align-center" style="gap: 0.5rem;">
+                <MudTextField @bind-Value="ViewModel.NameQueryInput"
+                              Label="@L["SearchByNameLabel"]"
+                              Placeholder="@L["SearchByNamePlaceholder"]"
+                              Variant="Variant.Outlined"
+                              Immediate="true"
+                              OnKeyDown="@OnNameKeyDown"
+                              Disabled="@ViewModel.IsBusy"
+                              Class="flex-grow-1" />
+                <VoiceInputButton Disabled="@ViewModel.IsBusy"
+                                  OnOrgNumberRecognized="OnVoiceOrgnr"
+                                  OnNameRecognized="OnVoiceName"
+                                  OnRecognitionFailed="OnVoiceFailed" />
+            </div>
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" FullWidth="true"
                        Disabled="@ViewModel.IsBusy" OnClick="OnSearchClicked">
                 @if (ViewModel.IsBusy)
@@ -145,7 +161,17 @@
         }
 
         <MudPaper Class="pa-4 mb-3" Elevation="3">
-            <MudText Typo="Typo.h5" Class="mb-1">@found.OrganizationName</MudText>
+            <div class="d-flex align-center justify-space-between mb-1">
+                <MudText Typo="Typo.h5">@found.OrganizationName</MudText>
+                @if (TextToSpeech.IsAvailable)
+                {
+                    <MudTooltip Text="@L["ReadAloudTooltip"]" Placement="Placement.Left">
+                        <MudIconButton Icon="@Icons.Material.Filled.VolumeUp"
+                                       Color="Color.Primary"
+                                       OnClick="() => OnReadAloud(found)" />
+                    </MudTooltip>
+                }
+            </div>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
                 <code>@found.OrganizationNumber</code> · @found.CompanyType · @found.LanguageForm
             </MudText>
@@ -382,6 +408,55 @@
         {
             await ViewModel.SelectHitAsync(args.Item, CancellationToken.None);
         }
+    }
+
+    private async Task OnVoiceOrgnr(string orgnr)
+    {
+        ViewModel.IsNameSearchMode = false;
+        ViewModel.OrgNumberInput = orgnr;
+        await ViewModel.LookupAsync(CancellationToken.None);
+    }
+
+    private async Task OnVoiceName(string name)
+    {
+        ViewModel.IsNameSearchMode = true;
+        ViewModel.NameQueryInput = name;
+        await ViewModel.SearchByNameAsync(CancellationToken.None);
+    }
+
+    private void OnVoiceFailed(string message)
+        => Snackbar.Add(message, Severity.Warning);
+
+    private async Task OnReadAloud(CompanyResponse c)
+    {
+        var text = BuildSpeechText(c);
+        await TextToSpeech.SpeakAsync(text, CultureInfo.CurrentUICulture.Name, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// Build the spoken summary for the read-aloud button. Org-numbers are spelled
+    /// digit-by-digit because long Norwegian numbers ("nittisju millioner...") are hard
+    /// to follow when read fast by TTS. Industry description is included only when present
+    /// so we don't say "industry unknown" — silence is friendlier than a literal null read-out.
+    /// </summary>
+    private string BuildSpeechText(CompanyResponse c)
+    {
+        var orgnrSpoken = string.Join(" ", c.OrganizationNumber.Select(ch => ch.ToString()));
+        var parts = new List<string>
+        {
+            c.OrganizationName,
+            L["ReadAloudOrgNumber", orgnrSpoken].Value,
+            L["ReadAloudOrgForm", c.CompanyType].Value,
+        };
+        if (c.PrimaryIndustry is { } industry)
+        {
+            parts.Add(L["ReadAloudIndustry", industry.Description].Value);
+        }
+        if (c.EmployeeCount is { } emp)
+        {
+            parts.Add(L["ReadAloudEmployees", emp].Value);
+        }
+        return string.Join(". ", parts) + ".";
     }
 
     private static bool HasContact(CompanyResponse c) =>

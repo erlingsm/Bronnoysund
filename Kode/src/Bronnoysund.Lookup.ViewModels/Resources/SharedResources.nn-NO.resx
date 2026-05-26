@@ -122,4 +122,11 @@
   <data name="LanguageEnglish"><value>Engelsk</value></data>
   <data name="LanguageNorwegianBokmal"><value>Norsk (bokmål)</value></data>
   <data name="LanguageNorwegianNynorsk"><value>Norsk (nynorsk)</value></data>
+  <data name="VoiceInputTooltip"><value>Sei organisasjonsnummer eller bedriftsnamn</value></data>
+  <data name="VoiceRecognitionFailed"><value>Vi forstod ikkje. Prøv på nytt, eller skriv inn manuelt.</value></data>
+  <data name="ReadAloudTooltip"><value>Les opp svaret</value></data>
+  <data name="ReadAloudOrgNumber"><value>organisasjonsnummer {0}</value></data>
+  <data name="ReadAloudOrgForm"><value>organisasjonsform {0}</value></data>
+  <data name="ReadAloudIndustry"><value>næring {0}</value></data>
+  <data name="ReadAloudEmployees"><value>{0} tilsette</value></data>
 </root>

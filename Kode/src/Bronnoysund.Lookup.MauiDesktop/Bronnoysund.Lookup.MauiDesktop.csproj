@@ -83,6 +83,8 @@
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
         <PackageReference Include="MudBlazor" Version="9.4.0" />
+        <!-- Speech recognition (same package as MauiMobile). -->
+        <PackageReference Include="CommunityToolkit.Maui" Version="14.1.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -91,6 +93,7 @@
       <ProjectReference Include="..\Bronnoysund.Lookup.Infrastructure.Persistence\Bronnoysund.Lookup.Infrastructure.Persistence.csproj" />
       <ProjectReference Include="..\Bronnoysund.Lookup.Components\Bronnoysund.Lookup.Components.csproj" />
       <ProjectReference Include="..\Bronnoysund.Lookup.ViewModels\Bronnoysund.Lookup.ViewModels.csproj" />
+      <ProjectReference Include="..\Bronnoysund.Lookup.Speech\Bronnoysund.Lookup.Speech.csproj" />
     </ItemGroup>
 
 </Project>

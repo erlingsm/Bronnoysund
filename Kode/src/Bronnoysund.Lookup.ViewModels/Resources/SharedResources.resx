@@ -128,4 +128,11 @@
   <data name="LanguageEnglish"><value>English</value></data>
   <data name="LanguageNorwegianBokmal"><value>Norwegian (Bokmål)</value></data>
   <data name="LanguageNorwegianNynorsk"><value>Norwegian (Nynorsk)</value></data>
+  <data name="VoiceInputTooltip"><value>Speak the organisation number or company name</value></data>
+  <data name="VoiceRecognitionFailed"><value>Could not understand. Try again or type the value.</value></data>
+  <data name="ReadAloudTooltip"><value>Read the result aloud</value></data>
+  <data name="ReadAloudOrgNumber"><value>organisation number {0}</value></data>
+  <data name="ReadAloudOrgForm"><value>company type {0}</value></data>
+  <data name="ReadAloudIndustry"><value>industry {0}</value></data>
+  <data name="ReadAloudEmployees"><value>{0} employees</value></data>
 </root>

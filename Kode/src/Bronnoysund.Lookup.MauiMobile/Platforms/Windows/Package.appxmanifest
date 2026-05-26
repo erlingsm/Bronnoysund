@@ -41,6 +41,8 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
+    <!-- Voice input: needed by CommunityToolkit.Maui.Media.SpeechToText on Windows. -->
+    <DeviceCapability Name="microphone" />
   </Capabilities>
 
 </Package>

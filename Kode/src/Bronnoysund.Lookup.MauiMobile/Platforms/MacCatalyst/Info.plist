@@ -34,5 +34,9 @@
     </array>
     <key>XSAppIconAssets</key>
     <string>Assets.xcassets/appicon.appiconset</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Bronnoysund Lookup uses the microphone to let you speak an organisation number or company name. Audio is processed on-device and never leaves your Mac.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Bronnoysund Lookup converts your spoken organisation number or company name to text on-device. No audio is sent to any server.</string>
 </dict>
 </plist>

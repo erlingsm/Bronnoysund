@@ -66,13 +66,13 @@
     </ItemGroup>
 
     <ItemGroup>
-        <!-- CommunityToolkit.Maui (for SpeechToText) støtter ikke net10.0 ennå.
-             Legges til når kompatibel versjon publiseres. Inntil da:
-             implementasjoner av ISpeechToText er stubs i platforms-mapper. -->
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
         <PackageReference Include="MudBlazor" Version="9.4.0" />
+        <!-- Speech recognition: wraps SFSpeechRecognizer (iOS/MacCatalyst),
+             android.speech.SpeechRecognizer (Android), Windows.Media.SpeechRecognition. -->
+        <PackageReference Include="CommunityToolkit.Maui" Version="14.1.1" />
     </ItemGroup>
 
     <ItemGroup>

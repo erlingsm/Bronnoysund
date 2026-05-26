@@ -5,7 +5,9 @@ using Bronnoysund.Lookup.Application.Ports;
 using Bronnoysund.Lookup.Infrastructure;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
+using Bronnoysund.Lookup.Speech;
 using Bronnoysund.Lookup.ViewModels;
+using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using MudBlazor.Services;
 
@@ -18,6 +20,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseMauiCommunityToolkit()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -33,7 +36,10 @@ public static class MauiProgram
 		builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
 		builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
 		builder.Services.AddBronnoysundPersistence(builder.Configuration);
+		builder.Services.AddBronnoysundSpeech();
 		builder.Services.AddSingleton<IDeviceLayout, MauiDeviceLayout>();
+		builder.Services.AddSingleton<ISpeechToText, MauiSpeechToText>();
+		builder.Services.AddSingleton<ITextToSpeech, MauiTextToSpeech>();
 		builder.Services.AddTransient<CompanyLookupViewModel>();
 
 #if DEBUG

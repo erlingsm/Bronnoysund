@@ -7,6 +7,7 @@
     <ProjectReference Include="..\Bronnoysund.Lookup.Components\Bronnoysund.Lookup.Components.csproj" />
     <ProjectReference Include="..\Bronnoysund.Lookup.ViewModels\Bronnoysund.Lookup.ViewModels.csproj" />
     <ProjectReference Include="..\Bronnoysund.Lookup.Speech\Bronnoysund.Lookup.Speech.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Lookup.Speech.Web\Bronnoysund.Lookup.Speech.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>
