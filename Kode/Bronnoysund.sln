@@ -43,6 +43,29 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bronnoysund.ViewModels.Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bronnoysund.Speech.Web", "src\Bronnoysund.Speech.Web\Bronnoysund.Speech.Web.csproj", "{0BA134B0-8433-4455-9CF1-0023CD84B1A2}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{29A7D81C-9D81-4BBC-9E07-2271583EDED0}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\ci.yml = ..\.github\workflows\ci.yml
+		..\.github\workflows\cd-web.yml = ..\.github\workflows\cd-web.yml
+		..\.github\workflows\cd-webapi.yml = ..\.github\workflows\cd-webapi.yml
+		..\.github\workflows\cd-mac-desktop.yml = ..\.github\workflows\cd-mac-desktop.yml
+		..\.github\workflows\cd-windows-desktop.yml = ..\.github\workflows\cd-windows-desktop.yml
+		..\.github\workflows\cd-ios-mobile.yml = ..\.github\workflows\cd-ios-mobile.yml
+		..\.github\workflows\cd-android-mobile.yml = ..\.github\workflows\cd-android-mobile.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{CFF2267E-5148-4C2F-987E-332C1EFAF81B}"
+	ProjectSection(SolutionItems) = preProject
+		..\deploy\README.md = ..\deploy\README.md
+		..\deploy\deploy-web.sh = ..\deploy\deploy-web.sh
+		..\deploy\deploy-webapi.sh = ..\deploy\deploy-webapi.sh
+		..\deploy\deploy-mac-desktop.sh = ..\deploy\deploy-mac-desktop.sh
+		..\deploy\deploy-windows-desktop.sh = ..\deploy\deploy-windows-desktop.sh
+		..\deploy\deploy-ios-mobile.sh = ..\deploy\deploy-ios-mobile.sh
+		..\deploy\deploy-android-mobile.sh = ..\deploy\deploy-android-mobile.sh
+		..\deploy\teardown-web.sh = ..\deploy\teardown-web.sh
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

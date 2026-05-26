@@ -1,0 +1,123 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
+#
+# Google Play delivery for Bronnoysund.MauiMobile (Android target).
+#
+# Status: SKELETON. The AAB build runs but signing + upload are stubbed
+# until the Play Console pieces are in place. Unlike iOS this side is
+# relatively low-friction — the user already has a Play Console account.
+#
+# To turn the skeleton live:
+#
+#   1. In Play Console, create the app entry with package
+#      `no.roasystemutvikling.bronnoysund.mobile` and complete the
+#      mandatory metadata (privacy policy, store listing, content rating).
+#   2. Generate an upload signing key + keystore (`keytool -genkey ...`)
+#      and register it as the app's app signing key.
+#   3. Create a service account in Google Cloud, grant it Release Manager
+#      on the Play Console, download its JSON.
+#
+# Required GitHub secrets:
+#
+#   secrets.ANDROID_KEYSTORE_BASE64       base64-encoded .keystore
+#   secrets.ANDROID_KEYSTORE_PASSWORD     keystore password
+#   secrets.ANDROID_KEY_ALIAS             upload key alias
+#   secrets.ANDROID_KEY_PASSWORD          upload key password
+#   secrets.GOOGLE_PLAY_SA_JSON           service-account JSON content
+
+name: CD — Android Mobile (Google Play)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run build+test before packaging'
+        type: boolean
+        default: true
+      track:
+        description: 'Play Console track'
+        type: choice
+        default: 'internal'
+        options: ['internal', 'alpha', 'beta', 'production']
+
+permissions:
+  contents: read
+
+env:
+  TFM: net10.0-android
+  PROJECT: Kode/src/Bronnoysund.MauiMobile/Bronnoysund.MauiMobile.csproj
+  PACKAGE: no.roasystemutvikling.bronnoysund.mobile
+
+jobs:
+  build-and-test:
+    name: Build & test gate
+    if: github.event.inputs.run_tests != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test Kode/Bronnoysund.Web.slnf -c Release
+
+  package-and-upload:
+    name: Package + upload AAB to Play Console
+    needs: [build-and-test]
+    if: always() && (needs.build-and-test.result == 'success' || needs.build-and-test.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Setup Java 17 (Android tooling needs it)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+
+      # TODO: decode + place the keystore so MSBuild signing picks it up:
+      #
+      # - name: Decode keystore
+      #   env: { KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }} }
+      #   run: echo "$KS_B64" | base64 --decode > $RUNNER_TEMP/bronnoysund.keystore
+
+      - name: Publish AAB (signed, Release)
+        run: |
+          dotnet publish "$PROJECT" \
+            -c Release \
+            -f "$TFM" \
+            -p:AndroidPackageFormat=aab \
+            -p:AndroidKeyStore=true \
+            -p:AndroidSigningKeyStore=$RUNNER_TEMP/bronnoysund.keystore \
+            -p:AndroidSigningStorePass=${{ secrets.ANDROID_KEYSTORE_PASSWORD }} \
+            -p:AndroidSigningKeyAlias=${{ secrets.ANDROID_KEY_ALIAS }} \
+            -p:AndroidSigningKeyPass=${{ secrets.ANDROID_KEY_PASSWORD }} \
+            -o ./.dist/android
+
+      # TODO: upload the .aab to the chosen Play track:
+      #
+      # - uses: r0adkll/upload-google-play@v1
+      #   with:
+      #     serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SA_JSON }}
+      #     packageName: ${{ env.PACKAGE }}
+      #     releaseFiles: ./.dist/android/*.aab
+      #     track: ${{ github.event.inputs.track }}
+      #     status: completed
+
+      - name: Skeleton notice
+        run: |
+          {
+            echo "## Android Mobile skeleton"
+            echo ""
+            echo "Track: \`${{ github.event.inputs.track }}\`"
+            echo ""
+            echo "This run produced \`.dist/android/*.aab\` but the upload step is stubbed."
+            echo "Uncomment the keystore decode + upload-google-play steps once secrets are set."
+          } >> "$GITHUB_STEP_SUMMARY"

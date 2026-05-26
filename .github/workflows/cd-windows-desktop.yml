@@ -1,0 +1,104 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
+#
+# Microsoft Store delivery for Bronnoysund.MauiDesktop (Windows target).
+#
+# Status: DISABLED-BY-DEFAULT skeleton — the user does NOT currently have a
+# Microsoft Partner Center account. The MSIX build runs but every store
+# upload step is commented out. Re-enable by removing the `if: false` on
+# the package job once the account is set up.
+#
+# To turn the skeleton live (in order):
+#
+#   1. Open a Microsoft Partner Center developer account (~$19 one-time
+#      for individuals, $99/year for companies).
+#   2. Reserve the app name and let Partner Center generate publisher info.
+#   3. Generate a code-signing certificate (Sectigo / DigiCert / Azure
+#      Trusted Signing) — required for MSIX outside the Store, optional if
+#      you only ship via the Store (Microsoft re-signs after submission).
+#   4. Create a service-principal for Partner Center Submission API
+#      (Azure AD App + role assignment in Partner Center).
+#
+# Required GitHub secrets once enabled:
+#
+#   secrets.WINDOWS_CERT_PFX_BASE64       base64-encoded .pfx (optional)
+#   secrets.WINDOWS_CERT_PFX_PASSWORD     .pfx password
+#   secrets.PARTNER_CENTER_TENANT_ID
+#   secrets.PARTNER_CENTER_CLIENT_ID
+#   secrets.PARTNER_CENTER_CLIENT_SECRET
+#   secrets.PARTNER_CENTER_SELLER_ID
+
+name: CD — Windows Desktop (Microsoft Store)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run build+test before packaging'
+        type: boolean
+        default: true
+      destination:
+        description: 'Submission flight'
+        type: choice
+        default: 'private'
+        options: ['private', 'public']
+
+permissions:
+  contents: read
+
+env:
+  TFM: net10.0-windows10.0.19041.0
+  PROJECT: Kode/src/Bronnoysund.MauiDesktop/Bronnoysund.MauiDesktop.csproj
+
+jobs:
+  build-and-test:
+    name: Build & test gate
+    if: github.event.inputs.run_tests != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test Kode/Bronnoysund.Web.slnf -c Release
+
+  package-and-upload:
+    name: Package MSIX + upload to Partner Center
+    needs: [build-and-test]
+    # Flip to `if: always() && ...` once the Partner Center account exists.
+    if: false
+    runs-on: windows-2022
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI Windows workload
+        run: dotnet workload install maui-windows
+
+      - name: Publish MSIX (Release, x64)
+        run: |
+          dotnet publish $env:PROJECT `
+            -c Release `
+            -f $env:TFM `
+            -p:RuntimeIdentifier=win10-x64 `
+            -p:WindowsPackageType=MSIX `
+            -p:GenerateAppxPackageOnBuild=true `
+            -o ./.dist/windows
+
+      # TODO: sign with signtool.exe if not relying on Store re-signing.
+      # TODO: submit via Partner Center Submission API (e.g. StoreBroker
+      #       PowerShell module or direct REST calls).
+
+      - name: Skeleton notice
+        shell: bash
+        run: |
+          {
+            echo "## Windows Desktop skeleton"
+            echo ""
+            echo "This step is currently behind \`if: false\` because no Partner Center"
+            echo "account is set up. Enable once the account exists."
+          } >> "$GITHUB_STEP_SUMMARY"

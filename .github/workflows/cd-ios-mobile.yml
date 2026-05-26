@@ -1,0 +1,99 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
+#
+# TestFlight / App Store delivery for Bronnoysund.MauiMobile (iOS target).
+#
+# Status: SKELETON. The IPA build runs but signing + upload are stubbed
+# until the Apple Developer pieces are in place:
+#
+#   * App ID `no.roasystemutvikling.bronnoysund.mobile` registered
+#   * iOS Distribution certificate exported as .p12 with password
+#   * App Store provisioning profile `Bronnoysund.MauiMobile.AppStore`
+#   * App Store Connect API key (.p8 + key id + issuer id)
+#
+# Required GitHub secrets / variables:
+#
+#   secrets.APPLE_IOS_CERT_P12_BASE64
+#   secrets.APPLE_IOS_CERT_P12_PASSWORD
+#   secrets.APPLE_IOS_PROFILE_BASE64
+#   secrets.APPLE_ASC_API_KEY_BASE64       (same key as Mac if you reuse)
+#   secrets.APPLE_ASC_API_KEY_ID
+#   secrets.APPLE_ASC_API_ISSUER_ID
+#   vars.APPLE_TEAM_ID
+
+name: CD — iOS Mobile (TestFlight / App Store)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run build+test before packaging'
+        type: boolean
+        default: true
+      destination:
+        description: 'Upload destination'
+        type: choice
+        default: 'testflight'
+        options: ['testflight', 'app-store']
+
+permissions:
+  contents: read
+
+env:
+  TFM: net10.0-ios
+  PROJECT: Kode/src/Bronnoysund.MauiMobile/Bronnoysund.MauiMobile.csproj
+
+jobs:
+  build-and-test:
+    name: Build & test gate
+    if: github.event.inputs.run_tests != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test Kode/Bronnoysund.Web.slnf -c Release
+
+  package-and-upload:
+    name: Package + upload to App Store Connect
+    needs: [build-and-test]
+    if: always() && (needs.build-and-test.result == 'success' || needs.build-and-test.result == 'skipped')
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI iOS workload
+        run: dotnet workload install maui-ios
+
+      # TODO: import certificate + profile (see cd-mac-desktop.yml for the standard pattern)
+
+      - name: Publish .ipa (signed, Release, arm64)
+        run: |
+          dotnet publish "$PROJECT" \
+            -c Release \
+            -f "$TFM" \
+            -p:RuntimeIdentifier=ios-arm64 \
+            -p:ArchiveOnBuild=true \
+            -p:CodesignKey="Apple Distribution: Røa Systemutvikling AS (${{ vars.APPLE_TEAM_ID }})" \
+            -p:CodesignProvision="Bronnoysund.MauiMobile.AppStore" \
+            -o ./.dist/ios
+
+      # TODO: xcrun altool --upload-app --type ios --file ./.dist/ios/*.ipa ...
+      # (TestFlight is automatic once the build is uploaded and processed by ASC.)
+
+      - name: Skeleton notice
+        run: |
+          {
+            echo "## iOS Mobile skeleton"
+            echo ""
+            echo "Destination: \`${{ github.event.inputs.destination }}\`"
+            echo ""
+            echo "This run produced \`.dist/ios/*.ipa\` but signing + upload are stubbed."
+            echo "Wire the TODOs once Apple Developer signing material is in place."
+          } >> "$GITHUB_STEP_SUMMARY"

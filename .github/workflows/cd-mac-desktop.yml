@@ -1,0 +1,136 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
+#
+# Mac App Store delivery for Bronnoysund.MauiDesktop (Mac Catalyst target).
+#
+# Status: SKELETON. Workflow runs but the signing + upload steps are stubs
+# until the following are in place on the user's Apple Developer account:
+#
+#   * App ID `no.roasystemutvikling.bronnoysund.desktop` registered
+#   * Mac App Store distribution certificate exported as .p12 with password
+#   * Provisioning profile `Bronnoysund.MauiDesktop.MacAppStore` downloaded
+#   * App Store Connect API key (.p8 + key id + issuer id) generated
+#
+# Required GitHub secrets / variables once the above exists:
+#
+#   secrets.APPLE_MAC_CERT_P12_BASE64      base64-encoded .p12 file
+#   secrets.APPLE_MAC_CERT_P12_PASSWORD    .p12 export password
+#   secrets.APPLE_MAC_PROFILE_BASE64       base64-encoded .provisionprofile file
+#   secrets.APPLE_ASC_API_KEY_BASE64       base64-encoded .p8 file
+#   secrets.APPLE_ASC_API_KEY_ID           e.g. AB12CD34EF
+#   secrets.APPLE_ASC_API_ISSUER_ID        UUID
+#   vars.APPLE_TEAM_ID                     10-character Team ID
+#
+# macOS runners cost 10x linux minutes — keep this workflow manual-only.
+
+name: CD — Mac Desktop (Mac App Store)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_tests:
+        description: 'Run build+test before packaging'
+        type: boolean
+        default: true
+      destination:
+        description: 'Upload destination'
+        type: choice
+        default: 'testflight'
+        options: ['testflight', 'app-store']
+
+permissions:
+  contents: read
+
+env:
+  TFM: net10.0-maccatalyst
+  PROJECT: Kode/src/Bronnoysund.MauiDesktop/Bronnoysund.MauiDesktop.csproj
+
+jobs:
+  build-and-test:
+    name: Build & test (non-MAUI gate)
+    if: github.event.inputs.run_tests != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet test Kode/Bronnoysund.Web.slnf -c Release
+
+  package-and-upload:
+    name: Package + upload to App Store Connect
+    needs: [build-and-test]
+    if: always() && (needs.build-and-test.result == 'success' || needs.build-and-test.result == 'skipped')
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI workload
+        run: dotnet workload install maui
+
+      # TODO: import .p12 into a temporary keychain, install the provisioning profile,
+      # set certificate trust. The standard pattern is:
+      #
+      # - name: Import signing certificate
+      #   env:
+      #     CERT_BASE64: ${{ secrets.APPLE_MAC_CERT_P12_BASE64 }}
+      #     CERT_PASS:   ${{ secrets.APPLE_MAC_CERT_P12_PASSWORD }}
+      #   run: |
+      #     KEYCHAIN=$RUNNER_TEMP/build.keychain
+      #     security create-keychain -p "" "$KEYCHAIN"
+      #     security default-keychain -s "$KEYCHAIN"
+      #     security unlock-keychain -p "" "$KEYCHAIN"
+      #     echo "$CERT_BASE64" | base64 --decode > cert.p12
+      #     security import cert.p12 -k "$KEYCHAIN" -P "$CERT_PASS" -T /usr/bin/codesign
+      #
+      # - name: Install provisioning profile
+      #   env: { PROFILE_BASE64: ${{ secrets.APPLE_MAC_PROFILE_BASE64 }} }
+      #   run: |
+      #     mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+      #     echo "$PROFILE_BASE64" | base64 --decode \
+      #       > "$HOME/Library/MobileDevice/Provisioning Profiles/Bronnoysund.MauiDesktop.MacAppStore.provisionprofile"
+
+      - name: Publish .app (signed, Release)
+        run: |
+          dotnet publish "$PROJECT" \
+            -c Release \
+            -f "$TFM" \
+            -p:RuntimeIdentifier=maccatalyst-arm64 \
+            -p:CreatePackage=true \
+            -p:EnableCodeSigning=true \
+            -p:EnablePackageSigning=true \
+            -p:CodesignKey="3rd Party Mac Developer Application: Røa Systemutvikling AS (${{ vars.APPLE_TEAM_ID }})" \
+            -p:CodesignProvision="Bronnoysund.MauiDesktop.MacAppStore" \
+            -o ./.dist/mac
+
+      # TODO: upload the resulting .pkg to App Store Connect via xcrun altool / Transporter:
+      #
+      # - name: Upload to App Store Connect
+      #   env:
+      #     ASC_KEY_BASE64: ${{ secrets.APPLE_ASC_API_KEY_BASE64 }}
+      #     ASC_KEY_ID:     ${{ secrets.APPLE_ASC_API_KEY_ID }}
+      #     ASC_ISSUER:     ${{ secrets.APPLE_ASC_API_ISSUER_ID }}
+      #   run: |
+      #     mkdir -p ~/.appstoreconnect/private_keys
+      #     echo "$ASC_KEY_BASE64" | base64 --decode \
+      #       > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+      #     xcrun altool --upload-app \
+      #       --type macos \
+      #       --file ./.dist/mac/*.pkg \
+      #       --apiKey "$ASC_KEY_ID" \
+      #       --apiIssuer "$ASC_ISSUER"
+
+      - name: Skeleton notice
+        run: |
+          {
+            echo "## Mac Desktop skeleton"
+            echo ""
+            echo "This run produced \`.dist/mac/*.pkg\` but the signing + upload steps are stubbed."
+            echo "Wire the TODOs once Apple Developer signing material is in place."
+          } >> "$GITHUB_STEP_SUMMARY"

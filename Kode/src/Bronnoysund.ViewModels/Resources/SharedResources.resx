@@ -31,11 +31,11 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
 
-  <data name="AppTitle"><value>Bronnoysund</value></data>
+  <data name="AppTitle"><value>Bronnoysund Lookup</value></data>
 
   <!-- Lookup page -->
-  <data name="LookupTitle"><value>Bronnoysund</value></data>
-  <data name="LookupDescription"><value>Look up Norwegian companies in the central business register. Enter an organization number (9 digits, starting with 8 or 9).</value></data>
+  <data name="LookupTitle"><value>Information about companies from the Brønnøysund Register Centre</value></data>
+  <data name="LookupDescription"><value>Look up Norwegian companies registered in the Brønnøysund Register Centre. Enter an organization number (9 digits, starting with 8 or 9).</value></data>
   <data name="OrgNumberLabel"><value>Organization number</value></data>
   <data name="OrgNumberPlaceholder"><value>e.g. 919300388</value></data>
   <data name="SearchButton"><value>Look up</value></data>
@@ -51,9 +51,11 @@
   <data name="SearchByNamePlaceholder"><value>e.g. Statens vegvesen</value></data>
   <data name="SearchButtonName"><value>Search</value></data>
   <data name="CompanyNameCol"><value>Name</value></data>
+  <data name="CompanyTypeColHeader"><value>Type</value></data>
   <data name="PostalCityCol"><value>City</value></data>
   <data name="SearchPaginationHint"><value>Showing {0} of {1} hits — refine the search to narrow results.</value></data>
   <data name="NoHitsForName"><value>No companies found matching this name.</value></data>
+  <data name="OtherHitsHeader"><value>Other search hits</value></data>
 
   <!-- Aggregated detail sections (Phase 4 UI expansion) -->
   <data name="ContactSection"><value>Contact</value></data>
@@ -125,9 +127,12 @@
 
   <!-- Language switcher -->
   <data name="UiCultureLabel"><value>Language</value></data>
+  <data name="MenuAriaLabel"><value>Menu</value></data>
   <data name="LanguageEnglish"><value>English</value></data>
-  <data name="LanguageNorwegianBokmal"><value>Norwegian (Bokmål)</value></data>
-  <data name="LanguageNorwegianNynorsk"><value>Norwegian (Nynorsk)</value></data>
+  <data name="LanguageNorwegianBokmal"><value>Norsk</value></data>
+  <data name="LanguageNorwegianNynorsk"><value>Nynorsk</value></data>
+
+  <!-- Voice (Plan 04b) -->
   <data name="VoiceInputTooltip"><value>Speak the organisation number or company name</value></data>
   <data name="VoiceRecognitionFailed"><value>Could not understand. Try again or type the value.</value></data>
   <data name="ReadAloudTooltip"><value>Read the result aloud</value></data>

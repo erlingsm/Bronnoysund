@@ -31,9 +31,9 @@
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
 
-  <data name="AppTitle"><value>Bronnoysund</value></data>
+  <data name="AppTitle"><value>Virksomhetsinformasjon</value></data>
 
-  <data name="LookupTitle"><value>Bronnoysund</value></data>
+  <data name="LookupTitle"><value>Virksomhetsinformasjon fra Brønnøysundregistrene</value></data>
   <data name="LookupDescription"><value>Slå opp norske virksomheter i Enhetsregisteret. Skriv organisasjonsnummer (9 siffer, starter på 8 eller 9).</value></data>
   <data name="OrgNumberLabel"><value>Organisasjonsnummer</value></data>
   <data name="OrgNumberPlaceholder"><value>f.eks. 919300388</value></data>
@@ -49,9 +49,11 @@
   <data name="SearchByNamePlaceholder"><value>f.eks. Statens vegvesen</value></data>
   <data name="SearchButtonName"><value>Søk</value></data>
   <data name="CompanyNameCol"><value>Navn</value></data>
+  <data name="CompanyTypeColHeader"><value>Form</value></data>
   <data name="PostalCityCol"><value>Sted</value></data>
   <data name="SearchPaginationHint"><value>Viser {0} av {1} treff — søk mer presist for å snevre inn.</value></data>
   <data name="NoHitsForName"><value>Ingen virksomheter funnet med dette navnet.</value></data>
+  <data name="OtherHitsHeader"><value>Andre søketreff</value></data>
 
   <data name="ContactSection"><value>Kontakt</value></data>
   <data name="AddressLabel"><value>Adresse</value></data>
@@ -119,9 +121,11 @@
   <data name="AllRemoved"><value>Alle innstillinger fjernet — bruker defaults fra appsettings.json</value></data>
 
   <data name="UiCultureLabel"><value>Språk</value></data>
-  <data name="LanguageEnglish"><value>Engelsk</value></data>
-  <data name="LanguageNorwegianBokmal"><value>Norsk (bokmål)</value></data>
-  <data name="LanguageNorwegianNynorsk"><value>Norsk (nynorsk)</value></data>
+  <data name="MenuAriaLabel"><value>Meny</value></data>
+  <data name="LanguageEnglish"><value>English</value></data>
+  <data name="LanguageNorwegianBokmal"><value>Norsk</value></data>
+  <data name="LanguageNorwegianNynorsk"><value>Nynorsk</value></data>
+
   <data name="VoiceInputTooltip"><value>Si organisasjonsnummer eller bedriftsnavn</value></data>
   <data name="VoiceRecognitionFailed"><value>Vi forstod ikke. Prøv på nytt, eller skriv inn manuelt.</value></data>
   <data name="ReadAloudTooltip"><value>Les opp svaret</value></data>

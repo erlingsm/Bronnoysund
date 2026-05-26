@@ -1,0 +1,73 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
+#
+# Continuous integration: build + test on every push, PR, and manual trigger.
+# No deploy — that lives in the cd-*.yml workflows. This pipeline is the
+# required status check for PRs and the gate every CD pipeline relies on
+# (each CD re-runs its own build+test for defence in depth, but anything
+# that passes here should pass there).
+
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'Kode/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'Kode/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & test (non-MAUI)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Kode/**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      # Web slnf is a superset of Core slnf — it includes every non-MAUI project + every
+      # test project. MAUI host projects (MauiMobile / MauiDesktop) are excluded because
+      # the MAUI workload is not installed on the linux runner; those are exercised in the
+      # cd-mac-desktop / cd-ios-mobile / cd-android-mobile workflows on platform-specific
+      # runners.
+      - name: Restore (Web slnf)
+        run: dotnet restore Kode/Bronnoysund.Web.slnf
+
+      - name: Build (Web slnf)
+        run: dotnet build Kode/Bronnoysund.Web.slnf --configuration Release --no-restore
+
+      - name: Test
+        run: |
+          dotnet test Kode/Bronnoysund.Web.slnf \
+            --configuration Release \
+            --no-build \
+            --logger "trx;LogFileName=tests.trx" \
+            --logger "console;verbosity=normal" \
+            --results-directory ./test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ github.run_number }}
+          path: test-results/
+          retention-days: 30
