@@ -125,11 +125,22 @@ public sealed partial class CompanyLookupViewModel(
         }
     }
 
-    /// <summary>Called from the search-result list when the user clicks a hit. Reuses the standard lookup flow.</summary>
+    /// <summary>
+    /// Called from the search-result list when the user clicks a hit. Reuses the standard
+    /// lookup flow but preserves the hit list across the call so the master-detail layout
+    /// (hits on the left, selected company on the right) keeps both panes visible. Without
+    /// this stash-and-restore, LookupAsync's ResetTransientState would clear SearchHits.
+    /// </summary>
     public async Task SelectHitAsync(CompanySearchHit hit, CancellationToken ct)
     {
+        var preservedHits = SearchHits;
+        var preservedTotal = SearchTotalElements;
+
         OrgNumberInput = hit.OrganizationNumber;
         await LookupAsync(ct);
+
+        SearchHits = preservedHits;
+        SearchTotalElements = preservedTotal;
     }
 
     private void ResetTransientState()

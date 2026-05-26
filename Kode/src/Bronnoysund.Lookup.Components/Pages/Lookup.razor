@@ -305,12 +305,35 @@
         ViewModel.PropertyChanged += OnViewModelChanged;
         DeviceLayout.LayoutChanged += OnLayoutChanged;
 
-        // Allow deep-linking to a specific company via ?orgnr=974760843. Useful for sharing
-        // direct links and for taking deterministic screenshots.
+        // Deep-link support. Three shapes:
+        //   ?orgnr=974760843            -> direct lookup, Found-only panel
+        //   ?name=Statens+vegvesen      -> name-search, hits-only panel
+        //   ?name=Statens+vegvesen&select=971032081
+        //                               -> name-search then select that orgnr to drive the
+        //                                  master-detail layout deterministically (useful for
+        //                                  screenshots and for sharing a specific result row).
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
         var orgnr = query["orgnr"];
-        if (!string.IsNullOrWhiteSpace(orgnr))
+        var name = query["name"];
+        var select = query["select"];
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            ViewModel.IsNameSearchMode = true;
+            ViewModel.NameQueryInput = name;
+            await ViewModel.SearchByNameAsync(CancellationToken.None);
+
+            if (!string.IsNullOrWhiteSpace(select))
+            {
+                var hit = ViewModel.SearchHits.FirstOrDefault(h => h.OrganizationNumber == select);
+                if (hit is not null)
+                {
+                    await ViewModel.SelectHitAsync(hit, CancellationToken.None);
+                }
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(orgnr))
         {
             ViewModel.OrgNumberInput = orgnr;
             await ViewModel.LookupAsync(CancellationToken.None);
