@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
 using Bronnoysund.Lookup.Application;
+using Bronnoysund.Lookup.Application.Ports;
 using Bronnoysund.Lookup.Infrastructure;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
@@ -32,6 +33,7 @@ public static class MauiProgram
 		builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
 		builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
 		builder.Services.AddBronnoysundPersistence(builder.Configuration);
+		builder.Services.AddSingleton<IDeviceLayout, MauiDeviceLayout>();
 		builder.Services.AddTransient<CompanyLookupViewModel>();
 
 #if DEBUG

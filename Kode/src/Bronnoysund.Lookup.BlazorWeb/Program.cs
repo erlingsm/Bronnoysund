@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
 using Bronnoysund.Lookup.Application;
+using Bronnoysund.Lookup.Application.Ports;
+using Bronnoysund.Lookup.BlazorWeb.Adapters;
 using Bronnoysund.Lookup.BlazorWeb.Components;
 using Bronnoysund.Lookup.Infrastructure;
 using Bronnoysund.Lookup.Infrastructure.Persistence;
 using Bronnoysund.Lookup.Infrastructure.Persistence.Configuration;
 using Bronnoysund.Lookup.ViewModels;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using MudBlazor.Services;
 using Serilog;
 
@@ -46,6 +49,13 @@ try
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
     builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
     builder.Services.AddBronnoysundPersistence(builder.Configuration);
+
+    // Per-circuit so two browser tabs at different sizes don't share layout state.
+    // Replace() rather than Add(): AddBronnoysundApplication already TryAdd'd the Desktop
+    // fallback, and a circuit-scoped service can't sit behind a singleton fallback in the
+    // same container, so we swap the descriptor outright.
+    builder.Services.RemoveAll<IDeviceLayout>();
+    builder.Services.AddScoped<IDeviceLayout, WebDeviceLayout>();
 
     // ViewModels — transient (one per component instance)
     builder.Services.AddTransient<CompanyLookupViewModel>();

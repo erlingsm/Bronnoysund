@@ -4,11 +4,12 @@
 @inject CompanyLookupViewModel ViewModel
 @inject IStringLocalizer<SharedResources> L
 @inject NavigationManager Nav
+@inject IDeviceLayout DeviceLayout
 @implements IDisposable
 
 <PageTitle>@L["LookupTitle"]</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+<MudContainer MaxWidth="@ContainerWidth" Class="mt-8">
     <MudText Typo="Typo.h4" GutterBottom="true">@L["LookupTitle"]</MudText>
     <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
         @L["LookupDescription"]
@@ -71,7 +72,46 @@
         <MudAlert Severity="Severity.Warning" Class="mb-4">@ViewModel.ErrorMessage</MudAlert>
     }
 
-    @if (ViewModel.SearchHits.Count > 0)
+    @* Master-detail kicks in only when both panes have content AND the host can fit them
+       side-by-side. Phones get the original linear stack so the small screen isn't split. *@
+    @if (UseMasterDetail)
+    {
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="5">
+                @RenderHitsPanel()
+            </MudItem>
+            <MudItem xs="12" md="7">
+                @RenderFoundPanel()
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        @if (ViewModel.SearchHits.Count > 0)
+        {
+            @RenderHitsPanel()
+        }
+        @if (ViewModel.Found is not null)
+        {
+            @RenderFoundPanel()
+        }
+    }
+</MudContainer>
+
+@code {
+    private MaxWidth ContainerWidth => DeviceLayout.Current switch
+    {
+        DeviceLayoutKind.Phone => MaxWidth.Medium,
+        DeviceLayoutKind.Tablet => MaxWidth.Large,
+        _ => MaxWidth.ExtraLarge,
+    };
+
+    private bool UseMasterDetail =>
+        DeviceLayout.Current != DeviceLayoutKind.Phone
+        && ViewModel.SearchHits.Count > 0
+        && ViewModel.Found is not null;
+
+    private RenderFragment RenderHitsPanel() => __builder =>
     {
         <MudPaper Class="pa-4 mb-4" Elevation="2">
             <MudTable Items="@ViewModel.SearchHits" Hover="true" Dense="true" OnRowClick="OnHitClicked" T="CompanySearchHit">
@@ -95,10 +135,15 @@
                 </MudText>
             }
         </MudPaper>
-    }
+    };
 
-    @if (ViewModel.Found is { } found)
+    private RenderFragment RenderFoundPanel() => __builder =>
     {
+        if (ViewModel.Found is not { } found)
+        {
+            return;
+        }
+
         <MudPaper Class="pa-4 mb-3" Elevation="3">
             <MudText Typo="Typo.h5" Class="mb-1">@found.OrganizationName</MudText>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
@@ -114,7 +159,6 @@
                 </MudAlert>
             }
 
-            @* Contact section *@
             @if (HasContact(found))
             {
                 <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">@L["ContactSection"]</MudText>
@@ -147,7 +191,6 @@
                 </MudList>
             }
 
-            @* Activity section *@
             @if (HasActivity(found))
             {
                 <MudText Typo="Typo.subtitle1" Class="mt-3 mb-1">@L["ActivitySection"]</MudText>
@@ -170,7 +213,6 @@
                 </MudList>
             }
 
-            @* Lifecycle section *@
             @if (HasDates(found))
             {
                 <MudText Typo="Typo.subtitle1" Class="mt-3 mb-1">@L["DatesSection"]</MudText>
@@ -256,13 +298,12 @@
                 </MudList>
             </MudPaper>
         }
-    }
-</MudContainer>
+    };
 
-@code {
     protected override async Task OnInitializedAsync()
     {
         ViewModel.PropertyChanged += OnViewModelChanged;
+        DeviceLayout.LayoutChanged += OnLayoutChanged;
 
         // Allow deep-linking to a specific company via ?orgnr=974760843. Useful for sharing
         // direct links and for taking deterministic screenshots.
@@ -277,6 +318,9 @@
     }
 
     private void OnViewModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnLayoutChanged(object? sender, EventArgs e)
         => InvokeAsync(StateHasChanged);
 
     private void OnSearchModeChanged(bool isNameMode)
@@ -350,5 +394,6 @@
     public void Dispose()
     {
         ViewModel.PropertyChanged -= OnViewModelChanged;
+        DeviceLayout.LayoutChanged -= OnLayoutChanged;
     }
 }
