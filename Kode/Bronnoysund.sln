@@ -65,6 +65,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{CFF226
 		..\deploy\deploy-android-mobile.sh = ..\deploy\deploy-android-mobile.sh
 		..\deploy\teardown-web.sh = ..\deploy\teardown-web.sh
 		..\deploy\azure-bootstrap.sh = ..\deploy\azure-bootstrap.sh
+		..\deploy\azure-cleanup-mvp-overlap.sh = ..\deploy\azure-cleanup-mvp-overlap.sh
 	EndProjectSection
 EndProject
 Global

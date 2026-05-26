@@ -41,7 +41,11 @@ echo "    Subscription: $SUB_ID"
 echo "    Tenant:       $TENANT_ID"
 
 echo "==> 1/6 Azure AD App Registration"
-APP_ID="$(az ad app list --display-name "$AD_APP_NAME" --query '[0].appId' -o tsv)"
+# IMPORTANT: --filter "displayName eq" matches EXACTLY. The older --display-name
+# parameter does a prefix match, which would silently reuse an app whose name is
+# a prefix of $AD_APP_NAME — see the 2026-05-26 incident where it picked up
+# github-bronnoysund-mvp instead of creating a fresh github-bronnoysund.
+APP_ID="$(az ad app list --filter "displayName eq '$AD_APP_NAME'" --query '[0].appId' -o tsv)"
 if [[ -z "$APP_ID" ]]; then
     APP_ID="$(az ad app create --display-name "$AD_APP_NAME" --query appId -o tsv)"
     echo "    Created app $AD_APP_NAME -> $APP_ID"
