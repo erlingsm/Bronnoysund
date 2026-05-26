@@ -1,0 +1,15 @@
+{
+  "solution": {
+    "path": "Bronnoysund.sln",
+    "projects": [
+      "src\\Bronnoysund.Domain\\Bronnoysund.Domain.csproj",
+      "src\\Bronnoysund.Application\\Bronnoysund.Application.csproj",
+      "src\\Bronnoysund.Infrastructure\\Bronnoysund.Infrastructure.csproj",
+      "src\\Bronnoysund.Components\\Bronnoysund.Components.csproj",
+      "src\\Bronnoysund.ViewModels\\Bronnoysund.ViewModels.csproj",
+      "src\\Bronnoysund.Speech\\Bronnoysund.Speech.csproj",
+      "src\\Bronnoysund.MauiMobile\\Bronnoysund.MauiMobile.csproj",
+      "tests\\Bronnoysund.Speech.Tests\\Bronnoysund.Speech.Tests.csproj"
+    ]
+  }
+}
