@@ -9,7 +9,7 @@
 #   3. AcrPush role on the container registry              (so the SP can push images)
 #   4. Container App `bronnoysund-web` (BlazorWeb host)    (provisioned with placeholder image)
 #   5. Contributor role on both container apps             (so the SP can roll new images)
-#   6. GitHub repo variables                               (AZURE_CLIENT_ID / TENANT_ID / SUBSCRIPTION_ID)
+#   6. GitHub repo secrets                                 (AZURE_CLIENT_ID / TENANT_ID / SUBSCRIPTION_ID)
 #
 # Prereqs: az login + gh auth status, plus the existing resources from
 # the prior Azure setup (resource group, ACR, Container Apps environment,
@@ -135,10 +135,14 @@ for APP in "$APP_WEB" "$APP_WEBAPI"; do
     fi
 done
 
-echo "==> 6/6 GitHub repo variables on $REPO"
-gh variable set AZURE_CLIENT_ID       --repo "$REPO" --body "$APP_ID"   >/dev/null
-gh variable set AZURE_TENANT_ID       --repo "$REPO" --body "$TENANT_ID" >/dev/null
-gh variable set AZURE_SUBSCRIPTION_ID --repo "$REPO" --body "$SUB_ID"   >/dev/null
+echo "==> 6/6 GitHub repo secrets on $REPO"
+# Workflows read these via secrets.AZURE_* (not vars). Technically the three
+# values aren't sensitive — they're OIDC identifiers, no client-secret is
+# exchanged — but storing as secrets matches the convention most reviewers
+# expect and lets the user audit them under Settings -> Secrets.
+gh secret set AZURE_CLIENT_ID       --repo "$REPO" --body "$APP_ID"   >/dev/null
+gh secret set AZURE_TENANT_ID       --repo "$REPO" --body "$TENANT_ID" >/dev/null
+gh secret set AZURE_SUBSCRIPTION_ID --repo "$REPO" --body "$SUB_ID"   >/dev/null
 echo "    Set AZURE_CLIENT_ID / AZURE_TENANT_ID / AZURE_SUBSCRIPTION_ID"
 
 cat <<DONE

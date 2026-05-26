@@ -15,7 +15,7 @@
 #      that were grafted onto github-bronnoysund-mvp.
 #   3. Removes the role assignments on bronnoysund-lookup-rg resources
 #      that were grafted onto the MVP service principal.
-#   4. Repoints the GitHub repo variables to the new dedicated app.
+#   4. Repoints the GitHub repo secrets to the new dedicated app.
 #
 # Re-running is safe (idempotent probes at every step).
 
@@ -95,15 +95,13 @@ for SCOPE in "${SCOPES_TO_CHECK[@]}"; do
 done
 
 echo ""
-echo "==> 4/4 Verify GitHub repo vars point to the new app"
+echo "==> 4/4 Repoint GitHub repo secrets to the new app"
+# gh secret get does not exist (secrets are write-only), so we re-set every
+# time. The bootstrap step above also writes them; this block is a belt-
+# and-braces sanity update in case the user mutated them between runs.
 NEW_APP_ID="$(az ad app list --filter "displayName eq '$NEW_APP_NAME'" --query '[0].appId' -o tsv)"
-CURRENT_GH_CLIENT="$(gh variable get AZURE_CLIENT_ID --repo "$REPO" 2>/dev/null || echo '')"
-if [[ "$CURRENT_GH_CLIENT" == "$NEW_APP_ID" ]]; then
-    echo "    GitHub AZURE_CLIENT_ID = $NEW_APP_ID (correct)"
-else
-    echo "    Updating GitHub AZURE_CLIENT_ID -> $NEW_APP_ID"
-    gh variable set AZURE_CLIENT_ID --repo "$REPO" --body "$NEW_APP_ID" >/dev/null
-fi
+gh secret set AZURE_CLIENT_ID --repo "$REPO" --body "$NEW_APP_ID" >/dev/null
+echo "    GitHub AZURE_CLIENT_ID -> $NEW_APP_ID"
 
 cat <<DONE
 

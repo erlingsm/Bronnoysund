@@ -32,7 +32,7 @@ check in branch protection.
 
 ## How they chain
 
-```
+```text
                               ┌─── cd-web.yml         (Azure)
                               │
 push to master ─► ci.yml ─────┼─── cd-webapi.yml      (Azure)
@@ -79,7 +79,7 @@ absent.
 | Container App — Web | `bronnoysund-web` (BlazorWeb, port 8080) |
 | Container App — WebApi | `bronnoysund-webapi` (port 8080) |
 | Azure AD App Registration | `github-bronnoysund` (federated credential for OIDC) |
-| GitHub repo variables | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` |
+| GitHub repo secrets | `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID` (workflows read via `secrets.*`) |
 
 The federated credential trusts OIDC tokens with subject
 `repo:erlingsm/Bronnoysund.Lookup:ref:refs/heads/master`. The service

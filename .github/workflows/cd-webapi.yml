@@ -1,18 +1,23 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 #
-# Deploys the JSON endpoint service (Bronnoysund.WebApi) to Azure Container Apps.
-# Same shape as cd-web.yml but a different image, app, and Dockerfile — kept as
-# its own workflow so each service is independently deployable and rollback-able.
+# Build + test + deploy of the JSON endpoint (Bronnoysund.WebApi) to
+# Azure Container Apps. Mirrors cd-web.yml — separate workflow so the
+# two services roll and roll back independently.
 
 name: CD — WebApi (endpoint to Azure)
 
 on:
-  workflow_dispatch:
-    inputs:
-      run_tests:
-        description: 'Run build+test before deploying'
-        type: boolean
-        default: true
+  push:
+    branches: [master]
+    paths:
+      - 'Kode/src/Bronnoysund.WebApi/**'
+      - 'Kode/src/Bronnoysund.Application/**'
+      - 'Kode/src/Bronnoysund.Infrastructure/**'
+      - 'Kode/src/Bronnoysund.Infrastructure.Persistence/**'
+      - 'Kode/src/Bronnoysund.Domain/**'
+      - 'Kode/Directory.Build.props'
+      - '.github/workflows/cd-webapi.yml'
+  workflow_dispatch: {}
 
 permissions:
   id-token: write
@@ -24,26 +29,44 @@ env:
   APP: bronnoysund-webapi
   IMAGE: bronnoysund-webapi
   DOCKERFILE: Kode/src/Bronnoysund.WebApi/Dockerfile
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   build-and-test:
     name: Build & test
-    if: github.event.inputs.run_tests != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Test (Core slnf)
-        run: dotnet test Kode/Bronnoysund.Core.slnf -c Release
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Kode/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Kode/Bronnoysund.Core.slnf
+
+      - name: Build
+        run: dotnet build Kode/Bronnoysund.Core.slnf --no-restore -c Release
+
+      - name: Test
+        run: |
+          dotnet test Kode/Bronnoysund.Core.slnf \
+            --no-build -c Release \
+            --logger 'console;verbosity=normal'
 
   deploy:
     name: Deploy to Container Apps
     needs: [build-and-test]
-    if: always() && (needs.build-and-test.result == 'success' || needs.build-and-test.result == 'skipped')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -52,9 +75,9 @@ jobs:
       - name: Azure login (OIDC)
         uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build image in ACR
         run: |

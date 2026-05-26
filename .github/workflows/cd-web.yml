@@ -1,24 +1,29 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 #
-# Deploys the Blazor Web UI (Bronnoysund.BlazorWeb) to Azure Container Apps.
-# Separate from cd-webapi.yml so the two services can ship and roll back
-# independently. Manual-only by default; flip on the workflow_run block to
-# auto-deploy on green CI on master.
+# Build + test + deploy of the Blazor Web UI (Bronnoysund.BlazorWeb) to
+# Azure Container Apps. Mirrors the MVP pattern: same workflow runs on
+# every push and PR, but the deploy job is gated by branch — only `push`
+# to master (or a manual workflow_dispatch) actually rolls a new image.
+# PR runs stop after the build+test gate.
 
 name: CD — Web (BlazorWeb to Azure)
 
 on:
-  workflow_dispatch:
-    inputs:
-      run_tests:
-        description: 'Run build+test before deploying (defence in depth)'
-        type: boolean
-        default: true
-  # Uncomment to auto-deploy after CI passes on master:
-  # workflow_run:
-  #   workflows: ['CI']
-  #   types: [completed]
-  #   branches: [master]
+  push:
+    branches: [master]
+    paths:
+      - 'Kode/src/Bronnoysund.BlazorWeb/**'
+      - 'Kode/src/Bronnoysund.Components/**'
+      - 'Kode/src/Bronnoysund.ViewModels/**'
+      - 'Kode/src/Bronnoysund.Application/**'
+      - 'Kode/src/Bronnoysund.Infrastructure/**'
+      - 'Kode/src/Bronnoysund.Infrastructure.Persistence/**'
+      - 'Kode/src/Bronnoysund.Domain/**'
+      - 'Kode/src/Bronnoysund.Speech/**'
+      - 'Kode/src/Bronnoysund.Speech.Web/**'
+      - 'Kode/Directory.Build.props'
+      - '.github/workflows/cd-web.yml'
+  workflow_dispatch: {}
 
 permissions:
   id-token: write   # OIDC token exchange with Azure AD
@@ -30,26 +35,46 @@ env:
   APP: bronnoysund-web
   IMAGE: bronnoysund-web
   DOCKERFILE: Kode/src/Bronnoysund.BlazorWeb/Dockerfile
+  # Opt in to Node.js 24 for JS-based actions now (default from June 2026).
+  # Silences the Node.js 20 deprecation notice on checkout / setup-dotnet / azure/login.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
   build-and-test:
     name: Build & test
-    if: github.event.inputs.run_tests != 'false' && (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-      - name: Test (Web slnf)
-        run: dotnet test Kode/Bronnoysund.Web.slnf -c Release
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('Kode/**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore Kode/Bronnoysund.Web.slnf
+
+      - name: Build
+        run: dotnet build Kode/Bronnoysund.Web.slnf --no-restore -c Release
+
+      - name: Test
+        run: |
+          dotnet test Kode/Bronnoysund.Web.slnf \
+            --no-build -c Release \
+            --logger 'console;verbosity=normal'
 
   deploy:
     name: Deploy to Container Apps
     needs: [build-and-test]
-    if: always() && (needs.build-and-test.result == 'success' || needs.build-and-test.result == 'skipped')
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -58,9 +83,9 @@ jobs:
       - name: Azure login (OIDC, federated credential)
         uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Build image in ACR
         run: |
