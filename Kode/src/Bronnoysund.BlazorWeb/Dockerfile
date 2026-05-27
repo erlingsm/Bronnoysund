@@ -17,6 +17,7 @@ COPY Directory.Build.props .
 COPY src/Bronnoysund.Domain/Bronnoysund.Domain.csproj                                   src/Bronnoysund.Domain/
 COPY src/Bronnoysund.Application/Bronnoysund.Application.csproj                         src/Bronnoysund.Application/
 COPY src/Bronnoysund.Infrastructure/Bronnoysund.Infrastructure.csproj                   src/Bronnoysund.Infrastructure/
+COPY src/Bronnoysund.Infrastructure.Brreg.Generated/Bronnoysund.Infrastructure.Brreg.Generated.csproj src/Bronnoysund.Infrastructure.Brreg.Generated/
 COPY src/Bronnoysund.Infrastructure.Persistence/Bronnoysund.Infrastructure.Persistence.csproj src/Bronnoysund.Infrastructure.Persistence/
 COPY src/Bronnoysund.ViewModels/Bronnoysund.ViewModels.csproj                           src/Bronnoysund.ViewModels/
 COPY src/Bronnoysund.Speech/Bronnoysund.Speech.csproj                                   src/Bronnoysund.Speech/
@@ -27,7 +28,8 @@ COPY src/Bronnoysund.BlazorWeb/Bronnoysund.BlazorWeb.csproj                     
 # Now full source.
 COPY src/Bronnoysund.Domain/                    src/Bronnoysund.Domain/
 COPY src/Bronnoysund.Application/               src/Bronnoysund.Application/
-COPY src/Bronnoysund.Infrastructure/            src/Bronnoysund.Infrastructure/
+COPY src/Bronnoysund.Infrastructure/             src/Bronnoysund.Infrastructure/
+COPY src/Bronnoysund.Infrastructure.Brreg.Generated/ src/Bronnoysund.Infrastructure.Brreg.Generated/
 COPY src/Bronnoysund.Infrastructure.Persistence/ src/Bronnoysund.Infrastructure.Persistence/
 COPY src/Bronnoysund.ViewModels/                src/Bronnoysund.ViewModels/
 COPY src/Bronnoysund.Speech/                    src/Bronnoysund.Speech/

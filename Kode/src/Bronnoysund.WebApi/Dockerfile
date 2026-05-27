@@ -12,17 +12,19 @@ COPY Directory.Build.props .
 COPY src/Bronnoysund.Domain/Bronnoysund.Domain.csproj                                       src/Bronnoysund.Domain/
 COPY src/Bronnoysund.Application/Bronnoysund.Application.csproj                             src/Bronnoysund.Application/
 COPY src/Bronnoysund.Infrastructure/Bronnoysund.Infrastructure.csproj                       src/Bronnoysund.Infrastructure/
+COPY src/Bronnoysund.Infrastructure.Brreg.Generated/Bronnoysund.Infrastructure.Brreg.Generated.csproj src/Bronnoysund.Infrastructure.Brreg.Generated/
 COPY src/Bronnoysund.Infrastructure.Persistence/Bronnoysund.Infrastructure.Persistence.csproj src/Bronnoysund.Infrastructure.Persistence/
 COPY src/Bronnoysund.WebApi/Bronnoysund.WebApi.csproj                                       src/Bronnoysund.WebApi/
 
 RUN dotnet restore src/Bronnoysund.WebApi/Bronnoysund.WebApi.csproj
 
 # Kopier all kildekode og bygg
-COPY src/Bronnoysund.Domain/                     src/Bronnoysund.Domain/
-COPY src/Bronnoysund.Application/                src/Bronnoysund.Application/
-COPY src/Bronnoysund.Infrastructure/             src/Bronnoysund.Infrastructure/
-COPY src/Bronnoysund.Infrastructure.Persistence/ src/Bronnoysund.Infrastructure.Persistence/
-COPY src/Bronnoysund.WebApi/                     src/Bronnoysund.WebApi/
+COPY src/Bronnoysund.Domain/                          src/Bronnoysund.Domain/
+COPY src/Bronnoysund.Application/                     src/Bronnoysund.Application/
+COPY src/Bronnoysund.Infrastructure/                  src/Bronnoysund.Infrastructure/
+COPY src/Bronnoysund.Infrastructure.Brreg.Generated/  src/Bronnoysund.Infrastructure.Brreg.Generated/
+COPY src/Bronnoysund.Infrastructure.Persistence/      src/Bronnoysund.Infrastructure.Persistence/
+COPY src/Bronnoysund.WebApi/                          src/Bronnoysund.WebApi/
 
 RUN dotnet publish src/Bronnoysund.WebApi/Bronnoysund.WebApi.csproj \
     -c Release \
