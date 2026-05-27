@@ -54,19 +54,29 @@ internal sealed class BrregCompanyProvider(
         catch (ApiException ex)
         {
             logger.LogWarning(ex, "Brreg upstream error for {OrgNumber}", org.Value);
-            throw new BrregUnavailableException(
-                $"Brreg returned HTTP {ex.ResponseStatusCode} for /enheter/{org.Value}", ex);
+            return new CompanyLookupResult.Unavailable(
+                $"Brreg returned HTTP {ex.ResponseStatusCode} for /enheter/{org.Value}");
+        }
+        catch (Polly.CircuitBreaker.BrokenCircuitException ex)
+        {
+            // Resilience pipeline tripped — Brreg has been failing recently. Return
+            // Unavailable so the UI can render "midlertidig utilgjengelig" instead of
+            // bubbling a stack trace. Caching layer (CachingCompanyProvider) does not
+            // cache Unavailable for long, so we'll probe again on the next request.
+            logger.LogWarning(ex, "Brreg circuit open for {OrgNumber}", org.Value);
+            return new CompanyLookupResult.Unavailable("Brreg is temporarily unavailable.");
         }
         catch (HttpRequestException ex)
         {
             logger.LogWarning(ex, "Brreg transport error for {OrgNumber}", org.Value);
-            throw new BrregUnavailableException(
-                $"Could not contact Brreg for /enheter/{org.Value}: {ex.Message}", ex);
+            return new CompanyLookupResult.Unavailable(
+                $"Could not contact Brreg for /enheter/{org.Value}: {ex.Message}");
         }
         catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
         {
-            throw new BrregUnavailableException(
-                $"Brreg did not respond within the timeout for /enheter/{org.Value}", ex);
+            logger.LogWarning(ex, "Brreg timeout for {OrgNumber}", org.Value);
+            return new CompanyLookupResult.Unavailable(
+                $"Brreg did not respond within the timeout for /enheter/{org.Value}");
         }
     }
 
