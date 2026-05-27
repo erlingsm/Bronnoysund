@@ -1,4 +1,4 @@
-# Bronnoysund.Lookup
+# Bronnoysund
 
 > Slå opp norske selskaper via Enhetsregisteret. Desktop, web, mobil og smartwatch — fra én .NET 10-kodebase.
 
@@ -39,8 +39,8 @@ Bytte er én linje i `appsettings.json`: `"DataSource": { "Mode": "Direct" }` el
 
 | Fase | Status | Tester | Kjørbar |
 | --- | --- | --- | --- |
-| Fase 0 — Kjerne + WebApi (MVP) | ✅ Ferdig | 31 passerer | `dotnet run --project Kode/src/Bronnoysund.Lookup.WebApi` |
-| Fase 2 — Blazor Web (Server) | ✅ Ferdig | — | `dotnet run --project Kode/src/Bronnoysund.Lookup.BlazorWeb` |
+| Fase 0 — Kjerne + WebApi (MVP) | ✅ Ferdig | 31 passerer | `dotnet run --project Kode/src/Bronnoysund.WebApi` |
+| Fase 2 — Blazor Web (Server) | ✅ Ferdig | — | `dotnet run --project Kode/src/Bronnoysund.BlazorWeb` |
 | Fase 1 — MAUI Desktop (Mac+Win) | 🟡 Kode ferdig, bygg krever Xcode 26.4 | — | Se [docs/install/desktop.md](docs/install/desktop.md) |
 | Fase 3 — MAUI Mobile + Voice | 🟡 Grunnlag + Speech-prosjekter | 16 passerer | Se [docs/install/ios.md](docs/install/ios.md) |
 | Fase 4 — Register-aggregator | 📋 Planlagt (Brreg-Roller, Regnskap, Eiere via parallelle oppslag) | — | — |
@@ -53,7 +53,7 @@ Bytte er én linje i `appsettings.json`: `"DataSource": { "Mode": "Direct" }` el
 
 ```text
 /Kode/                         — .NET 10 solution (10 src + 4 test-prosjekter)
-  ├── Bronnoysund.Lookup.sln   — komplett solution
+  ├── Bronnoysund.sln   — komplett solution
   ├── *.slnf                   — Solution Filter: Core, Web, Desktop, Mobile
   ├── src/                     — alle prosjekter
   └── tests/                   — alle test-prosjekter
@@ -82,7 +82,7 @@ Bytte er én linje i `appsettings.json`: `"DataSource": { "Mode": "Direct" }` el
 cd Kode
 dotnet build
 dotnet test
-dotnet run --project src/Bronnoysund.Lookup.WebApi --urls http://localhost:5099
+dotnet run --project src/Bronnoysund.WebApi --urls http://localhost:5099
 # I annen terminal:
 curl http://localhost:5099/companies/974760843  # Statens vegvesen
 ```
@@ -97,6 +97,52 @@ Forventet respons:
   "languageForm": "Bokmål"
 }
 ```
+
+## Brreg-dekning per i dag
+
+Klienten mot Brreg er generert fra den offisielle OpenAPI 3-spec'en —
+<https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/openapi.json> —
+via Kiota. Nattlig CI-job (`.github/workflows/spec-drift.yml`) varsler
+via GitHub-issue når Brreg endrer spec'en. Regenererer ved behov:
+
+```bash
+cd Kode/src/Bronnoysund.Infrastructure.Brreg.Generated
+./regenerate.sh
+```
+
+**Åpne endepunkter (ingen autentisering):**
+
+| Endepunkt | I koden? | I UI? |
+|---|---|---|
+| `/enheter/{orgnr}` | ✓ via `BrregCompanyProvider` | ✓ Lookup-side |
+| `/enheter?navn=…` (paginert) | ✓ via `BrregCompanySearchProvider` | ✓ Lookup (navn-modus) |
+| `/enheter/{orgnr}/roller` | ✓ via `BrregRolesProvider` | ✓ Lookup-resultat |
+| `/underenheter?overordnetEnhet=…` | ✓ via `BrregSubUnitsProvider` | ✓ Lookup-resultat |
+| `/organisasjonsformer` | ✓ via `BrregKodeverkProvider` | ✓ `/kodeverk/organisasjonsformer` |
+| Øvrige 28 åpne endepunkter (Kommuner, Næringskoder, Oppdateringer, Frivillighet, Matrikkel, Downloads, Partiregisteret) | Klient generert (klar til bruk) | Ikke bygget — full spec i `Plan/54-Frontend-alle-aapne-endepunkter.md` |
+
+**Lukkede endepunkter (krever Maskinporten):**
+
+| Endepunkt / Register | Hva som mangler |
+|---|---|
+| `/autorisert-api/enheter/{orgnr}/roller` | Virksomhetssertifikat + Maskinporten-onboarding + scope `brreg:enhetsregister.read` |
+| Regnskapsregisteret | Egen Maskinporten-scope `regnskapsregisteret:read` + egen Kiota-klient |
+| Reelle rettighetshavere | Scope `brreg:reellerettighetshavere/read` + AML-rapporteringsstatus |
+| Løsøreregisteret | Egen spec (ikke i hoved-OpenAPI) |
+| Elektronisk mottak | Maskinporten + Altinn-autorisasjon |
+| Gjeldsregisteret | IKKE Brreg — kommersiell avtale + 2-veis TLS via `gjeldsregisteret.com` |
+
+**Hva må til for full Maskinporten-dekning:**
+
+1. **Virksomhetssertifikat** fra Buypass (~3 000 NOK/år) eller Commfides
+   (~4 500 NOK/år) — 1–2 ukers bestillingstid
+2. **Digdir Selvbetjening-onboarding** av konsumenten `Bronnoysund` — noen dager
+3. **Søk om scopes** — sekunder for åpne scopes, uker for AML-gated
+4. **Lagre sertifikat i Azure Key Vault** + gi Container App's managed identity tilgang
+5. **Implementer Maskinporten-token-provider + autorisert Kiota-klient** (~4 timer kode når premissene er på plass)
+
+Aldri sjekk inn `.p12`, `.pfx`, `.keystore`, `.jks`, eller `AuthKey_*.p8` —
+de er allerede i `.gitignore`. Lokal kopi forventes i `~/.bronnoysund/`.
 
 ## Lisens
 

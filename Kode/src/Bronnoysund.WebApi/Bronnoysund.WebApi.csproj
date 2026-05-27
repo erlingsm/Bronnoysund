@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Bronnoysund.Application\Bronnoysund.Application.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure\Bronnoysund.Infrastructure.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.Brreg.Generated\Bronnoysund.Infrastructure.Brreg.Generated.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Persistence\Bronnoysund.Infrastructure.Persistence.csproj" />
   </ItemGroup>
 

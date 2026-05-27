@@ -12,3 +12,14 @@ Dokumentasjon/
 dist/
 **/bin/
 **/obj/
+
+# Signing-material — virksomhetssertifikater + private keys for Maskinporten,
+# Apple-signering, Android-keystore. Aldri på GitHub. Plan 55 dokumenterer
+# hvor lokale kopier skal ligge (utenfor repo). Hvis du noensinne ser disse
+# her, har vi en hendelse å håndtere.
+**/*.p12
+**/*.pfx
+**/*.keystore
+**/*.jks
+**/*.cer
+**/AuthKey_*.p8

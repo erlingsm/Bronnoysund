@@ -107,6 +107,7 @@ public static class ServiceCollectionExtensions
                     logger: sp.GetRequiredService<ILogger<CachingCompanyProvider>>()));
 
             services.AddSingleton<ICompanySearchProvider, BrregCompanySearchProvider>();
+            services.AddSingleton<IKodeverkProvider, BrregKodeverkProvider>();
         }
 
         // Phase 4 aggregator: parallel calls to every registered provider, per-provider error

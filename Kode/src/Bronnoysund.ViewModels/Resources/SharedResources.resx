@@ -140,4 +140,17 @@
   <data name="ReadAloudOrgForm"><value>company type {0}</value></data>
   <data name="ReadAloudIndustry"><value>industry {0}</value></data>
   <data name="ReadAloudEmployees"><value>{0} employees</value></data>
+
+  <!-- Browse (Plan 54) -->
+  <data name="NavLookup"><value>Lookup</value></data>
+  <data name="NavBrowse"><value>Browse</value></data>
+  <data name="NavOrgForms"><value>Organisation forms</value></data>
+  <data name="OrgFormsDescription"><value>The Norwegian register's catalogue of legal organisation forms (Aksjeselskap, Enkeltpersonforetak, Stiftelse, etc.) used as the company-type code on each entity. Retired codes are kept for historical lookups.</value></data>
+  <data name="KodeCol"><value>Code</value></data>
+  <data name="BeskrivelseCol"><value>Description</value></data>
+  <data name="StatusCol"><value>Status</value></data>
+  <data name="StatusActive"><value>Active</value></data>
+  <data name="StatusRetired"><value>Retired</value></data>
+  <data name="FilterPlaceholder"><value>Filter by code or description…</value></data>
+  <data name="NoResults"><value>No results.</value></data>
 </root>

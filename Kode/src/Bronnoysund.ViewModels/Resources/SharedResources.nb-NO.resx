@@ -133,4 +133,16 @@
   <data name="ReadAloudOrgForm"><value>organisasjonsform {0}</value></data>
   <data name="ReadAloudIndustry"><value>næring {0}</value></data>
   <data name="ReadAloudEmployees"><value>{0} ansatte</value></data>
+
+  <data name="NavLookup"><value>Oppslag</value></data>
+  <data name="NavBrowse"><value>Utforsk</value></data>
+  <data name="NavOrgForms"><value>Organisasjonsformer</value></data>
+  <data name="OrgFormsDescription"><value>Brreg sitt kodeverk for juridiske organisasjonsformer (Aksjeselskap, Enkeltpersonforetak, Stiftelse, osv.) som brukes som virksomhets-type-kode på hver enhet. Utgåtte koder beholdes for historiske oppslag.</value></data>
+  <data name="KodeCol"><value>Kode</value></data>
+  <data name="BeskrivelseCol"><value>Beskrivelse</value></data>
+  <data name="StatusCol"><value>Status</value></data>
+  <data name="StatusActive"><value>Aktiv</value></data>
+  <data name="StatusRetired"><value>Utgått</value></data>
+  <data name="FilterPlaceholder"><value>Filtrer på kode eller beskrivelse…</value></data>
+  <data name="NoResults"><value>Ingen treff.</value></data>
 </root>
