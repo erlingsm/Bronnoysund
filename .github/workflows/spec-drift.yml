@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
+#
+# Nightly check: does the live Brreg OpenAPI spec still match our committed
+# kiota-lock.json? If Brreg has changed the spec, the regenerate.sh --check
+# call exits non-zero and we open a GitHub issue so the change is acted on
+# before it surfaces in prod. See Plan 53 for the full graceful-fallback
+# classification of Brreg changes.
+
+name: Brreg spec drift
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 06:00 UTC daily
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write   # only needed when drift is detected
+
+jobs:
+  drift-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Drift check via regenerate.sh --check
+        id: drift
+        continue-on-error: true
+        run: ./Kode/src/Bronnoysund.Infrastructure.Brreg.Generated/regenerate.sh --check
+
+      - name: Open issue if drift detected
+        if: steps.drift.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Brreg OpenAPI spec drift detected';
+            // Avoid duplicate issues: if one already exists with the same title and is
+            // open, just leave a comment with today's date instead of opening another.
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'brreg-drift'
+            });
+            const today = new Date().toISOString().slice(0, 10);
+            const note = [
+              `Drift detected on ${today}. The live Brreg spec at`,
+              '`https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/openapi.json`',
+              'no longer matches `Kode/src/Bronnoysund.Infrastructure.Brreg.Generated/Generated/kiota-lock.json`.',
+              '',
+              'To resolve:',
+              '1. `cd Kode/src/Bronnoysund.Infrastructure.Brreg.Generated && ./regenerate.sh`',
+              '2. Review the diff to see which Brreg fields/endpoints changed.',
+              '3. If adapter code under `Kode/src/Bronnoysund.Infrastructure/Brreg/`',
+              '   stops compiling, see Plan 53 for the graceful-fallback policy per',
+              '   change class (added field / removed field / changed type / etc.)',
+              '4. Run the full test suite + smoke-test BlazorWeb locally before pushing.',
+              '',
+              `Triggered by run [${context.runId}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`
+            ].join('\n');
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body: note
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body: note, labels: ['brreg-drift']
+              });
+            }

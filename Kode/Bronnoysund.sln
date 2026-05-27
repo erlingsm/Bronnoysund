@@ -52,6 +52,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{29A7
 		..\.github\workflows\cd-windows-desktop.yml = ..\.github\workflows\cd-windows-desktop.yml
 		..\.github\workflows\cd-ios-mobile.yml = ..\.github\workflows\cd-ios-mobile.yml
 		..\.github\workflows\cd-android-mobile.yml = ..\.github\workflows\cd-android-mobile.yml
+		..\.github\workflows\spec-drift.yml = ..\.github\workflows\spec-drift.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{CFF2267E-5148-4C2F-987E-332C1EFAF81B}"
