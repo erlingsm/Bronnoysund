@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Bronnoysund.Application\Bronnoysund.Application.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.Brreg.Generated\Bronnoysund.Infrastructure.Brreg.Generated.csproj" />
   </ItemGroup>
 
   <ItemGroup>

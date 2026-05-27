@@ -68,6 +68,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{CFF226
 		..\deploy\azure-cleanup-mvp-overlap.sh = ..\deploy\azure-cleanup-mvp-overlap.sh
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bronnoysund.Infrastructure.Brreg.Generated", "src\Bronnoysund.Infrastructure.Brreg.Generated\Bronnoysund.Infrastructure.Brreg.Generated.csproj", "{681E21AE-AE1D-486B-9AE1-D0F59613A417}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -294,6 +296,18 @@ Global
 		{0BA134B0-8433-4455-9CF1-0023CD84B1A2}.Release|x64.Build.0 = Release|Any CPU
 		{0BA134B0-8433-4455-9CF1-0023CD84B1A2}.Release|x86.ActiveCfg = Release|Any CPU
 		{0BA134B0-8433-4455-9CF1-0023CD84B1A2}.Release|x86.Build.0 = Release|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Debug|x64.Build.0 = Debug|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Debug|x86.Build.0 = Debug|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Release|Any CPU.Build.0 = Release|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Release|x64.ActiveCfg = Release|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Release|x64.Build.0 = Release|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Release|x86.ActiveCfg = Release|Any CPU
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -317,5 +331,6 @@ Global
 		{AD2DDEB4-794B-4226-9C5E-8DADCA7F108A} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{B1D6F8B4-7CBB-42C5-A63A-8C8DA7FB8BD5} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{0BA134B0-8433-4455-9CF1-0023CD84B1A2} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{681E21AE-AE1D-486B-9AE1-D0F59613A417} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
