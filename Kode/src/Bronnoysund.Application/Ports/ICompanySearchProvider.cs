@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
+using Bronnoysund.Application.Dtos;
+
 namespace Bronnoysund.Application.Ports;
 
 /// <summary>
@@ -10,7 +12,18 @@ namespace Bronnoysund.Application.Ports;
 /// </summary>
 public interface ICompanySearchProvider
 {
+    /// <summary>
+    /// Legacy single-page search. Returns the first <paramref name="maxResults"/> hits plus
+    /// the source registry's total element count. Prefer <see cref="SearchByNameAsync(string, PagedRequest, CancellationToken)"/>
+    /// in new code that needs browse-through-pages.
+    /// </summary>
     Task<CompanySearchResult> SearchByNameAsync(string query, int maxResults, CancellationToken ct);
+
+    /// <summary>
+    /// Paginated search. Page is 0-based to match Brreg's HAL convention; UI converts to
+    /// 1-based for display. Plan 54's Browse-page exercises this path.
+    /// </summary>
+    Task<PagedResult<CompanySearchHit>> SearchByNameAsync(string query, PagedRequest paging, CancellationToken ct);
 }
 
 /// <summary>One row in a name-search result list.</summary>

@@ -20,7 +20,7 @@ public class BrregCompanySearchProviderTests : IDisposable
     {
         _wireMock = WireMockServer.Start();
         _httpClient = new HttpClient { BaseAddress = new Uri(_wireMock.Url!) };
-        var brreg = new BrregHttpClient(_httpClient, NullLogger<BrregHttpClient>.Instance);
+        var brreg = TestKiotaClientFactory.ForWireMock(_wireMock);
         _sut = new BrregCompanySearchProvider(brreg, NullLogger<BrregCompanySearchProvider>.Instance);
     }
 
@@ -48,7 +48,7 @@ public class BrregCompanySearchProviderTests : IDisposable
               "page": { "totalElements": 142, "totalPages": 8, "number": 0, "size": 20 }
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/enheter").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
@@ -66,7 +66,7 @@ public class BrregCompanySearchProviderTests : IDisposable
     public async Task SearchByNameAsync_EmptyEmbedded_ReturnsEmptyHits()
     {
         const string body = """{"_embedded": {"enheter": []}, "page": {"totalElements": 0}}""";
-        _wireMock.Given(Request.Create().WithPath("/enheter").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
@@ -87,7 +87,7 @@ public class BrregCompanySearchProviderTests : IDisposable
               "page": { "totalElements": 1 }
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/enheter").WithParam("navn", "røa").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter").WithParam("navn", "røa").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
@@ -112,7 +112,7 @@ public class BrregCompanySearchProviderTests : IDisposable
               "page": { "totalElements": 2 }
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/enheter").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 

@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Bronnoysund.Infrastructure\Bronnoysund.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Bronnoysund.Infrastructure.Brreg.Generated\Bronnoysund.Infrastructure.Brreg.Generated.csproj" />
   </ItemGroup>
 
 </Project>

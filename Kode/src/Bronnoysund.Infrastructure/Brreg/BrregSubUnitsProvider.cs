@@ -1,45 +1,69 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
+using System.Net;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Domain;
+using Bronnoysund.Infrastructure.Brreg.Generated;
 using Bronnoysund.Infrastructure.Exceptions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Kiota.Abstractions;
 
 namespace Bronnoysund.Infrastructure.Brreg;
 
 /// <summary>
-/// ISubUnitsProvider adapter for Brreg's open underenheter listing. The endpoint paginates
-/// — we ask for size=100 which covers almost every Norwegian parent. If we later hit a
-/// parent with more than 100 sub-units in practice, page through the HAL links.
+/// Adapter for <see cref="ISubUnitsProvider"/> backed by the Kiota-generated
+/// <see cref="BrregClient"/>. Filters underenheter where <c>overordnetEnhet={orgnr}</c>;
+/// page size 100 covers the long tail of Norwegian parent entities. Pagination beyond
+/// page 0 is not exposed today — if a parent ever has more than 100 sub-units, follow
+/// up by paging the Browse-Underenheter page (Plan 54) instead of expanding the
+/// aggregator response.
 /// </summary>
 internal sealed class BrregSubUnitsProvider(
-    BrregHttpClient http,
+    BrregClient client,
     ILogger<BrregSubUnitsProvider> logger) : ISubUnitsProvider
 {
+    private const int PageSize = 100;
+
     public async Task<SubUnitsResponse?> GetSubUnitsAsync(OrganizationNumber org, CancellationToken ct)
     {
         try
         {
-            var page = await http.GetUnderenheterAsync(org, ct);
-            if (page is null)
-            {
-                return null;
-            }
+            var page = await client.Enhetsregisteret.Api.Underenheter
+                .GetAsync(cfg =>
+                {
+                    cfg.QueryParameters.OverordnetEnhet = org.Value;
+                    cfg.QueryParameters.Size = PageSize;
+                }, ct).ConfigureAwait(false);
 
-            var items = page.Embedded?.Underenheter ?? [];
-            var subUnits = items
+            var items = (page?.Embedded?.Underenheter ?? [])
                 .Where(u => !string.IsNullOrWhiteSpace(u.Organisasjonsnummer))
                 .Select(u => new SubUnit(
                     OrganizationNumber: u.Organisasjonsnummer!,
                     Name: u.Navn ?? string.Empty))
                 .ToList();
 
-            return new SubUnitsResponse(subUnits);
+            return new SubUnitsResponse(items);
         }
-        catch (BrregUnavailableException ex)
+        catch (ApiException ex) when (ex.ResponseStatusCode == (int)HttpStatusCode.NotFound)
         {
-            logger.LogWarning(ex, "Brreg Underenheter unavailable for {OrgNumber}", org.Value);
-            throw;
+            return null;
+        }
+        catch (ApiException ex)
+        {
+            logger.LogWarning(ex, "Brreg Underenheter upstream error for {OrgNumber}", org.Value);
+            throw new BrregUnavailableException(
+                $"Brreg returned HTTP {ex.ResponseStatusCode} for /underenheter?overordnetEnhet={org.Value}", ex);
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning(ex, "Brreg Underenheter transport error for {OrgNumber}", org.Value);
+            throw new BrregUnavailableException(
+                $"Could not contact Brreg for /underenheter?overordnetEnhet={org.Value}: {ex.Message}", ex);
+        }
+        catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+        {
+            throw new BrregUnavailableException(
+                $"Brreg did not respond within the timeout for /underenheter?overordnetEnhet={org.Value}", ex);
         }
     }
 }

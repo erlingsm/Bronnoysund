@@ -29,7 +29,7 @@ public class BrregCompanyProviderMappingTests : IDisposable
     {
         _wireMock = WireMockServer.Start();
         _httpClient = new HttpClient { BaseAddress = new Uri(_wireMock.Url!) };
-        var brreg = new BrregHttpClient(_httpClient, NullLogger<BrregHttpClient>.Instance);
+        var brreg = TestKiotaClientFactory.ForWireMock(_wireMock);
         _sut = new BrregCompanyProvider(brreg, NullLogger<BrregCompanyProvider>.Instance);
     }
 
@@ -38,6 +38,7 @@ public class BrregCompanyProviderMappingTests : IDisposable
     {
         const string body = """
             {
+              "respons_klasse": "Enhet",
               "organisasjonsnummer": "974760843",
               "navn": "RIKSREVISJONEN",
               "organisasjonsform": { "kode": "ORGL", "beskrivelse": "Organisasjonsledd" },
@@ -72,7 +73,7 @@ public class BrregCompanyProviderMappingTests : IDisposable
               "registrertIForetaksregisteret": false
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/enheter/974760843").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter/974760843").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
@@ -122,6 +123,7 @@ public class BrregCompanyProviderMappingTests : IDisposable
         // What Brreg returns for a brand-new entity: just core fields, optional ones absent.
         const string body = """
             {
+              "respons_klasse": "Enhet",
               "organisasjonsnummer": "919300388",
               "navn": "EQUINOR ASA",
               "organisasjonsform": { "kode": "AS" },
@@ -129,7 +131,7 @@ public class BrregCompanyProviderMappingTests : IDisposable
               "konkurs": false
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/enheter/919300388").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter/919300388").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
@@ -152,6 +154,7 @@ public class BrregCompanyProviderMappingTests : IDisposable
         // we surface null instead.
         const string body = """
             {
+              "respons_klasse": "Enhet",
               "organisasjonsnummer": "919300388",
               "navn": "EQUINOR ASA",
               "organisasjonsform": { "kode": "AS" },
@@ -161,7 +164,7 @@ public class BrregCompanyProviderMappingTests : IDisposable
               "harRegistrertAntallAnsatte": false
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/enheter/919300388").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter/919300388").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 

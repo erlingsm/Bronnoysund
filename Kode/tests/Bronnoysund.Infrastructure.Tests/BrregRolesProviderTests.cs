@@ -22,7 +22,7 @@ public class BrregRolesProviderTests : IDisposable
     {
         _wireMock = WireMockServer.Start();
         _httpClient = new HttpClient { BaseAddress = new Uri(_wireMock.Url!) };
-        var brreg = new BrregHttpClient(_httpClient, NullLogger<BrregHttpClient>.Instance);
+        var brreg = TestKiotaClientFactory.ForWireMock(_wireMock);
         _sut = new BrregRolesProvider(brreg, NullLogger<BrregRolesProvider>.Instance);
     }
 
@@ -60,7 +60,7 @@ public class BrregRolesProviderTests : IDisposable
               ]
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/enheter/974760843/roller").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter/974760843/roller").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
@@ -98,7 +98,7 @@ public class BrregRolesProviderTests : IDisposable
               ]
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/enheter/974760843/roller").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter/974760843/roller").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
@@ -111,7 +111,7 @@ public class BrregRolesProviderTests : IDisposable
     [Fact]
     public async Task GetRolesAsync_Returns404_ResolvedAsNull()
     {
-        _wireMock.Given(Request.Create().WithPath("/enheter/974760843/roller").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/enheter/974760843/roller").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(404));
 
         var result = await _sut.GetRolesAsync(Vegvesenet, CancellationToken.None);

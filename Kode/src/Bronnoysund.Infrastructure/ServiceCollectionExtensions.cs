@@ -3,6 +3,7 @@
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Infrastructure.Aggregation;
 using Bronnoysund.Infrastructure.Brreg;
+using Bronnoysund.Infrastructure.Brreg.Generated;
 using Bronnoysund.Infrastructure.Caching;
 using Bronnoysund.Infrastructure.Remote;
 using Bronnoysund.Infrastructure.Stubs;
@@ -11,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Kiota.Abstractions.Authentication;
+using Microsoft.Kiota.Http.HttpClientLibrary;
 
 namespace Bronnoysund.Infrastructure;
 
@@ -65,15 +68,35 @@ public static class ServiceCollectionExtensions
         }
         else
         {
-            // Fat Client — call Brreg directly
-            services.AddHttpClient<BrregHttpClient>((sp, http) =>
+            // Fat Client — call Brreg directly through the Kiota-generated client.
+            // We register the HttpClient under the BrregClient typed name so Polly's
+            // resilience handler attaches to the chain Kiota's adapter uses.
+            services.AddHttpClient<BrregClient>((sp, http) =>
             {
                 var opts = sp.GetRequiredService<IOptions<BrregOptions>>().Value;
-                http.BaseAddress = new Uri(opts.BaseUrl);
+                // Generated BaseUrl is https://data.brreg.no (from spec.servers[0]); BrregOptions
+                // can still override it — useful for WireMock-based tests pointing at localhost.
+                http.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/').EndsWith("/enhetsregisteret/api", StringComparison.Ordinal)
+                    ? opts.BaseUrl[..opts.BaseUrl.IndexOf("/enhetsregisteret/api", StringComparison.Ordinal)]
+                    : opts.BaseUrl);
                 http.Timeout = opts.RequestTimeout;
                 http.DefaultRequestHeaders.UserAgent.ParseAdd(opts.UserAgent);
                 http.DefaultRequestHeaders.Accept.ParseAdd("application/json");
             }).AddStandardResilienceHandler();
+
+            services.AddSingleton(sp =>
+            {
+                var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(BrregClient));
+                var adapter = new HttpClientRequestAdapter(
+                    new AnonymousAuthenticationProvider(), httpClient: http);
+                // Override Kiota's spec-derived BaseUrl with our HttpClient's BaseAddress so the
+                // WireMock fixture (which points BaseUrl at localhost) is honored.
+                if (http.BaseAddress is not null)
+                {
+                    adapter.BaseUrl = http.BaseAddress.ToString().TrimEnd('/');
+                }
+                return new BrregClient(adapter);
+            });
 
             services.AddSingleton<BrregCompanyProvider>();
             services.AddSingleton<ICompanyProvider>(sp =>

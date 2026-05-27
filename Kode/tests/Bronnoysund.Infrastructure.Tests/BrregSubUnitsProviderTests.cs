@@ -22,7 +22,7 @@ public class BrregSubUnitsProviderTests : IDisposable
     {
         _wireMock = WireMockServer.Start();
         _httpClient = new HttpClient { BaseAddress = new Uri(_wireMock.Url!) };
-        var brreg = new BrregHttpClient(_httpClient, NullLogger<BrregHttpClient>.Instance);
+        var brreg = TestKiotaClientFactory.ForWireMock(_wireMock);
         _sut = new BrregSubUnitsProvider(brreg, NullLogger<BrregSubUnitsProvider>.Instance);
     }
 
@@ -40,7 +40,7 @@ public class BrregSubUnitsProviderTests : IDisposable
               "page": { "totalElements": 2, "totalPages": 1, "number": 0, "size": 100 }
             }
             """;
-        _wireMock.Given(Request.Create().WithPath("/underenheter").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/underenheter").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
@@ -56,7 +56,7 @@ public class BrregSubUnitsProviderTests : IDisposable
     public async Task GetSubUnitsAsync_EmptyEmbedded_ReturnsEmptyList()
     {
         const string body = """{"_embedded": {"underenheter": []}, "page": {"totalElements": 0}}""";
-        _wireMock.Given(Request.Create().WithPath("/underenheter").UsingGet())
+        _wireMock.Given(Request.Create().WithPath("/enhetsregisteret/api/underenheter").UsingGet())
             .RespondWith(Response.Create().WithStatusCode(200)
                 .WithHeader("Content-Type", "application/json").WithBody(body));
 
