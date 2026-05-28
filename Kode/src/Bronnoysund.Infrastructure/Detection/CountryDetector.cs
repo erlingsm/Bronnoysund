@@ -67,7 +67,36 @@ internal sealed class CountryDetector : ICountryDetector
             return regon;
         }
 
-        // 5. Irish — 1-7 digits without prefix. Tried last because a bare "5" matches IE
+        // 5. Swedish — 10 digits + Luhn. Tried after Polish because Polish 10-digit forms
+        //    are more specific (NIP MOD-11 or KRS leading zeros).
+        if (SwedishOrganizationNumber.TryCreate(rawInput, out var swedish, out _))
+        {
+            return swedish;
+        }
+
+        // 6. Lithuanian — 9 digits + the two-step MOD-11. Tried after Polish REGON but
+        //    before any unconditional 9-digit fallback because the algorithms differ.
+        if (digits.Length == 9 && LithuanianCompanyCode.TryCreate(rawInput, out var lithuanian, out _))
+        {
+            return lithuanian;
+        }
+
+        // 7. Danish — 8 digits + MOD-11. Estonian patterns are 1/7/8/9-prefixed so do not
+        //    collide; here we accept any 8-digit string that passes the Danish checksum.
+        if (digits.Length == 8 && DanishCvrNumber.TryCreate(rawInput, out var danish, out _))
+        {
+            return danish;
+        }
+
+        // 8. Slovenian — 10 digits, no checksum. The only check is length, so this is
+        //    nearly always wrong as a positive detection — keep below NO/PL/SE/LT so the
+        //    stricter validators win first.
+        if (digits.Length == 10 && SlovenianMaticnaStevilka.TryCreate(rawInput, out var slovenian, out _))
+        {
+            return slovenian;
+        }
+
+        // 9. Irish — 1-7 digits without prefix. Tried last because a bare "5" matches IE
         //    but would also match many partial inputs from other countries; we accept the
         //    false-positive risk because the alternative (no detection at all) is worse.
         if (IrishCroNumber.TryCreate(rawInput, out var irish, out _))

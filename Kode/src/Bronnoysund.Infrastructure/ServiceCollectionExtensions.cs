@@ -5,11 +5,15 @@ using Bronnoysund.Infrastructure.Aggregation;
 using Bronnoysund.Infrastructure.Brreg;
 using Bronnoysund.Infrastructure.Brreg.Generated;
 using Bronnoysund.Infrastructure.Caching;
+using Bronnoysund.Infrastructure.Denmark;
 using Bronnoysund.Infrastructure.Detection;
 using Bronnoysund.Infrastructure.Estonia;
 using Bronnoysund.Infrastructure.Finland;
 using Bronnoysund.Infrastructure.Ireland;
+using Bronnoysund.Infrastructure.Lithuania;
 using Bronnoysund.Infrastructure.Poland;
+using Bronnoysund.Infrastructure.Slovenia;
+using Bronnoysund.Infrastructure.Sweden;
 using Bronnoysund.Infrastructure.Remote;
 using Bronnoysund.Infrastructure.Stubs;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -236,6 +240,14 @@ public static class ServiceCollectionExtensions
         services.AddBronnoysundEstonia(configuration);
         services.AddBronnoysundIreland(configuration);
         services.AddBronnoysundPoland(configuration);
+
+        // Plan 21 Bølge 2 — registers with longer activation lead times (OAuth signup,
+        // e-mail credentials, prepaid VTA balance). All four return Unavailable with a
+        // specific reason until App Config provisions the required keys.
+        services.AddBronnoysundSweden(configuration);
+        services.AddBronnoysundDenmark(configuration);
+        services.AddBronnoysundSlovenia(configuration);
+        services.AddBronnoysundLithuania(configuration);
 
         return services;
     }
