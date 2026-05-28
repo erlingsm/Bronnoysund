@@ -1,0 +1,161 @@
+@page "/matrikkel"
+@using Bronnoysund.Application.Results
+@inject IMatrikkelenhetProvider Matrikkel
+@inject NavigationManager Nav
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@L["MatrikkelTitle"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">@L["MatrikkelTitle"]</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        @L["MatrikkelDescription"]
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <MudRadioGroup T="MatrikkelMode" Value="_mode" ValueChanged="OnModeChanged" Class="mb-4">
+            <MudRadio T="MatrikkelMode" Value="MatrikkelMode.Number">@L["MatrikkelModeNumber"]</MudRadio>
+            <MudRadio T="MatrikkelMode" Value="MatrikkelMode.Id">@L["MatrikkelModeId"]</MudRadio>
+        </MudRadioGroup>
+
+        <div class="d-flex align-center" style="gap: 0.5rem;">
+            @if (_mode == MatrikkelMode.Number)
+            {
+                <MudTextField @bind-Value="_matrikkelnummer"
+                              Label="@L["MatrikkelNumberLabel"]"
+                              Placeholder="@L["MatrikkelNumberPlaceholder"]"
+                              Variant="Variant.Outlined" Immediate="true"
+                              OnKeyDown="OnKeyDown" Disabled="@_loading"
+                              Class="flex-grow-1" />
+            }
+            else
+            {
+                <MudTextField @bind-Value="_matrikkelenhetid"
+                              Label="@L["MatrikkelIdLabel"]"
+                              Placeholder="@L["MatrikkelIdPlaceholder"]"
+                              Variant="Variant.Outlined" Immediate="true"
+                              OnKeyDown="OnKeyDown" Disabled="@_loading"
+                              Class="flex-grow-1" />
+            }
+        </div>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" FullWidth="true"
+                   Disabled="@_loading" OnClick="OnSearchClicked"
+                   StartIcon="@Icons.Material.Filled.Search">
+            @L["MatrikkelSearchButton"]
+        </MudButton>
+    </MudPaper>
+
+    @if (_invalid is not null)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">@_invalid</MudAlert>
+    }
+    else if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">@_error</MudAlert>
+    }
+    else if (_notFound)
+    {
+        <MudAlert Severity="Severity.Info" Class="mb-4">@L["MatrikkelEmpty"]</MudAlert>
+    }
+
+    @if (_rows.Count > 0)
+    {
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudTable Items="@_rows" Dense="true" Hover="true" T="MatrikkelenhetResponse">
+                <HeaderContent>
+                    <MudTh>@L["MatrikkelColMatrikkelId"]</MudTh>
+                    <MudTh>@L["MatrikkelColOrgNumber"]</MudTh>
+                    <MudTh>@L["MatrikkelColKommune"]</MudTh>
+                    <MudTh>@L["MatrikkelColGnr"]</MudTh>
+                    <MudTh>@L["MatrikkelColBnr"]</MudTh>
+                    <MudTh>@L["MatrikkelColFnr"]</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="row">
+                    <MudTd>
+                        <code class="d-inline-block" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">
+                            @row.MatrikkelenhetId
+                        </code>
+                    </MudTd>
+                    <MudTd>
+                        <MudLink Href="@($"lookup?orgnr={row.OrganizationNumber}")">
+                            <code>@row.OrganizationNumber</code>
+                        </MudLink>
+                    </MudTd>
+                    <MudTd>@row.KommuneNumber</MudTd>
+                    <MudTd>@row.GardsNumber</MudTd>
+                    <MudTd>@row.BruksNumber</MudTd>
+                    <MudTd>@row.FesteNumber</MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private MatrikkelMode _mode = MatrikkelMode.Number;
+    private string _matrikkelnummer = string.Empty;
+    private string _matrikkelenhetid = string.Empty;
+    private bool _loading;
+    private bool _notFound;
+    private string? _error;
+    private string? _invalid;
+    private List<MatrikkelenhetResponse> _rows = new();
+
+    private void OnModeChanged(MatrikkelMode mode)
+    {
+        _mode = mode;
+        // Clear cross-mode state so a stale invalid/notFound from the other mode does not linger.
+        _invalid = null;
+        _error = null;
+        _notFound = false;
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !_loading)
+        {
+            await OnSearchClicked();
+        }
+    }
+
+    private async Task OnSearchClicked()
+    {
+        _loading = true;
+        _error = null;
+        _invalid = null;
+        _notFound = false;
+        _rows.Clear();
+        try
+        {
+            var query = _mode == MatrikkelMode.Number
+                ? new MatrikkelenhetQuery(Matrikkelnummer: _matrikkelnummer)
+                : new MatrikkelenhetQuery(MatrikkelenhetId: _matrikkelenhetid);
+            var result = await Matrikkel.LookupAsync(query, CancellationToken.None);
+            switch (result)
+            {
+                case MatrikkelenhetLookupResult.Found f:
+                    _rows = f.Matrikkelenheter.ToList();
+                    break;
+                case MatrikkelenhetLookupResult.NotFound:
+                    _notFound = true;
+                    break;
+                case MatrikkelenhetLookupResult.InvalidInput inv:
+                    _invalid = string.Format(L["MatrikkelInvalidInput"].Value, inv.Message);
+                    break;
+                case MatrikkelenhetLookupResult.Unavailable u:
+                    _error = string.Format(L["MatrikkelError"].Value, u.Message);
+                    break;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private enum MatrikkelMode
+    {
+        Number,
+        Id,
+    }
+}

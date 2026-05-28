@@ -1,0 +1,84 @@
+@page "/downloads"
+@inject IBulkDownloadCatalog Catalog
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@L["DownloadsTitle"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">@L["DownloadsTitle"]</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        @L["DownloadsDescription"]
+    </MudText>
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">@_error</MudAlert>
+    }
+
+    @if (_entries.Count == 0 && _error is null)
+    {
+        <MudAlert Severity="Severity.Info">@L["DownloadsEmpty"]</MudAlert>
+    }
+
+    @foreach (var group in _entries.GroupBy(e => e.Register).OrderBy(g => g.Key, StringComparer.Ordinal))
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudText Typo="Typo.h6" GutterBottom="true">@group.Key</MudText>
+            <MudTable Items="@group" Dense="true" Hover="true" T="BulkDownload">
+                <HeaderContent>
+                    <MudTh>@L["DownloadsColTitle"]</MudTh>
+                    <MudTh>@L["DownloadsColFormat"]</MudTh>
+                    <MudTh>@L["DownloadsColCompressed"]</MudTh>
+                    <MudTh Style="text-align: right;">@L["DownloadsColAction"]</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="entry">
+                    <MudTd>
+                        <MudText Typo="Typo.body2"><strong>@entry.Title</strong></MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@entry.Description</MudText>
+                    </MudTd>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">@entry.Format</MudChip>
+                    </MudTd>
+                    <MudTd>
+                        @if (entry.Compressed)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Info">@L["DownloadsCompressedYes"]</MudChip>
+                        }
+                        else
+                        {
+                            @L["DownloadsCompressedNo"]
+                        }
+                    </MudTd>
+                    <MudTd Style="text-align: right;">
+                        @* target=_blank with rel=noopener so the Brreg CDN page can't reach back
+                           into our window and so we don't lose state if the user wants to keep
+                           browsing while a large dump downloads. *@
+                        <MudLink Href="@entry.Url" Target="_blank" rel="noopener">
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.CloudDownload" Size="Size.Small">
+                                @L["DownloadsButton"]
+                            </MudButton>
+                        </MudLink>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private IReadOnlyList<BulkDownload> _entries = [];
+    private string? _error;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            _entries = Catalog.GetAll();
+        }
+        catch (Exception ex)
+        {
+            _error = string.Format(L["DownloadsError"].Value, ex.Message);
+        }
+    }
+}

@@ -320,10 +320,14 @@
                 <MudText Typo="Typo.subtitle1" Class="mb-2">
                     @L["SubUnitsSection"] (@subUnits.Count)
                 </MudText>
+                @* Each sub-unit row is a navigation link to /underenhet/{orgnr} (Plan 57, A-gap 1).
+                   Using MudListItem's Href + OnClick avoids the full-circuit re-render that a
+                   server-handled OnClick would trigger. *@
                 <MudList T="string" Dense="true">
                     @foreach (var sub in subUnits)
                     {
                         <MudListItem T="string" Icon="@Icons.Material.Filled.AccountTree"
+                                     Href="@($"underenhet/{sub.OrganizationNumber}")"
                                      Text="@($"{sub.Name} — {sub.OrganizationNumber}")" />
                     }
                 </MudList>

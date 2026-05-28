@@ -1,0 +1,81 @@
+@page "/kodeverk/kommuner/{Kommunenummer}"
+@using Bronnoysund.Application.Results
+@inject IKodeverkProvider Kodeverk
+@inject NavigationManager Nav
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@string.Format(L["KommuneDetailTitle"].Value, Kommunenummer)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Class="mb-4"
+               OnClick="@(() => Nav.NavigateTo("kodeverk/kommuner"))">
+        @L["KommuneDetailBack"]
+    </MudButton>
+
+    <MudText Typo="Typo.h4" GutterBottom="true">
+        @L["KommuneDetailTitle", Kommunenummer]
+    </MudText>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning">@_error</MudAlert>
+    }
+    else if (_notFound)
+    {
+        <MudAlert Severity="Severity.Info">
+            @L["KommuneNotFound", Kommunenummer]
+        </MudAlert>
+    }
+    else if (_entry is { } entry)
+    {
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudList T="string" Dense="true">
+                <MudListItem T="string" Icon="@Icons.Material.Filled.Tag"
+                             Text="@($"{L["KommunerColNumber"]}: {entry.Code}")" />
+                <MudListItem T="string" Icon="@Icons.Material.Filled.LocationCity"
+                             Text="@($"{L["KommunerColName"]}: {entry.Description}")" />
+            </MudList>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public string Kommunenummer { get; set; } = string.Empty;
+
+    private KodeverkEntry? _entry;
+    private bool _loading = true;
+    private bool _notFound;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _notFound = false;
+        _entry = null;
+        try
+        {
+            var result = await Kodeverk.GetKommuneAsync(Kommunenummer, CancellationToken.None);
+            switch (result)
+            {
+                case KodeverkSingleResult.Found f:
+                    _entry = f.Entry;
+                    break;
+                case KodeverkSingleResult.NotFound:
+                    _notFound = true;
+                    break;
+                case KodeverkSingleResult.Unavailable u:
+                    _error = u.Message;
+                    break;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

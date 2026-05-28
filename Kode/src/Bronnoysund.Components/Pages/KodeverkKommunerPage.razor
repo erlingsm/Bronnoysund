@@ -1,0 +1,121 @@
+@page "/kodeverk/kommuner"
+@using Bronnoysund.Application.Results
+@inject IKodeverkProvider Kodeverk
+@inject NavigationManager Nav
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@L["KommunerTitle"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">@L["KommunerTitle"]</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        @L["KommunerDescription"]
+    </MudText>
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">@_error</MudAlert>
+    }
+
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudTable Items="@_rows" Loading="@_loading" Dense="true" Hover="true"
+                  OnRowClick="OnRowClick"
+                  Filter="new Func<KodeverkEntry, bool>(FilterRow)"
+                  T="KodeverkEntry">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_filter" Placeholder="@L["FilterPlaceholder"]"
+                              Variant="Variant.Outlined" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.FilterList" Margin="Margin.Dense"
+                              Clearable="true" Immediate="true" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>@L["KommunerColNumber"]</MudTh>
+                <MudTh>@L["KommunerColName"]</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="row">
+                <MudTd><code>@row.Code</code></MudTd>
+                <MudTd>@row.Description</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>@L["KommunerEmpty"]</MudText>
+            </NoRecordsContent>
+        </MudTable>
+
+        @if (_totalElements > 0)
+        {
+            <div class="d-flex align-center justify-space-between mt-4" style="flex-wrap: wrap; gap: 0.5rem;">
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    @L["KommunerPagedHint", _rows.Count, _totalElements, _totalPages]
+                </MudText>
+                <MudPagination Selected="@(_page + 1)" SelectedChanged="OnPageSelected"
+                               Count="@_totalPages" ShowFirstButton="true" ShowLastButton="true" />
+            </div>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private const int PageSize = 100;
+
+    private IReadOnlyList<KodeverkEntry> _rows = [];
+    private bool _loading = true;
+    private string? _error;
+    private string _filter = string.Empty;
+    private int _page;
+    private int _totalElements;
+    private int _totalPages;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync(0);
+    }
+
+    private async Task OnPageSelected(int oneBasedPage)
+    {
+        await LoadAsync(Math.Max(0, oneBasedPage - 1));
+    }
+
+    private async Task LoadAsync(int page)
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var result = await Kodeverk.GetKommunerAsync(page, PageSize, CancellationToken.None);
+            switch (result)
+            {
+                case KodeverkPagedResult.Found f:
+                    _rows = f.Entries;
+                    _page = f.Page;
+                    _totalElements = f.TotalElements;
+                    _totalPages = Math.Max(1, f.TotalPages);
+                    break;
+                case KodeverkPagedResult.Unavailable u:
+                    _error = u.Message;
+                    _rows = [];
+                    _totalElements = 0;
+                    _totalPages = 0;
+                    break;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool FilterRow(KodeverkEntry e)
+    {
+        if (string.IsNullOrWhiteSpace(_filter)) return true;
+        return e.Code.Contains(_filter, StringComparison.OrdinalIgnoreCase)
+            || e.Description.Contains(_filter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void OnRowClick(TableRowClickEventArgs<KodeverkEntry> args)
+    {
+        if (args.Item is { } row)
+        {
+            Nav.NavigateTo($"kodeverk/kommuner/{Uri.EscapeDataString(row.Code)}");
+        }
+    }
+}

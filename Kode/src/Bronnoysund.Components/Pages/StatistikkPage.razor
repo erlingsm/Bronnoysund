@@ -1,0 +1,83 @@
+@page "/statistikk"
+@using System.Globalization
+@using Bronnoysund.Application.Results
+@inject IBrregStatisticsProvider Stats
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@L["StatistikkTitle"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">@L["StatistikkTitle"]</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        @L["StatistikkDescription"]
+    </MudText>
+
+    @* Single tile for now (Brreg's /roller/totalbestand). Wrap in a grid so additional
+       statistics tiles can be added without restructuring the page. The decorator caches
+       the value for 2 minutes so we don't auto-refresh client-side. *@
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <MudCard Elevation="2">
+                <MudCardContent>
+                    @if (_loading)
+                    {
+                        <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="ml-2 d-inline">
+                            @L["StatistikkLoading"]
+                        </MudText>
+                    }
+                    else if (_error is not null)
+                    {
+                        <MudAlert Severity="Severity.Warning">@_error</MudAlert>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.subtitle1" Color="Color.Secondary">
+                            @L["StatistikkRolesTotalLabel"]
+                        </MudText>
+                        <MudText Typo="Typo.h3" Class="mt-2">
+                            @_total.ToString("N0", CultureInfo.CurrentUICulture)
+                        </MudText>
+                    }
+                </MudCardContent>
+                @if (_loadedAt is { } loadedAt && _error is null && !_loading)
+                {
+                    <MudCardActions>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @L["StatistikkLastUpdated", loadedAt.ToString("g", CultureInfo.CurrentUICulture)]
+                        </MudText>
+                    </MudCardActions>
+                }
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private long _total;
+    private bool _loading = true;
+    private string? _error;
+    private DateTimeOffset? _loadedAt;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await Stats.GetRolesTotalCountAsync(CancellationToken.None);
+            switch (result)
+            {
+                case RolesTotalCountResult.Found f:
+                    _total = f.TotalCount;
+                    _loadedAt = DateTimeOffset.Now;
+                    break;
+                case RolesTotalCountResult.Unavailable u:
+                    _error = string.Format(L["StatistikkError"].Value, u.Message);
+                    break;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

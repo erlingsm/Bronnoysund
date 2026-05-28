@@ -1,12 +1,13 @@
 @page "/kodeverk/organisasjonsformer"
 @using Bronnoysund.Application.Results
 @inject IKodeverkProvider Kodeverk
+@inject NavigationManager Nav
 @inject IStringLocalizer<SharedResources> L
 
-<PageTitle>@L["NavOrgForms"]</PageTitle>
+<PageTitle>@L["NavKodeverkOrgForms"]</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
-    <MudText Typo="Typo.h4" GutterBottom="true">@L["NavOrgForms"]</MudText>
+    <MudText Typo="Typo.h4" GutterBottom="true">@L["NavKodeverkOrgForms"]</MudText>
     <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
         @L["OrgFormsDescription"]
     </MudText>
@@ -17,8 +18,22 @@
     }
 
     <MudPaper Class="pa-4" Elevation="2">
+        <div class="d-flex align-center mb-4" style="gap: 0.75rem; flex-wrap: wrap;">
+            @* Toggle reuses Brreg's two filtered endpoints (med-enheter / med-underenheter)
+               instead of running a client-side filter — Brreg's lists already reflect "in use"
+               better than we could derive from the full list, and the 24h cache makes the
+               extra round-trip free in steady state. *@
+            <MudToggleGroup T="OrgFormsFilter" SelectionMode="SelectionMode.SingleSelection"
+                            Value="_filterMode" ValueChanged="OnFilterChanged">
+                <MudToggleItem Value="OrgFormsFilter.All">@L["OrgFormsFilterAll"]</MudToggleItem>
+                <MudToggleItem Value="OrgFormsFilter.WithEntities">@L["OrgFormsFilterWithEntities"]</MudToggleItem>
+                <MudToggleItem Value="OrgFormsFilter.WithSubUnits">@L["OrgFormsFilterWithSubUnits"]</MudToggleItem>
+            </MudToggleGroup>
+        </div>
+
         <MudTable Items="@_rows" Loading="@_loading" Dense="true" Hover="true"
                   Filter="new Func<KodeverkEntry, bool>(FilterRow)"
+                  OnRowClick="OnRowClick"
                   T="KodeverkEntry">
             <ToolBarContent>
                 <MudTextField @bind-Value="_filter" Placeholder="@L["FilterPlaceholder"]"
@@ -61,12 +76,31 @@
     private bool _loading = true;
     private string? _error;
     private string _filter = string.Empty;
+    private OrgFormsFilter _filterMode = OrgFormsFilter.All;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadAsync();
+    }
+
+    private async Task OnFilterChanged(OrgFormsFilter mode)
+    {
+        _filterMode = mode;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
         try
         {
-            var result = await Kodeverk.GetOrganisasjonsformerAsync(CancellationToken.None);
+            var result = _filterMode switch
+            {
+                OrgFormsFilter.WithEntities => await Kodeverk.GetOrganisasjonsformerWithEnheterAsync(CancellationToken.None),
+                OrgFormsFilter.WithSubUnits => await Kodeverk.GetOrganisasjonsformerWithUnderenheterAsync(CancellationToken.None),
+                _ => await Kodeverk.GetOrganisasjonsformerAsync(CancellationToken.None),
+            };
             switch (result)
             {
                 case KodeverkLookupResult.Found f:
@@ -74,6 +108,7 @@
                     break;
                 case KodeverkLookupResult.Unavailable u:
                     _error = u.Message;
+                    _rows = [];
                     break;
             }
         }
@@ -88,5 +123,20 @@
         if (string.IsNullOrWhiteSpace(_filter)) return true;
         return e.Code.Contains(_filter, StringComparison.OrdinalIgnoreCase)
             || e.Description.Contains(_filter, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void OnRowClick(TableRowClickEventArgs<KodeverkEntry> args)
+    {
+        if (args.Item is { } row)
+        {
+            Nav.NavigateTo($"kodeverk/organisasjonsformer/{Uri.EscapeDataString(row.Code)}");
+        }
+    }
+
+    private enum OrgFormsFilter
+    {
+        All,
+        WithEntities,
+        WithSubUnits,
     }
 }

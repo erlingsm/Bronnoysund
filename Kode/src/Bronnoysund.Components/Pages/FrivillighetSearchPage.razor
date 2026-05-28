@@ -1,0 +1,155 @@
+@page "/frivillighet"
+@using Bronnoysund.Application.Results
+@inject IVoluntaryOrganizationSearchProvider Search
+@inject NavigationManager Nav
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@L["VoluntaryTitle"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">@L["VoluntaryTitle"]</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        @L["VoluntaryDescription"]
+    </MudText>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="2">
+        <div class="d-flex align-center" style="gap: 0.5rem; flex-wrap: wrap;">
+            <MudNumericField T="int" @bind-Value="_size" Min="1" Max="100" Step="10"
+                             Label="@L["VoluntarySizeLabel"]"
+                             Variant="Variant.Outlined" Margin="Margin.Dense"
+                             Style="max-width: 200px;" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       Disabled="@_loading" OnClick="OnSearchClicked"
+                       StartIcon="@Icons.Material.Filled.Search">
+                @L["VoluntarySearchButton"]
+            </MudButton>
+        </div>
+    </MudPaper>
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">@_error</MudAlert>
+    }
+
+    @if (_rows.Count > 0 || _searched)
+    {
+        <MudPaper Class="pa-4 mb-4" Elevation="2">
+            <MudTable Items="@_rows" Loading="@_loading" Dense="true" Hover="true"
+                      OnRowClick="OnRowClick" T="VoluntaryOrganizationResponse">
+                <HeaderContent>
+                    <MudTh>@L["VoluntaryColName"]</MudTh>
+                    <MudTh>@L["VoluntaryColOrgNumber"]</MudTh>
+                    <MudTh>@L["VoluntaryColStatus"]</MudTh>
+                    <MudTh>@L["VoluntaryColIcnpo"]</MudTh>
+                    <MudTh>@L["VoluntaryColGrasrot"]</MudTh>
+                </HeaderContent>
+                <RowTemplate Context="row">
+                    @* Brreg's voluntary-organization search payload does not include the
+                       organization name. Until we backfill via /enheter/{orgnr} we render a
+                       placeholder so the column communicates "this row exists" rather than
+                       being silently empty. *@
+                    <MudTd>@L["VoluntaryNameUnknown"]</MudTd>
+                    <MudTd><code>@row.OrganizationNumber</code></MudTd>
+                    <MudTd>@row.Status</MudTd>
+                    <MudTd>
+                        @if (!string.IsNullOrWhiteSpace(row.PrimaryIcnpoCategoryName))
+                        {
+                            @($"{row.PrimaryIcnpoCategoryNumber} — {row.PrimaryIcnpoCategoryName}")
+                        }
+                        else if (!string.IsNullOrWhiteSpace(row.PrimaryIcnpoCategoryNumber))
+                        {
+                            @row.PrimaryIcnpoCategoryNumber
+                        }
+                    </MudTd>
+                    <MudTd>
+                        @if (row.ParticipatesInGrasrotandel)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success">
+                                @L["VoluntaryGrasrotYes"]
+                            </MudChip>
+                        }
+                        else
+                        {
+                            @L["VoluntaryGrasrotNo"]
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText>@L["VoluntaryEmpty"]</MudText>
+                </NoRecordsContent>
+            </MudTable>
+
+            @if (_nextCursor is not null)
+            {
+                <div class="d-flex justify-end mt-3">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary"
+                               OnClick="OnNextPage" Disabled="@_loading"
+                               EndIcon="@Icons.Material.Filled.ArrowForward">
+                        @L["VoluntaryNextPage"]
+                    </MudButton>
+                </div>
+            }
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private readonly List<VoluntaryOrganizationResponse> _rows = new();
+    private bool _loading;
+    private bool _searched;
+    private int _size = 20;
+    private string? _nextCursor;
+    private string? _error;
+
+    private async Task OnSearchClicked()
+    {
+        _rows.Clear();
+        _nextCursor = null;
+        _searched = true;
+        await LoadAsync(searchAfter: null);
+    }
+
+    private async Task OnNextPage()
+    {
+        if (_nextCursor is null) return;
+        await LoadAsync(searchAfter: _nextCursor);
+    }
+
+    private async Task LoadAsync(string? searchAfter)
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var query = new VoluntaryOrganizationSearchQuery(
+                Size: Math.Clamp(_size, 1, 100),
+                SearchAfter: searchAfter);
+            var result = await Search.SearchAsync(query, CancellationToken.None);
+            switch (result)
+            {
+                case VoluntaryOrganizationSearchResult.Found f:
+                    _rows.AddRange(f.Result.Organizations);
+                    _nextCursor = f.Result.NextCursor;
+                    break;
+                case VoluntaryOrganizationSearchResult.InvalidInput inv:
+                    _error = inv.Message;
+                    break;
+                case VoluntaryOrganizationSearchResult.Unavailable u:
+                    _error = string.Format(L["VoluntaryError"].Value, u.Message);
+                    break;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void OnRowClick(TableRowClickEventArgs<VoluntaryOrganizationResponse> args)
+    {
+        if (args.Item is { OrganizationNumber: var orgnr } && !string.IsNullOrWhiteSpace(orgnr))
+        {
+            Nav.NavigateTo($"lookup?orgnr={Uri.EscapeDataString(orgnr)}");
+        }
+    }
+}

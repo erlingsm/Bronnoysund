@@ -169,4 +169,123 @@
   <data name="StatusRetired"><value>Utgått</value></data>
   <data name="FilterPlaceholder"><value>Filtrer på kode eller beskrivelse…</value></data>
   <data name="NoResults"><value>Ingen treff.</value></data>
+
+  <data name="NavHome"><value>Hjem</value></data>
+  <data name="NavVoluntary"><value>Frivillighet</value></data>
+  <data name="NavKodeverk"><value>Kodeverk</value></data>
+  <data name="NavKodeverkOrgForms"><value>Organisasjonsformer</value></data>
+  <data name="NavKodeverkIcnpo"><value>ICNPO-kategorier</value></data>
+  <data name="NavKodeverkInfoTypes"><value>Informasjonstyper</value></data>
+  <data name="NavKodeverkKommuner"><value>Kommuner</value></data>
+  <data name="NavKodeverkRolletyper"><value>Rolletyper</value></data>
+  <data name="NavKodeverkRollegruppetyper"><value>Rollegruppetyper</value></data>
+  <data name="NavKodeverkRepresentanter"><value>Representanter</value></data>
+  <data name="NavMatrikkel"><value>Matrikkel</value></data>
+  <data name="NavStatistikk"><value>Statistikk</value></data>
+  <data name="NavDownloads"><value>Nedlastinger</value></data>
+  <data name="NavSettings"><value>Innstillinger</value></data>
+
+  <data name="OrgFormsFilterAll"><value>Alle</value></data>
+  <data name="OrgFormsFilterWithEntities"><value>Med enheter</value></data>
+  <data name="OrgFormsFilterWithSubUnits"><value>Med underenheter</value></data>
+
+  <data name="IcnpoTitle"><value>ICNPO-kategorier</value></data>
+  <data name="IcnpoDescription"><value>International Classification of Non-Profit Organizations — taksonomien Frivillighetsregisteret bruker for å klassifisere frivillige organisasjoner etter formål (idrett, kultur, utdanning, osv.).</value></data>
+  <data name="IcnpoColCode"><value>ICNPO-nummer</value></data>
+  <data name="IcnpoColName"><value>Kategori</value></data>
+  <data name="IcnpoEmpty"><value>Ingen ICNPO-kategorier returnert.</value></data>
+
+  <data name="InfoTypesTitle"><value>Informasjonstyper</value></data>
+  <data name="InfoTypesDescription"><value>Metadata-katalog som beskriver hvilke data Frivillighetsregisteret eksponerer per frivillig organisasjon. Primært nyttig for verktøy som konsumerer registeret.</value></data>
+  <data name="InfoTypesColCode"><value>Identifikator</value></data>
+  <data name="InfoTypesColName"><value>Navn</value></data>
+  <data name="InfoTypesEmpty"><value>Ingen informasjonstyper returnert.</value></data>
+
+  <data name="RolletyperTitle"><value>Rolletyper</value></data>
+  <data name="RolletyperDescription"><value>Brreg sin taksonomi for personrolle-koder (Daglig leder, Styreleder, osv.) som brukes når juridiske representanter for en enhet skal registreres.</value></data>
+  <data name="RolletyperEmpty"><value>Ingen rolletyper returnert.</value></data>
+
+  <data name="RollegruppetyperTitle"><value>Rollegruppetyper</value></data>
+  <data name="RollegruppetyperDescription"><value>Brreg sin taksonomi for rollegrupper (Styre, Daglig ledelse, osv.) som brukes til å kategorisere de enkelte rolletypene.</value></data>
+  <data name="RollegruppetyperEmpty"><value>Ingen rollegruppetyper returnert.</value></data>
+
+  <data name="RepresentanterTitle"><value>Representanter</value></data>
+  <data name="RepresentanterDescription"><value>Koder for juridiske representant-roller som brukes for hvitvaskingsrapportering. Til tross for navnet er dette en kodeverks-liste over typer, ikke en personliste.</value></data>
+  <data name="RepresentanterEmpty"><value>Ingen representanttyper returnert.</value></data>
+
+  <data name="KommunerTitle"><value>Kommuner</value></data>
+  <data name="KommunerDescription"><value>Norske kommuner — omtrent 5200 oppføringer. Brreg eksponerer kun nummer og navn; geografiske detaljer ligger i Kartverkets matrikkel-API.</value></data>
+  <data name="KommunerColNumber"><value>Nummer</value></data>
+  <data name="KommunerColName"><value>Navn</value></data>
+  <data name="KommunerEmpty"><value>Ingen kommuner returnert.</value></data>
+  <data name="KommunerPagedHint"><value>Viser {0} av {1} ({2} sider).</value></data>
+  <data name="KommuneDetailTitle"><value>Kommune {0}</value></data>
+  <data name="KommuneDetailBack"><value>Tilbake til lista</value></data>
+  <data name="KommuneNotFound"><value>Ingen kommune med nummer {0} ble funnet.</value></data>
+
+  <data name="OrgFormDetailTitle"><value>Organisasjonsform {0}</value></data>
+  <data name="OrgFormDetailBack"><value>Tilbake til lista</value></data>
+  <data name="OrgFormNotFound"><value>Ingen organisasjonsform med kode {0} ble funnet.</value></data>
+  <data name="OrgFormRetiredWarning"><value>Denne organisasjonsformen er utgått. Brreg beholder koden for historiske oppslag, men nye enheter kan ikke registreres med den.</value></data>
+
+  <data name="SubUnitDetailTitle"><value>Underenhet {0}</value></data>
+  <data name="SubUnitDetailBack"><value>Tilbake til oppslag</value></data>
+  <data name="SubUnitNotFound"><value>Ingen underenhet med organisasjonsnummer {0} ble funnet.</value></data>
+  <data name="SubUnitParentLabel"><value>Hovedenhet</value></data>
+  <data name="SubUnitStartDateLabel"><value>Oppstartsdato</value></data>
+  <data name="SubUnitClosedDateLabel"><value>Nedlagt</value></data>
+
+  <data name="VoluntaryTitle"><value>Frivillige organisasjoner</value></data>
+  <data name="VoluntaryDescription"><value>Bla gjennom organisasjoner registrert i Frivillighetsregisteret. Frivillighetsregisteret paginerer med en framover-bare cursor, så kun "neste side" er tilgjengelig.</value></data>
+  <data name="VoluntarySizeLabel"><value>Sidestørrelse</value></data>
+  <data name="VoluntarySearchButton"><value>Søk</value></data>
+  <data name="VoluntaryNextPage"><value>Neste side</value></data>
+  <data name="VoluntaryColName"><value>Navn</value></data>
+  <data name="VoluntaryColOrgNumber"><value>Org.nr</value></data>
+  <data name="VoluntaryColStatus"><value>Status</value></data>
+  <data name="VoluntaryColIcnpo"><value>Primær ICNPO</value></data>
+  <data name="VoluntaryColGrasrot"><value>Grasrotandelen</value></data>
+  <data name="VoluntaryEmpty"><value>Ingen frivillige organisasjoner matchet.</value></data>
+  <data name="VoluntaryError"><value>Kunne ikke hente frivillige organisasjoner: {0}</value></data>
+  <data name="VoluntaryGrasrotYes"><value>Ja</value></data>
+  <data name="VoluntaryGrasrotNo"><value>—</value></data>
+  <data name="VoluntaryNameUnknown"><value>(navn ikke tilgjengelig)</value></data>
+
+  <data name="DownloadsTitle"><value>Nedlastinger</value></data>
+  <data name="DownloadsDescription"><value>Direktelenker til Brregs bulk-filer. Filene serveres fra Brregs eget CDN — vi proxy-er ikke bytes.</value></data>
+  <data name="DownloadsColTitle"><value>Fil</value></data>
+  <data name="DownloadsColFormat"><value>Format</value></data>
+  <data name="DownloadsColCompressed"><value>Komprimert</value></data>
+  <data name="DownloadsColAction"><value>Handling</value></data>
+  <data name="DownloadsButton"><value>Last ned</value></data>
+  <data name="DownloadsCompressedYes"><value>gzip</value></data>
+  <data name="DownloadsCompressedNo"><value>—</value></data>
+  <data name="DownloadsEmpty"><value>Ingen nedlastinger tilgjengelig.</value></data>
+  <data name="DownloadsError"><value>Kunne ikke hente nedlastinger: {0}</value></data>
+
+  <data name="MatrikkelTitle"><value>Matrikkel-oppslag</value></data>
+  <data name="MatrikkelDescription"><value>Slå opp hvilken enhet som eier en matrikkelenhet. Brreg eksponerer eier-organisasjonsnummeret; geografiske data (areal, koordinater) ligger i Kartverkets matrikkel-API.</value></data>
+  <data name="MatrikkelModeId"><value>Matrikkelenhet-ID</value></data>
+  <data name="MatrikkelModeNumber"><value>Matrikkelnummer</value></data>
+  <data name="MatrikkelIdLabel"><value>Intern ID</value></data>
+  <data name="MatrikkelIdPlaceholder"><value>f.eks. 1d3f-…</value></data>
+  <data name="MatrikkelNumberLabel"><value>Matrikkelnummer</value></data>
+  <data name="MatrikkelNumberPlaceholder"><value>f.eks. 0301-1/1</value></data>
+  <data name="MatrikkelSearchButton"><value>Slå opp</value></data>
+  <data name="MatrikkelColMatrikkelId"><value>Matrikkelenhet-ID</value></data>
+  <data name="MatrikkelColOrgNumber"><value>Eier</value></data>
+  <data name="MatrikkelColKommune"><value>Kommune</value></data>
+  <data name="MatrikkelColGnr"><value>Gnr</value></data>
+  <data name="MatrikkelColBnr"><value>Bnr</value></data>
+  <data name="MatrikkelColFnr"><value>Fnr</value></data>
+  <data name="MatrikkelEmpty"><value>Ingen matrikkelenhet matchet.</value></data>
+  <data name="MatrikkelInvalidInput"><value>{0}</value></data>
+  <data name="MatrikkelError"><value>Kunne ikke slå opp matrikkel: {0}</value></data>
+
+  <data name="StatistikkTitle"><value>Statistikk</value></data>
+  <data name="StatistikkDescription"><value>Aggregert statistikk fra Brregs åpne registre. Flere tiles legges til etter hvert som flere bulk-endepunkter blir tilgjengelige.</value></data>
+  <data name="StatistikkRolesTotalLabel"><value>Totalt person-roller i Brreg</value></data>
+  <data name="StatistikkLoading"><value>Laster…</value></data>
+  <data name="StatistikkLastUpdated"><value>Oppdatert {0}</value></data>
+  <data name="StatistikkError"><value>Kunne ikke hente statistikk: {0}</value></data>
 </root>

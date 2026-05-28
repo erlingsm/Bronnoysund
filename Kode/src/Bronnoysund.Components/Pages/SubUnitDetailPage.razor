@@ -1,0 +1,198 @@
+@page "/underenhet/{Orgnr}"
+@using System.Globalization
+@using Bronnoysund.Application.Results
+@using Bronnoysund.Domain
+@inject ISubUnitDetailsProvider SubUnits
+@inject NavigationManager Nav
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@string.Format(L["SubUnitDetailTitle"].Value, Orgnr)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Class="mb-4"
+               OnClick="@(() => Nav.NavigateTo(""))">
+        @L["SubUnitDetailBack"]
+    </MudButton>
+
+    <MudText Typo="Typo.h4" GutterBottom="true">
+        @L["SubUnitDetailTitle", Orgnr]
+    </MudText>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning">@_error</MudAlert>
+    }
+    else if (_notFound)
+    {
+        <MudAlert Severity="Severity.Info">@L["SubUnitNotFound", Orgnr]</MudAlert>
+    }
+    else if (_subUnit is { } sub)
+    {
+        <MudPaper Class="pa-4 mb-3" Elevation="3">
+            <MudText Typo="Typo.h5" GutterBottom="true">@sub.OrganizationName</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
+                <code>@sub.OrganizationNumber</code>
+            </MudText>
+
+            @if (!string.IsNullOrWhiteSpace(sub.ParentOrganizationNumber))
+            {
+                <MudText Typo="Typo.body2" Class="mb-2">
+                    @L["SubUnitParentLabel"]:
+                    <MudLink Href="@($"lookup?orgnr={sub.ParentOrganizationNumber}")">
+                        <code>@sub.ParentOrganizationNumber</code>
+                    </MudLink>
+                </MudText>
+            }
+
+            @if (HasContact(sub))
+            {
+                <MudText Typo="Typo.subtitle1" Class="mt-3 mb-1">@L["ContactSection"]</MudText>
+                <MudList T="string" Dense="true">
+                    @if (sub.BusinessAddress is { } addr && FormatAddress(addr) is { } addrLine)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.LocationOn"
+                                     Text="@($"{L["AddressLabel"]}: {addrLine}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(sub.Website))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Public"
+                                     Text="@($"{L["WebsiteLabel"]}: {sub.Website}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(sub.Email))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Email"
+                                     Text="@($"{L["EmailLabel"]}: {sub.Email}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(sub.Phone))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Phone"
+                                     Text="@($"{L["PhoneLabel"]}: {sub.Phone}")" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(sub.MobilePhone))
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.PhoneIphone"
+                                     Text="@($"{L["MobileLabel"]}: {sub.MobilePhone}")" />
+                    }
+                </MudList>
+            }
+
+            @if (sub.PrimaryIndustry is not null || sub.EmployeeCount is not null)
+            {
+                <MudText Typo="Typo.subtitle1" Class="mt-3 mb-1">@L["ActivitySection"]</MudText>
+                <MudList T="string" Dense="true">
+                    @if (sub.PrimaryIndustry is { } industry)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Category"
+                                     Text="@($"{L["IndustryLabel"]}: {industry.Code} — {industry.Description}")" />
+                    }
+                    @if (sub.EmployeeCount is { } emp)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.People"
+                                     Text="@($"{L["EmployeesLabel"]}: {emp}")" />
+                    }
+                </MudList>
+            }
+
+            @if (HasDates(sub))
+            {
+                <MudText Typo="Typo.subtitle1" Class="mt-3 mb-1">@L["DatesSection"]</MudText>
+                <MudList T="string" Dense="true">
+                    @if (sub.StartDate is { } start)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.PlayArrow"
+                                     Text="@($"{L["SubUnitStartDateLabel"]}: {start.ToString("d", CultureInfo.CurrentUICulture)}")" />
+                    }
+                    @if (sub.ClosedDate is { } closed)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Stop"
+                                     Text="@($"{L["SubUnitClosedDateLabel"]}: {closed.ToString("d", CultureInfo.CurrentUICulture)}")" />
+                    }
+                    @if (sub.RegisteredDate is { } reg)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.HowToReg"
+                                     Text="@($"{L["RegisteredDateLabel"]}: {reg.ToString("d", CultureInfo.CurrentUICulture)}")" />
+                    }
+                    @if (sub.RegisteredInVatRegistry is { } vat)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Receipt"
+                                     Text="@($"{L["VatRegistryLabel"]}: {(vat ? L["YesValue"] : L["NoValue"])}")" />
+                    }
+                </MudList>
+            }
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public string Orgnr { get; set; } = string.Empty;
+
+    private SubUnitDetailsResponse? _subUnit;
+    private bool _loading = true;
+    private bool _notFound;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _notFound = false;
+        _subUnit = null;
+
+        if (!OrganizationNumber.TryCreate(Orgnr, out var org, out var error))
+        {
+            _error = error;
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            var result = await SubUnits.LookupAsync(org, CancellationToken.None);
+            switch (result)
+            {
+                case SubUnitLookupResult.Found f:
+                    _subUnit = f.SubUnit;
+                    break;
+                case SubUnitLookupResult.NotFound:
+                    _notFound = true;
+                    break;
+                case SubUnitLookupResult.Unavailable u:
+                    _error = u.Message;
+                    break;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static bool HasContact(SubUnitDetailsResponse s) =>
+        s.BusinessAddress is not null
+        || !string.IsNullOrWhiteSpace(s.Website)
+        || !string.IsNullOrWhiteSpace(s.Email)
+        || !string.IsNullOrWhiteSpace(s.Phone)
+        || !string.IsNullOrWhiteSpace(s.MobilePhone);
+
+    private static bool HasDates(SubUnitDetailsResponse s) =>
+        s.StartDate is not null
+        || s.ClosedDate is not null
+        || s.RegisteredDate is not null
+        || s.RegisteredInVatRegistry is not null;
+
+    private static string? FormatAddress(PostalAddress a)
+    {
+        var parts = new[]
+        {
+            a.StreetAddress,
+            string.Join(" ", new[] { a.PostalCode, a.City }.Where(p => !string.IsNullOrWhiteSpace(p))),
+            a.Country,
+        }.Where(p => !string.IsNullOrWhiteSpace(p));
+        var joined = string.Join(", ", parts);
+        return string.IsNullOrWhiteSpace(joined) ? null : joined;
+    }
+}

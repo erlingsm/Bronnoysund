@@ -1,0 +1,77 @@
+@page "/kodeverk/informasjonstyper"
+@using Bronnoysund.Application.Results
+@inject IKodeverkProvider Kodeverk
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@L["InfoTypesTitle"]</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudText Typo="Typo.h4" GutterBottom="true">@L["InfoTypesTitle"]</MudText>
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-6">
+        @L["InfoTypesDescription"]
+    </MudText>
+
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">@_error</MudAlert>
+    }
+
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudTable Items="@_rows" Loading="@_loading" Dense="true" Hover="true"
+                  Filter="new Func<KodeverkEntry, bool>(FilterRow)"
+                  T="KodeverkEntry">
+            <ToolBarContent>
+                <MudTextField @bind-Value="_filter" Placeholder="@L["FilterPlaceholder"]"
+                              Variant="Variant.Outlined" Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.FilterList" Margin="Margin.Dense"
+                              Clearable="true" Immediate="true" />
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>@L["InfoTypesColCode"]</MudTh>
+                <MudTh>@L["InfoTypesColName"]</MudTh>
+            </HeaderContent>
+            <RowTemplate Context="row">
+                <MudTd><code>@row.Code</code></MudTd>
+                <MudTd>@row.Description</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>@L["InfoTypesEmpty"]</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private IReadOnlyList<KodeverkEntry> _rows = [];
+    private bool _loading = true;
+    private string? _error;
+    private string _filter = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await Kodeverk.GetVoluntaryInformationTypesAsync(CancellationToken.None);
+            switch (result)
+            {
+                case KodeverkLookupResult.Found f:
+                    _rows = f.Entries;
+                    break;
+                case KodeverkLookupResult.Unavailable u:
+                    _error = u.Message;
+                    break;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool FilterRow(KodeverkEntry e)
+    {
+        if (string.IsNullOrWhiteSpace(_filter)) return true;
+        return e.Code.Contains(_filter, StringComparison.OrdinalIgnoreCase)
+            || e.Description.Contains(_filter, StringComparison.OrdinalIgnoreCase);
+    }
+}

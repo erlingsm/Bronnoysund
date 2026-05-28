@@ -14,14 +14,58 @@
                Elevation="1" ClipMode="DrawerClipMode.Always">
         <MudNavMenu>
             <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Search">
-                @L["NavLookup"]
+                @L["NavHome"]
             </MudNavLink>
-            <MudNavGroup Title="@L["NavBrowse"]" Icon="@Icons.Material.Filled.Explore" Expanded="true">
+            <MudNavLink Href="frivillighet" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.VolunteerActivism">
+                @L["NavVoluntary"]
+            </MudNavLink>
+            <MudNavGroup Title="@L["NavKodeverk"]" Icon="@Icons.Material.Filled.Explore" Expanded="true">
                 <MudNavLink Href="kodeverk/organisasjonsformer" Match="NavLinkMatch.Prefix"
                             Icon="@Icons.Material.Filled.Category">
-                    @L["NavOrgForms"]
+                    @L["NavKodeverkOrgForms"]
+                </MudNavLink>
+                <MudNavLink Href="kodeverk/icnpo-kategorier" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Filled.Class">
+                    @L["NavKodeverkIcnpo"]
+                </MudNavLink>
+                <MudNavLink Href="kodeverk/informasjonstyper" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Filled.Info">
+                    @L["NavKodeverkInfoTypes"]
+                </MudNavLink>
+                <MudNavLink Href="kodeverk/kommuner" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Filled.LocationCity">
+                    @L["NavKodeverkKommuner"]
+                </MudNavLink>
+                <MudNavLink Href="kodeverk/rolletyper" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Filled.Badge">
+                    @L["NavKodeverkRolletyper"]
+                </MudNavLink>
+                <MudNavLink Href="kodeverk/rollegruppetyper" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Filled.Groups">
+                    @L["NavKodeverkRollegruppetyper"]
+                </MudNavLink>
+                <MudNavLink Href="kodeverk/representanter" Match="NavLinkMatch.Prefix"
+                            Icon="@Icons.Material.Filled.SupportAgent">
+                    @L["NavKodeverkRepresentanter"]
                 </MudNavLink>
             </MudNavGroup>
+            <MudNavLink Href="matrikkel" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.Map">
+                @L["NavMatrikkel"]
+            </MudNavLink>
+            <MudNavLink Href="statistikk" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.QueryStats">
+                @L["NavStatistikk"]
+            </MudNavLink>
+            <MudNavLink Href="downloads" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.CloudDownload">
+                @L["NavDownloads"]
+            </MudNavLink>
+            <MudNavLink Href="settings" Match="NavLinkMatch.Prefix"
+                        Icon="@Icons.Material.Filled.Settings">
+                @L["NavSettings"]
+            </MudNavLink>
         </MudNavMenu>
     </MudDrawer>
     <MudMainContent>

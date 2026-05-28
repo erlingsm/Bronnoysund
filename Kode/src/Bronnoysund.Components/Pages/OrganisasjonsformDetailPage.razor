@@ -1,0 +1,94 @@
+@page "/kodeverk/organisasjonsformer/{Kode}"
+@using Bronnoysund.Application.Results
+@inject IKodeverkProvider Kodeverk
+@inject NavigationManager Nav
+@inject IStringLocalizer<SharedResources> L
+
+<PageTitle>@string.Format(L["OrgFormDetailTitle"].Value, Kode)</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-8">
+    <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" Class="mb-4"
+               OnClick="@(() => Nav.NavigateTo("kodeverk/organisasjonsformer"))">
+        @L["OrgFormDetailBack"]
+    </MudButton>
+
+    <MudText Typo="Typo.h4" GutterBottom="true">
+        @L["OrgFormDetailTitle", Kode]
+    </MudText>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Indeterminate="true" />
+    }
+    else if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning">@_error</MudAlert>
+    }
+    else if (_notFound)
+    {
+        <MudAlert Severity="Severity.Info">
+            @L["OrgFormNotFound", Kode]
+        </MudAlert>
+    }
+    else if (_entry is { } entry)
+    {
+        <MudPaper Class="pa-4" Elevation="2">
+            <div class="d-flex align-center mb-3" style="gap: 0.5rem;">
+                <code class="mr-2">@entry.Code</code>
+                @if (entry.IsRetired)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Warning">@L["StatusRetired"]</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">@L["StatusActive"]</MudChip>
+                }
+            </div>
+            <MudText Typo="Typo.h6">@entry.Description</MudText>
+
+            @if (entry.IsRetired)
+            {
+                <MudAlert Severity="Severity.Warning" Class="mt-4">
+                    @L["OrgFormRetiredWarning"]
+                </MudAlert>
+            }
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public string Kode { get; set; } = string.Empty;
+
+    private KodeverkEntry? _entry;
+    private bool _loading = true;
+    private bool _notFound;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        _error = null;
+        _notFound = false;
+        _entry = null;
+        try
+        {
+            var result = await Kodeverk.GetOrganisasjonsformAsync(Kode, CancellationToken.None);
+            switch (result)
+            {
+                case KodeverkSingleResult.Found f:
+                    _entry = f.Entry;
+                    break;
+                case KodeverkSingleResult.NotFound:
+                    _notFound = true;
+                    break;
+                case KodeverkSingleResult.Unavailable u:
+                    _error = u.Message;
+                    break;
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}
