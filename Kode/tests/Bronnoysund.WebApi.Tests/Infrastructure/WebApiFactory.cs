@@ -30,6 +30,8 @@ public sealed class WebApiFactory : WebApplicationFactory<Program>
     public ILegalRolesProvider LegalRoles { get; } = Substitute.For<ILegalRolesProvider>();
     public IEntityChangesProvider EntityChanges { get; } = Substitute.For<IEntityChangesProvider>();
     public IVoluntaryOrganizationProvider Voluntary { get; } = Substitute.For<IVoluntaryOrganizationProvider>();
+    public IVoluntaryOrganizationSearchProvider VoluntarySearch { get; } = Substitute.For<IVoluntaryOrganizationSearchProvider>();
+    public IKodeverkProvider Kodeverk { get; } = Substitute.For<IKodeverkProvider>();
 
     private readonly string _dbPath = Path.Combine(
         Path.GetTempPath(),
@@ -63,6 +65,8 @@ public sealed class WebApiFactory : WebApplicationFactory<Program>
             ReplaceSingleton<ILegalRolesProvider>(services, LegalRoles);
             ReplaceSingleton<IEntityChangesProvider>(services, EntityChanges);
             ReplaceSingleton<IVoluntaryOrganizationProvider>(services, Voluntary);
+            ReplaceSingleton<IVoluntaryOrganizationSearchProvider>(services, VoluntarySearch);
+            ReplaceSingleton<IKodeverkProvider>(services, Kodeverk);
         });
     }
 

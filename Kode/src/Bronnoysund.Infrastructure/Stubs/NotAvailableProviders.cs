@@ -110,6 +110,29 @@ internal sealed class NotAvailableVoluntaryOrganizationProvider : IVoluntaryOrga
             "Frivillighetsregisteret is only available in Direct mode. Switch DataSource:Mode=Direct."));
 }
 
+internal sealed class NotAvailableVoluntaryOrganizationSearchProvider : IVoluntaryOrganizationSearchProvider
+{
+    public Task<VoluntaryOrganizationSearchResult> SearchAsync(VoluntaryOrganizationSearchQuery query, CancellationToken ct) =>
+        Task.FromResult<VoluntaryOrganizationSearchResult>(new VoluntaryOrganizationSearchResult.Unavailable(
+            "Frivillighetsregisteret search is only available in Direct mode. Switch DataSource:Mode=Direct."));
+}
+
+internal sealed class NotAvailableKodeverkProvider : IKodeverkProvider
+{
+    private static Task<KodeverkLookupResult> NotAvailable(string endpoint) =>
+        Task.FromResult<KodeverkLookupResult>(new KodeverkLookupResult.Unavailable(
+            $"Kodeverk {endpoint} is only available in Direct mode. Switch DataSource:Mode=Direct."));
+
+    public Task<KodeverkLookupResult> GetOrganisasjonsformerAsync(CancellationToken ct) =>
+        NotAvailable("organisasjonsformer");
+
+    public Task<KodeverkLookupResult> GetIcnpoCategoriesAsync(CancellationToken ct) =>
+        NotAvailable("icnpo-kategorier");
+
+    public Task<KodeverkLookupResult> GetVoluntaryInformationTypesAsync(CancellationToken ct) =>
+        NotAvailable("informasjonstyper");
+}
+
 internal sealed class NotAvailablePersonRolesProvider : IPersonRolesProvider
 {
     public Task<PersonRolesResponse?> GetByPersonAsync(PersonIdentifier person, CancellationToken ct) =>

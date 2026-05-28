@@ -313,6 +313,82 @@ try
         };
     });
 
+    app.MapGet("/voluntary-organizations", async (
+        int? size,
+        string? searchAfter,
+        IVoluntaryOrganizationSearchProvider provider,
+        CancellationToken ct) =>
+    {
+        // M10: defensively validate searchAfter so obviously-bad cursors (control chars,
+        // excessive length, unexpected characters) fail at our edge with 400 instead of
+        // being forwarded to Brreg. Brreg's own cursor is the last orgnr seen which is
+        // 9 digits, but we leave room for base64 padding chars so future cursor shapes
+        // (or URL-encoded round-trips) still pass.
+        if (!SearchAfterValidator.IsValid(searchAfter))
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid input",
+                detail: "searchAfter must be 1-64 characters of [A-Za-z0-9+/=_-].",
+                type: InvalidInputType);
+        }
+
+        var query = new VoluntaryOrganizationSearchQuery(
+            Size: size ?? 20,
+            SearchAfter: searchAfter);
+
+        var result = await provider.SearchAsync(query, ct);
+        return result switch
+        {
+            VoluntaryOrganizationSearchResult.Found f => Results.Ok(f.Result),
+            VoluntaryOrganizationSearchResult.InvalidInput inv => Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid input",
+                detail: inv.Message,
+                type: InvalidInputType),
+            VoluntaryOrganizationSearchResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "Frivillighetsregisteret is temporarily unavailable",
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/icnpo-kategorier", async (
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        var result = await provider.GetIcnpoCategoriesAsync(ct);
+        return result switch
+        {
+            KodeverkLookupResult.Found f => Results.Ok(f.Entries),
+            KodeverkLookupResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "Frivillighetsregisteret is temporarily unavailable",
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/informasjonstyper", async (
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        var result = await provider.GetVoluntaryInformationTypesAsync(ct);
+        return result switch
+        {
+            KodeverkLookupResult.Found f => Results.Ok(f.Entries),
+            KodeverkLookupResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "Frivillighetsregisteret is temporarily unavailable",
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
     app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Bronnoysund.WebApi" }));
 
     Log.Information("Bronnoysund.WebApi starting");
@@ -346,6 +422,39 @@ internal static class AggregatedScopeParser
             "full" => AggregatedScope.Full,
             _ => AggregatedScope.CoreOnly,
         };
+    }
+}
+
+/// <summary>
+/// Defensive validation for the <c>searchAfter</c> cursor on the voluntary-organizations
+/// search endpoint. Brreg's documented cursor shape is the previous page's last orgnr
+/// (9 digits) but we widen to base64-safe characters so the validator stays forward-compatible
+/// if the cursor shape changes upstream.
+/// </summary>
+internal static class SearchAfterValidator
+{
+    public static bool IsValid(string? value)
+    {
+        if (value is null)
+        {
+            return true;
+        }
+        if (value.Length is 0 or > 64)
+        {
+            return false;
+        }
+        foreach (var c in value)
+        {
+            var ok = (c >= '0' && c <= '9')
+                || (c >= 'A' && c <= 'Z')
+                || (c >= 'a' && c <= 'z')
+                || c == '+' || c == '/' || c == '=' || c == '_' || c == '-';
+            if (!ok)
+            {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

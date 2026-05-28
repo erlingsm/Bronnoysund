@@ -1,4 +1,5 @@
 @page "/kodeverk/organisasjonsformer"
+@using Bronnoysund.Application.Results
 @inject IKodeverkProvider Kodeverk
 @inject IStringLocalizer<SharedResources> L
 
@@ -65,11 +66,16 @@
     {
         try
         {
-            _rows = await Kodeverk.GetOrganisasjonsformerAsync(CancellationToken.None);
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
+            var result = await Kodeverk.GetOrganisasjonsformerAsync(CancellationToken.None);
+            switch (result)
+            {
+                case KodeverkLookupResult.Found f:
+                    _rows = f.Entries;
+                    break;
+                case KodeverkLookupResult.Unavailable u:
+                    _error = u.Message;
+                    break;
+            }
         }
         finally
         {

@@ -59,5 +59,10 @@ i Plan 53.**
 | --- | --- | --- | --- |
 | `/frivillighetsregisteret/api/frivillige-organisasjoner/{orgnr}` | `BrregVoluntaryOrganizationProvider` | `FrivilligOrganisasjon` er en `oneOf` uten `discriminator` — Kiota genererer en composed-type-wrapper som ikke kan deserialisere svaret (mapping path `""`). | Brreg legger til `discriminator: { propertyName: "respons_klasse" }` på `FrivilligOrganisasjon`. |
 
+**Note:** List-endepunktet `/frivillige-organisasjoner` rammes IKKE av denne bug-en
+— items der er `FrivilligOrganisasjonInnfoert` (konkret type uten composed-type-wrapper),
+så `BrregVoluntaryOrganizationSearchProvider` bruker Kiota direkte. Det er kun
+single-entity-oppslaget (`/{orgnr}`) som trenger System.Text.Json-bypass.
+
 Når en bypass-adapter migreres tilbake, slett seksjonen ovenfor og fjern
 den manuelle JSON-modellen i adapter-en.

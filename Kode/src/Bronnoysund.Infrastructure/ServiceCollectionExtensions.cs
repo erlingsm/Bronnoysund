@@ -107,7 +107,15 @@ public static class ServiceCollectionExtensions
                     logger: sp.GetRequiredService<ILogger<CachingCompanyProvider>>()));
 
             services.AddSingleton<ICompanySearchProvider, BrregCompanySearchProvider>();
-            services.AddSingleton<IKodeverkProvider, BrregKodeverkProvider>();
+
+            // Kodeverk-tables drift on the order of years/never, so wrap in HybridCache with
+            // a 24h TTL — the four other Direct-mode providers got the same treatment in F5.
+            services.AddSingleton<BrregKodeverkProvider>();
+            services.AddSingleton<IKodeverkProvider>(sp =>
+                new CachingKodeverkProvider(
+                    inner: sp.GetRequiredService<BrregKodeverkProvider>(),
+                    cache: sp.GetRequiredService<HybridCache>(),
+                    logger: sp.GetRequiredService<ILogger<CachingKodeverkProvider>>()));
         }
 
         // Phase 4 aggregator: parallel calls to every registered provider, per-provider error
@@ -153,6 +161,8 @@ public static class ServiceCollectionExtensions
                     cache: sp.GetRequiredService<HybridCache>(),
                     logger: sp.GetRequiredService<ILogger<CachingVoluntaryOrganizationProvider>>()));
 
+            services.AddSingleton<IVoluntaryOrganizationSearchProvider, BrregVoluntaryOrganizationSearchProvider>();
+
             services.AddSingleton<IBankruptcyProvider, BrregBankruptcyProvider>();
         }
         else
@@ -165,7 +175,9 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<ILegalRolesProvider, NotAvailableLegalRolesProvider>();
             services.AddSingleton<IEntityChangesProvider, NotAvailableEntityChangesProvider>();
             services.AddSingleton<IVoluntaryOrganizationProvider, NotAvailableVoluntaryOrganizationProvider>();
+            services.AddSingleton<IVoluntaryOrganizationSearchProvider, NotAvailableVoluntaryOrganizationSearchProvider>();
             services.AddSingleton<IBankruptcyProvider, NotAvailableBankruptcyProvider>();
+            services.AddSingleton<IKodeverkProvider, NotAvailableKodeverkProvider>();
         }
 
         // Stub providers for registries that require gated access (Maskinporten, AML, commercial).

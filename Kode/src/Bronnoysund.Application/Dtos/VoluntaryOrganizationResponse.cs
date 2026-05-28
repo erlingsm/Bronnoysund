@@ -7,6 +7,12 @@ namespace Bronnoysund.Application.Dtos;
 /// Carries only the fields the UI needs to render a "frivillig organisasjon"-badge on
 /// the Lookup page (status, første gang innført, kategori, Grasrotandel-deltakelse).
 /// </summary>
+/// <param name="ParticipatesInGrasrotandel">
+/// True when Brreg returned <c>grasrotandel.deltarI = true</c>. False collapses three
+/// underlying states: not specified, explicitly false, or grasrotandel object absent.
+/// UI should treat this as "we know they participate" — absence of true does not mean
+/// they don't.
+/// </param>
 public sealed record VoluntaryOrganizationResponse(
     string OrganizationNumber,
     string Status,

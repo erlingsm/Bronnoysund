@@ -118,6 +118,52 @@ public class CachingDecoratorTests
         await inner.Received(1).GetChangesAsync(Org, 50, Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task CachingKodeverkProvider_GetOrganisasjonsformer_OnlyCallsInnerOnce()
+    {
+        var inner = Substitute.For<IKodeverkProvider>();
+        inner.GetOrganisasjonsformerAsync(Arg.Any<CancellationToken>())
+            .Returns(new KodeverkLookupResult.Found([new KodeverkEntry("AS", "Aksjeselskap")]));
+        var sut = new CachingKodeverkProvider(inner, CreateCache(),
+            NullLogger<CachingKodeverkProvider>.Instance);
+
+        await sut.GetOrganisasjonsformerAsync(CancellationToken.None);
+        await sut.GetOrganisasjonsformerAsync(CancellationToken.None);
+        await sut.GetOrganisasjonsformerAsync(CancellationToken.None);
+
+        await inner.Received(1).GetOrganisasjonsformerAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CachingKodeverkProvider_GetIcnpoCategories_OnlyCallsInnerOnce()
+    {
+        var inner = Substitute.For<IKodeverkProvider>();
+        inner.GetIcnpoCategoriesAsync(Arg.Any<CancellationToken>())
+            .Returns(new KodeverkLookupResult.Found([new KodeverkEntry("01100", "Kultur")]));
+        var sut = new CachingKodeverkProvider(inner, CreateCache(),
+            NullLogger<CachingKodeverkProvider>.Instance);
+
+        await sut.GetIcnpoCategoriesAsync(CancellationToken.None);
+        await sut.GetIcnpoCategoriesAsync(CancellationToken.None);
+
+        await inner.Received(1).GetIcnpoCategoriesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CachingKodeverkProvider_GetVoluntaryInformationTypes_OnlyCallsInnerOnce()
+    {
+        var inner = Substitute.For<IKodeverkProvider>();
+        inner.GetVoluntaryInformationTypesAsync(Arg.Any<CancellationToken>())
+            .Returns(new KodeverkLookupResult.Found([new KodeverkEntry("VEDTEKTER", "Vedtekter")]));
+        var sut = new CachingKodeverkProvider(inner, CreateCache(),
+            NullLogger<CachingKodeverkProvider>.Instance);
+
+        await sut.GetVoluntaryInformationTypesAsync(CancellationToken.None);
+        await sut.GetVoluntaryInformationTypesAsync(CancellationToken.None);
+
+        await inner.Received(1).GetVoluntaryInformationTypesAsync(Arg.Any<CancellationToken>());
+    }
+
     private static SubUnitDetailsResponse SampleSubUnit() => new(
         OrganizationNumber: Org.Value,
         OrganizationName: "Sample",
