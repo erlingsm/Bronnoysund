@@ -23,9 +23,13 @@ internal sealed class CachingCompanyProvider(
     IOptions<BrregOptions> options,
     ILogger<CachingCompanyProvider> logger) : ICompanyProvider
 {
-    public async Task<CompanyLookupResult> LookupAsync(OrganizationNumber org, CancellationToken ct)
+    public string CountryCode => inner.CountryCode;
+
+    public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
-        var cacheKey = $"org:{org.Value}";
+        // Country code in the cache key so a future FI/PL/etc. identifier with the same digit
+        // string can never collide with a Norwegian org number.
+        var cacheKey = $"company:{id.CountryCode}:{id.Value}";
         var ttl = options.Value.CacheTtl;
 
         logger.LogDebug("Cache lookup for {Key}", cacheKey);
@@ -34,7 +38,7 @@ internal sealed class CachingCompanyProvider(
             cacheKey,
             async cancel =>
             {
-                var result = await inner.LookupAsync(org, cancel);
+                var result = await inner.LookupAsync(id, cancel);
                 return CachedLookup.From(result);
             },
             new HybridCacheEntryOptions { Expiration = ttl },

@@ -18,8 +18,16 @@ internal sealed class RemoteApiCompanyProvider(
     HttpClient http,
     ILogger<RemoteApiCompanyProvider> logger) : ICompanyProvider
 {
-    public async Task<CompanyLookupResult> LookupAsync(OrganizationNumber org, CancellationToken ct)
+    public string CountryCode => "NO";
+
+    public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
+        if (id is not OrganizationNumber org)
+        {
+            return new CompanyLookupResult.InvalidInput(
+                $"RemoteApiCompanyProvider only accepts Norwegian organization numbers (got {id.CountryCode}:{id.Value}).");
+        }
+
         var path = $"companies/{org.Value}";
         logger.LogDebug("Remote API GET {Path}", path);
 

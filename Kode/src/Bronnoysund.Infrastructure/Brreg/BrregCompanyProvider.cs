@@ -24,8 +24,16 @@ internal sealed class BrregCompanyProvider(
     BrregClient client,
     ILogger<BrregCompanyProvider> logger) : ICompanyProvider
 {
-    public async Task<CompanyLookupResult> LookupAsync(OrganizationNumber org, CancellationToken ct)
+    public string CountryCode => "NO";
+
+    public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
+        if (id is not OrganizationNumber org)
+        {
+            return new CompanyLookupResult.InvalidInput(
+                $"BrregCompanyProvider only accepts Norwegian organization numbers (got {id.CountryCode}:{id.Value}).");
+        }
+
         try
         {
             // The endpoint returns a composed-type wrapper that can be either Enhet (live) or

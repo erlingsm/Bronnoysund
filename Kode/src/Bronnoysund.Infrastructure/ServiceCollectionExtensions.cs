@@ -5,6 +5,7 @@ using Bronnoysund.Infrastructure.Aggregation;
 using Bronnoysund.Infrastructure.Brreg;
 using Bronnoysund.Infrastructure.Brreg.Generated;
 using Bronnoysund.Infrastructure.Caching;
+using Bronnoysund.Infrastructure.Detection;
 using Bronnoysund.Infrastructure.Remote;
 using Bronnoysund.Infrastructure.Stubs;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -214,6 +215,12 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IBeneficialOwnerProvider, NotAvailableBeneficialOwnerProvider>();
         services.AddSingleton<IDebtRegisterProvider, NotAvailableDebtRegisterProvider>();
         services.AddSingleton<IPersonRolesProvider, NotAvailablePersonRolesProvider>();
+
+        // Country-agnostic plumbing — populated today by the single Norwegian provider
+        // registered above. International adapters (Plan 21 Bølge 1+) plug in as additional
+        // ICompanyProvider implementations and are picked up automatically by the registry.
+        services.AddSingleton<ICountryDetector, CountryDetector>();
+        services.AddSingleton<ICompanyProviderRegistry, CompanyProviderRegistry>();
 
         return services;
     }

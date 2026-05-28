@@ -17,7 +17,7 @@ public class OrganizationNumberTests
         var ok = OrganizationNumber.TryCreate(raw, out var value, out var error);
 
         ok.Should().BeTrue();
-        value.Value.Should().Be(raw);
+        value!.Value.Should().Be(raw);
         error.Should().BeNull();
     }
 
@@ -28,7 +28,7 @@ public class OrganizationNumberTests
     public void TryCreate_NormalizesSeparators(string input, string expected)
     {
         OrganizationNumber.TryCreate(input, out var value, out _).Should().BeTrue();
-        value.Value.Should().Be(expected);
+        value!.Value.Should().Be(expected);
     }
 
     [Theory]

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace Bronnoysund.Domain;
 
 /// <summary>
@@ -12,21 +14,18 @@ namespace Bronnoysund.Domain;
 /// Weights [3,2,7,6,5,4,3,2] are applied to digits 1-8 from the left, sum mod 11 gives the check digit (digit 9) = 11 - remainder.
 /// If remainder = 0 -> check digit = 0. If remainder = 1 -> the org. number is invalid (the check digit would have been 10).
 /// </remarks>
-public readonly record struct OrganizationNumber
+public sealed record OrganizationNumber : CompanyIdentifier
 {
     private static readonly int[] Mod11Weights = [3, 2, 7, 6, 5, 4, 3, 2];
 
-    /// <summary>Normalized form: 9 digits with no whitespace or separators.</summary>
-    public string Value { get; }
-
-    private OrganizationNumber(string value) => Value = value;
+    private OrganizationNumber(string value) : base("NO", value) { }
 
     /// <summary>
     /// Try to build an organization number. Returns false on invalid input and sets an error description.
     /// </summary>
-    public static bool TryCreate(string? raw, out OrganizationNumber value, out string? error)
+    public static bool TryCreate(string? raw, [NotNullWhen(true)] out OrganizationNumber? value, out string? error)
     {
-        value = default;
+        value = null;
 
         if (string.IsNullOrWhiteSpace(raw))
         {
@@ -75,7 +74,6 @@ public readonly record struct OrganizationNumber
         return value;
     }
 
-    /// <summary>Removes whitespace and common separators (space, hyphen, period).</summary>
     private static string Normalize(string raw)
     {
         var sb = new System.Text.StringBuilder(raw.Length);
@@ -100,7 +98,7 @@ public readonly record struct OrganizationNumber
         var remainder = sum % 11;
         if (remainder == 1)
         {
-            return false; // Check digit would have been 10 — invalid
+            return false;
         }
         var expectedCheckDigit = remainder == 0 ? 0 : 11 - remainder;
         var actualCheckDigit = nineDigits[8] - '0';
