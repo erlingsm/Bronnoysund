@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
 using System.Globalization;
-using Bronnoysund.Speech;
 using CommunityToolkit.Maui.Media;
+// Microsoft.Maui.Media (introduced as a top-level abstraction in Maui 10.0.60) ships its own
+// ISpeechToText / ITextToSpeech that collide with our Bronnoysund.Speech port-names. Alias the
+// app-side port through "Ports" so the class declarations can opt explicitly into our types.
+using Ports = Bronnoysund.Speech;
 
 namespace Bronnoysund.MauiMobile;
 
@@ -18,7 +21,7 @@ namespace Bronnoysund.MauiMobile;
 /// platform's manifest — see <c>Platforms/iOS/Info.plist</c> and
 /// <c>Platforms/Android/AndroidManifest.xml</c>.
 /// </remarks>
-internal sealed class MauiSpeechToText : ISpeechToText
+internal sealed class MauiSpeechToText : Ports.ISpeechToText
 {
     public bool IsAvailable => SpeechToText.Default is not null;
 
@@ -55,7 +58,7 @@ internal sealed class MauiSpeechToText : ISpeechToText
 /// MAUI <see cref="ITextToSpeech"/> adapter backed by <c>Microsoft.Maui.Media.TextToSpeech</c>.
 /// All four target platforms ship Norwegian voices out of the box.
 /// </summary>
-internal sealed class MauiTextToSpeech : ITextToSpeech
+internal sealed class MauiTextToSpeech : Ports.ITextToSpeech
 {
     public bool IsAvailable => true;
 

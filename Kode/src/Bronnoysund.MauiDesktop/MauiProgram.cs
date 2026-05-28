@@ -38,8 +38,10 @@ public static class MauiProgram
 		builder.Services.AddBronnoysundPersistence(builder.Configuration);
 		builder.Services.AddBronnoysundSpeech();
 		builder.Services.AddSingleton<IDeviceLayout, MauiDeviceLayout>();
-		builder.Services.AddSingleton<ISpeechToText, MauiSpeechToText>();
-		builder.Services.AddSingleton<ITextToSpeech, MauiTextToSpeech>();
+		// See MauiMobile/MauiProgram.cs for context — CommunityToolkit.Maui 14.x changed the
+		// ISpeechToText API. NullSpeechAdapters fall back until MauiSpeechAdapters is rewritten.
+		// builder.Services.AddSingleton<ISpeechToText, MauiSpeechToText>();
+		// builder.Services.AddSingleton<ITextToSpeech, MauiTextToSpeech>();
 		builder.Services.AddTransient<CompanyLookupViewModel>();
 
 #if DEBUG

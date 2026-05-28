@@ -38,8 +38,13 @@ public static class MauiProgram
 		builder.Services.AddBronnoysundPersistence(builder.Configuration);
 		builder.Services.AddBronnoysundSpeech();
 		builder.Services.AddSingleton<IDeviceLayout, MauiDeviceLayout>();
-		builder.Services.AddSingleton<ISpeechToText, MauiSpeechToText>();
-		builder.Services.AddSingleton<ITextToSpeech, MauiTextToSpeech>();
+		// CommunityToolkit.Maui's ISpeechToText API changed surface between 13.x and 14.x —
+		// the MauiSpeechAdapters file ships the older signature. NullSpeechAdapters (the
+		// fallbacks registered by AddBronnoysundSpeech) take over until the adapter is
+		// rewritten against the new SpeechToText API. UI voice-input button degrades
+		// gracefully via IsAvailable=false.
+		// builder.Services.AddSingleton<ISpeechToText, MauiSpeechToText>();
+		// builder.Services.AddSingleton<ITextToSpeech, MauiTextToSpeech>();
 		builder.Services.AddTransient<CompanyLookupViewModel>();
 
 #if DEBUG

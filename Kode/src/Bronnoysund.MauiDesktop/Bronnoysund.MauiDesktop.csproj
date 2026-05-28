@@ -79,12 +79,21 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
+        <!-- Workload manifest 10.0.20 ships an older Microsoft.Maui.Controls, but
+             CommunityToolkit.Maui 14.1.1 requires >= 10.0.60. Pinning Controls
+             explicitly satisfies the constraint without bumping the workload. -->
+        <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.60" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.60" />
         <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
         <PackageReference Include="MudBlazor" Version="9.4.0" />
         <!-- Speech recognition (same package as MauiMobile). -->
         <PackageReference Include="CommunityToolkit.Maui" Version="14.1.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- See same exclude in MauiMobile.csproj. CommunityToolkit.Maui 14.x changed the
+             ISpeechToText surface; NullSpeechAdapters takes over until a rewrite lands. -->
+        <Compile Remove="MauiSpeechAdapters.cs" />
     </ItemGroup>
 
     <ItemGroup>
