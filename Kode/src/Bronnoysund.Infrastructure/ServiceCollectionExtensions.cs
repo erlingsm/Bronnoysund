@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
+using System.Net;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Infrastructure.Aggregation;
 using Bronnoysund.Infrastructure.Brreg;
 using Bronnoysund.Infrastructure.Brreg.Generated;
 using Bronnoysund.Infrastructure.Caching;
+using Bronnoysund.Infrastructure.Croatia;
 using Bronnoysund.Infrastructure.Denmark;
 using Bronnoysund.Infrastructure.Detection;
 using Bronnoysund.Infrastructure.Estonia;
 using Bronnoysund.Infrastructure.Finland;
+using Bronnoysund.Infrastructure.Greece;
 using Bronnoysund.Infrastructure.Ireland;
+using Bronnoysund.Infrastructure.Latvia;
 using Bronnoysund.Infrastructure.Lithuania;
+using Bronnoysund.Infrastructure.OpenCorporates;
 using Bronnoysund.Infrastructure.Poland;
 using Bronnoysund.Infrastructure.Slovenia;
 using Bronnoysund.Infrastructure.Sweden;
@@ -91,7 +96,14 @@ public static class ServiceCollectionExtensions
                 http.Timeout = opts.RequestTimeout;
                 http.DefaultRequestHeaders.UserAgent.ParseAdd(opts.UserAgent);
                 http.DefaultRequestHeaders.Accept.ParseAdd("application/json");
-            }).AddStandardResilienceHandler();
+            })
+            // Brreg ships several endpoints (notably /roller/totalbestand) with gzip-encoded
+            // bodies. Without decompression we'd read raw bytes and fail the parse step.
+            .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+            {
+                AutomaticDecompression = DecompressionMethods.All,
+            })
+            .AddStandardResilienceHandler();
 
             services.AddSingleton(sp =>
             {
@@ -248,6 +260,18 @@ public static class ServiceCollectionExtensions
         services.AddBronnoysundDenmark(configuration);
         services.AddBronnoysundSlovenia(configuration);
         services.AddBronnoysundLithuania(configuration);
+
+        // Plan 21 Bølge 3 — trade-offs (Latvia has no free live API, Greece needs an
+        // API key, Croatia uses OAuth2 client-credentials). Latvia today returns
+        // Unavailable until the bulk-import pipeline is implemented.
+        services.AddBronnoysundCroatia(configuration);
+        services.AddBronnoysundGreece(configuration);
+        services.AddBronnoysundLatvia(configuration);
+
+        // Plan 21 Bølge 4 — OpenCorporates fasade covering Spain, Italy and Serbia in
+        // one go. Each jurisdiction registers its own ICompanyProvider but they share
+        // one HttpClient + one API token via the shared OpenCorporatesClient.
+        services.AddBronnoysundOpenCorporates(configuration);
 
         return services;
     }

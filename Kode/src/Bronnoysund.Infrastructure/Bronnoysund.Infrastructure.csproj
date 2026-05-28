@@ -3,11 +3,15 @@
   <ItemGroup>
     <ProjectReference Include="..\Bronnoysund.Application\Bronnoysund.Application.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Brreg.Generated\Bronnoysund.Infrastructure.Brreg.Generated.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.Croatia\Bronnoysund.Infrastructure.Croatia.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Denmark\Bronnoysund.Infrastructure.Denmark.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Estonia\Bronnoysund.Infrastructure.Estonia.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Finland\Bronnoysund.Infrastructure.Finland.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.Greece\Bronnoysund.Infrastructure.Greece.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Ireland\Bronnoysund.Infrastructure.Ireland.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.Latvia\Bronnoysund.Infrastructure.Latvia.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Lithuania\Bronnoysund.Infrastructure.Lithuania.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.OpenCorporates\Bronnoysund.Infrastructure.OpenCorporates.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Poland\Bronnoysund.Infrastructure.Poland.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Slovenia\Bronnoysund.Infrastructure.Slovenia.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Sweden\Bronnoysund.Infrastructure.Sweden.csproj" />
