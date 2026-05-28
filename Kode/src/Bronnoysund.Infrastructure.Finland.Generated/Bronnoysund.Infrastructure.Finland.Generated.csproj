@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Generated code: silence convention warnings we don't own. -->
+    <NoWarn>$(NoWarn);CS1591;CS8019;CA1000;CA1002;CA1054;CA1056;CA1062;CA1308;CA1707;CA1716;CA1819;CA2007;CA2227;CA5394;IDE0007;IDE0011;IDE0017;IDE0021;IDE0022;IDE0028;IDE0044;IDE0051;IDE0058;IDE0066;IDE0090;IDE0100;IDE0028;NU1900</NoWarn>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Kiota.Abstractions" Version="1.22.2" />
+    <PackageReference Include="Microsoft.Kiota.Http.HttpClientLibrary" Version="1.22.2" />
+    <PackageReference Include="Microsoft.Kiota.Serialization.Json" Version="1.22.2" />
+    <PackageReference Include="Microsoft.Kiota.Serialization.Text" Version="1.22.2" />
+    <PackageReference Include="Microsoft.Kiota.Serialization.Form" Version="1.22.2" />
+    <PackageReference Include="Microsoft.Kiota.Serialization.Multipart" Version="1.22.2" />
+  </ItemGroup>
+
+</Project>

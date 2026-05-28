@@ -24,13 +24,32 @@ public class CountryDetectorTests
     }
 
     [Theory]
+    [InlineData("0112038-9")] // Nokia Oyj
+    [InlineData("2646674-9")] // Wolt Oy
+    [InlineData("2336509-6")] // Supercell Oy
+    public void Detect_FinnishBusinessId_ReturnsFinnishBusinessId(string raw)
+    {
+        var result = _detector.Detect(raw);
+
+        result.Should().BeOfType<FinnishBusinessId>();
+        result!.CountryCode.Should().Be("FI");
+    }
+
+    [Fact]
+    public void Detect_FinnishDigitsWithoutDash_ReturnsNull()
+    {
+        // 8 plain digits could be Estonian/Danish — we require the dash to commit to FI.
+        _detector.Detect("01120389").Should().BeNull();
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("not a number")]
     [InlineData("12345")]          // too short
     [InlineData("123456785")]      // starts with 1 — fails NO rule
-    [InlineData("0112038-9")]      // looks Finnish — not yet supported
+    [InlineData("0112038-0")]      // looks Finnish but wrong checksum
     public void Detect_UnknownOrInvalidInput_ReturnsNull(string? raw)
     {
         _detector.Detect(raw).Should().BeNull();

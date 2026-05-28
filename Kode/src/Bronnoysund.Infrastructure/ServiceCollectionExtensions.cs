@@ -6,6 +6,7 @@ using Bronnoysund.Infrastructure.Brreg;
 using Bronnoysund.Infrastructure.Brreg.Generated;
 using Bronnoysund.Infrastructure.Caching;
 using Bronnoysund.Infrastructure.Detection;
+using Bronnoysund.Infrastructure.Finland;
 using Bronnoysund.Infrastructure.Remote;
 using Bronnoysund.Infrastructure.Stubs;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -216,11 +217,19 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDebtRegisterProvider, NotAvailableDebtRegisterProvider>();
         services.AddSingleton<IPersonRolesProvider, NotAvailablePersonRolesProvider>();
 
-        // Country-agnostic plumbing — populated today by the single Norwegian provider
-        // registered above. International adapters (Plan 21 Bølge 1+) plug in as additional
-        // ICompanyProvider implementations and are picked up automatically by the registry.
+        // Country-agnostic plumbing — populated by the providers registered above plus the
+        // Finland adapter wired up below. International adapters (Plan 21 Bølge 1+) plug in
+        // as additional ICompanyProvider implementations and are picked up automatically by
+        // the registry.
         services.AddSingleton<ICountryDetector, CountryDetector>();
         services.AddSingleton<ICompanyProviderRegistry, CompanyProviderRegistry>();
+
+        // Finland (PRH/YTJ) — first international adapter (Plan 21 Bølge 1). Registered
+        // unconditionally so RemoteApi-mode hosts get it too; the registry will simply expose
+        // both NO and FI as supported countries. Finland's HTTP/Kiota wiring lives in
+        // Bronnoysund.Infrastructure.Finland so the package can evolve (caching decorator,
+        // PRH-specific Polly tuning) without touching this composition root.
+        services.AddBronnoysundFinland();
 
         return services;
     }

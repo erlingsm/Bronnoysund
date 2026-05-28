@@ -657,6 +657,14 @@ try
 
     app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Bronnoysund.WebApi" }));
 
+    // Per Plan 21, a single endpoint that enumerates every ICompanyProvider currently wired
+    // up. Useful for verifying a new country adapter is registered after deploy, and for the
+    // smoke-test pages that need to know which flags to render.
+    app.MapGet("/health/providers", (ICompanyProviderRegistry registry) => Results.Ok(new
+    {
+        supportedCountries = registry.SupportedCountries.OrderBy(c => c).ToArray(),
+    }));
+
     Log.Information("Bronnoysund.WebApi starting");
     app.Run();
 }
