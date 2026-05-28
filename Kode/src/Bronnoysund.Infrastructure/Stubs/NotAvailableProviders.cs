@@ -171,6 +171,13 @@ internal sealed class NotAvailableBrregStatisticsProvider : IBrregStatisticsProv
             "Brreg statistics is only available in Direct mode. Switch DataSource:Mode=Direct."));
 }
 
+internal sealed class NotAvailableMatrikkelenhetProvider : IMatrikkelenhetProvider
+{
+    public Task<MatrikkelenhetLookupResult> LookupAsync(MatrikkelenhetQuery query, CancellationToken ct) =>
+        Task.FromResult<MatrikkelenhetLookupResult>(new MatrikkelenhetLookupResult.Unavailable(
+            "Matrikkelenhet is only available in Direct mode. Switch DataSource:Mode=Direct."));
+}
+
 internal sealed class NotAvailablePersonRolesProvider : IPersonRolesProvider
 {
     public Task<PersonRolesResponse?> GetByPersonAsync(PersonIdentifier person, CancellationToken ct) =>

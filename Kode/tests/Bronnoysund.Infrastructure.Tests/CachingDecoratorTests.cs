@@ -185,6 +185,50 @@ public class CachingDecoratorTests
         await inner.Received(1).GetRolesTotalCountAsync(Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task CachingMatrikkelenhetProvider_OnlyCallsInnerOnce_ForSameQuery()
+    {
+        // I8: Repeated lookups with the same matrikkelenhetid must hit the cache, not the inner.
+        var inner = Substitute.For<IMatrikkelenhetProvider>();
+        inner.LookupAsync(Arg.Any<MatrikkelenhetQuery>(), Arg.Any<CancellationToken>())
+            .Returns(new MatrikkelenhetLookupResult.Found([new MatrikkelenhetResponse(
+                MatrikkelenhetId: "x1",
+                OrganizationNumber: Org.Value,
+                KommuneNumber: "0301",
+                GardsNumber: "1",
+                BruksNumber: "1",
+                FesteNumber: null,
+                Order: 1)]));
+        var sut = new CachingMatrikkelenhetProvider(inner, CreateCache(),
+            NullLogger<CachingMatrikkelenhetProvider>.Instance);
+
+        var query = new MatrikkelenhetQuery(MatrikkelenhetId: "x1");
+        await sut.LookupAsync(query, CancellationToken.None);
+        await sut.LookupAsync(query, CancellationToken.None);
+        await sut.LookupAsync(query, CancellationToken.None);
+
+        await inner.Received(1).LookupAsync(
+            Arg.Is<MatrikkelenhetQuery>(q => q.MatrikkelenhetId == "x1"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task CachingMatrikkelenhetProvider_BypassesCache_ForInvalidInput()
+    {
+        // I8: InvalidInput (both filters or neither) must always reach the inner so the caller
+        // sees a fresh InvalidInput on every call, not a stale cached error.
+        var inner = Substitute.For<IMatrikkelenhetProvider>();
+        inner.LookupAsync(Arg.Any<MatrikkelenhetQuery>(), Arg.Any<CancellationToken>())
+            .Returns(new MatrikkelenhetLookupResult.InvalidInput("Either filter must be set."));
+        var sut = new CachingMatrikkelenhetProvider(inner, CreateCache(),
+            NullLogger<CachingMatrikkelenhetProvider>.Instance);
+
+        await sut.LookupAsync(new MatrikkelenhetQuery(), CancellationToken.None);
+        await sut.LookupAsync(new MatrikkelenhetQuery(), CancellationToken.None);
+
+        await inner.Received(2).LookupAsync(Arg.Any<MatrikkelenhetQuery>(), Arg.Any<CancellationToken>());
+    }
+
     private static SubUnitDetailsResponse SampleSubUnit() => new(
         OrganizationNumber: Org.Value,
         OrganizationName: "Sample",

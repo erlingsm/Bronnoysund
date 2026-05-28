@@ -594,6 +594,67 @@ try
         };
     });
 
+    // D1: Bulk-download catalogue. Metadata only — clients download bytes directly from
+    // Brreg, since our WebApi has no business proxying 10s-of-megabyte dumps.
+    app.MapGet("/downloads", (IBulkDownloadCatalog catalog) => Results.Ok(catalog.GetAll()));
+
+    // D2: Matrikkelenhet lookup. Caller supplies exactly one of matrikkelenhetid or
+    // matrikkelnummer; the adapter enforces that and surfaces an early 400 via
+    // MatrikkelenhetLookupResult.InvalidInput.
+    app.MapGet("/matrikkelenhet", async (
+        string? matrikkelenhetid,
+        string? matrikkelnummer,
+        IMatrikkelenhetProvider provider,
+        CancellationToken ct) =>
+    {
+        // I2: edge-level format validation (mirrors H11 for /kodeverk). Reject malformed
+        // values before the both-or-neither check in the adapter so callers get a precise
+        // 400 ("must be N digits") rather than the generic "provide exactly one" message
+        // when the bad input also happens to be the only filter set.
+        if (!MatrikkelenhetQueryValidator.IsValidMatrikkelenhetId(matrikkelenhetid))
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid input",
+                detail: "matrikkelenhetid must be 1-64 characters of [A-Za-z0-9_-].",
+                type: InvalidInputType);
+        }
+        if (!MatrikkelenhetQueryValidator.IsValidMatrikkelnummer(matrikkelnummer))
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid input",
+                detail: "matrikkelnummer must match the format kommune-gnr/bnr or kommune-gnr/bnr/fnr (e.g. 0301-1/1).",
+                type: InvalidInputType);
+        }
+
+        var query = new MatrikkelenhetQuery(
+            MatrikkelenhetId: matrikkelenhetid,
+            Matrikkelnummer: matrikkelnummer);
+
+        var result = await provider.LookupAsync(query, ct);
+        return result switch
+        {
+            MatrikkelenhetLookupResult.Found f => Results.Ok(f.Matrikkelenheter),
+            MatrikkelenhetLookupResult.NotFound nf => Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Matrikkelenhet not found",
+                detail: $"No matrikkelenhet matches query {nf.Query}.",
+                type: NotFoundType),
+            MatrikkelenhetLookupResult.InvalidInput inv => Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid input",
+                detail: inv.Message,
+                type: InvalidInputType),
+            MatrikkelenhetLookupResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
     app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Bronnoysund.WebApi" }));
 
     Log.Information("Bronnoysund.WebApi starting");
@@ -683,6 +744,33 @@ internal static partial class KodeverkRouteValidator
 
     public static bool IsValidOrganisasjonsformKode(string? value)
         => !string.IsNullOrEmpty(value) && OrganisasjonsformKodePattern().IsMatch(value);
+}
+
+/// <summary>
+/// I2: Edge-level format validation for the <c>/matrikkelenhet</c> query parameters. Both
+/// validators return <c>true</c> for null/empty inputs so the begge-eller-ingen rule in the
+/// adapter can still produce the canonical "provide exactly one" InvalidInput message —
+/// these regexes only reject values that are present but malformed.
+/// </summary>
+internal static partial class MatrikkelenhetQueryValidator
+{
+    // Brreg's internal matrikkelenhetid is typically UUID-shaped but we stay liberal:
+    // 1-64 characters of letters, digits, underscores, and hyphens covers UUIDs (with or
+    // without dashes), opaque tokens, and short test ids.
+    [System.Text.RegularExpressions.GeneratedRegex("^[A-Za-z0-9_-]{1,64}$")]
+    private static partial System.Text.RegularExpressions.Regex MatrikkelenhetIdPattern();
+
+    // Matrikkelnummer is "kommune-gnr/bnr" or "kommune-gnr/bnr/fnr" — kommune is 2-4 digits
+    // (current codes are zero-padded 4-digit, historic codes used 2 digits), gnr/bnr/fnr are
+    // unbounded positive integers in the spec but reasonable in practice.
+    [System.Text.RegularExpressions.GeneratedRegex(@"^\d{2,4}-\d+/\d+(/\d+)?$")]
+    private static partial System.Text.RegularExpressions.Regex MatrikkelnummerPattern();
+
+    public static bool IsValidMatrikkelenhetId(string? value)
+        => string.IsNullOrWhiteSpace(value) || MatrikkelenhetIdPattern().IsMatch(value.Trim());
+
+    public static bool IsValidMatrikkelnummer(string? value)
+        => string.IsNullOrWhiteSpace(value) || MatrikkelnummerPattern().IsMatch(value.Trim());
 }
 
 /// <summary>Marker class so Microsoft.AspNetCore.Mvc.Testing can find the entry assembly.</summary>

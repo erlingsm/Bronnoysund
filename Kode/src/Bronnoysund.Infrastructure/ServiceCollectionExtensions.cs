@@ -174,6 +174,17 @@ public static class ServiceCollectionExtensions
 
             services.AddSingleton<IVoluntaryOrganizationSearchProvider, BrregVoluntaryOrganizationSearchProvider>();
 
+            // D2/I8: Matrikkelenhet results are stable on the order of days (cadastral updates
+            // flow through municipalities slowly), so a 1-hour HybridCache TTL keeps repeat
+            // Lookup-page renders for the same matrikkelenhet from hammering Brreg. The decorator
+            // bypasses caching for InvalidInput so caller bugs always surface fresh.
+            services.AddSingleton<BrregMatrikkelenhetProvider>();
+            services.AddSingleton<IMatrikkelenhetProvider>(sp =>
+                new CachingMatrikkelenhetProvider(
+                    inner: sp.GetRequiredService<BrregMatrikkelenhetProvider>(),
+                    cache: sp.GetRequiredService<HybridCache>(),
+                    logger: sp.GetRequiredService<ILogger<CachingMatrikkelenhetProvider>>()));
+
             services.AddSingleton<IBankruptcyProvider, BrregBankruptcyProvider>();
         }
         else
@@ -187,10 +198,16 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IEntityChangesProvider, NotAvailableEntityChangesProvider>();
             services.AddSingleton<IVoluntaryOrganizationProvider, NotAvailableVoluntaryOrganizationProvider>();
             services.AddSingleton<IVoluntaryOrganizationSearchProvider, NotAvailableVoluntaryOrganizationSearchProvider>();
+            services.AddSingleton<IMatrikkelenhetProvider, NotAvailableMatrikkelenhetProvider>();
             services.AddSingleton<IBankruptcyProvider, NotAvailableBankruptcyProvider>();
             services.AddSingleton<IKodeverkProvider, NotAvailableKodeverkProvider>();
             services.AddSingleton<IBrregStatisticsProvider, NotAvailableBrregStatisticsProvider>();
         }
+
+        // D1: Bulk-download catalog is mode-agnostic (it serves metadata only — the actual
+        // bytes are fetched from Brreg directly by the consumer). Register unconditionally
+        // so RemoteApi-mode hosts can serve it too.
+        services.AddSingleton<IBulkDownloadCatalog, BrregBulkDownloadCatalog>();
 
         // Stub providers for registries that require gated access (Maskinporten, AML, commercial).
         services.AddSingleton<IAnnualReportProvider, NotAvailableAnnualReportProvider>();
