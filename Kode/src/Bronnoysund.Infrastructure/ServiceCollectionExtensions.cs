@@ -229,7 +229,7 @@ public static class ServiceCollectionExtensions
         // both NO and FI as supported countries. Finland's HTTP/Kiota wiring lives in
         // Bronnoysund.Infrastructure.Finland so the package can evolve (caching decorator,
         // PRH-specific Polly tuning) without touching this composition root.
-        services.AddBronnoysundFinland();
+        services.AddBronnoysundFinland(configuration);
 
         return services;
     }
