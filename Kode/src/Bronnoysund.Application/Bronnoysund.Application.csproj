@@ -9,6 +9,10 @@
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.8" />
+    <!-- Polly.Core gives us BrokenCircuitException only; the resilience pipelines stay
+         in Infrastructure where they belong. This keeps the shared error-translator
+         self-contained in Application without dragging in the full Polly machinery. -->
+    <PackageReference Include="Polly.Core" Version="8.5.2" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -3,6 +3,7 @@
 using System.Net;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
@@ -39,7 +40,7 @@ internal sealed class GemiCompanyProvider(
                 $"GemiCompanyProvider only accepts Greek AFM or GEMI numbers (got {id.CountryCode}:{id.Value}).");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
             using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(path, UriKind.Relative));
             req.Headers.Add("X-API-Key", opts.ApiKey);
@@ -57,16 +58,7 @@ internal sealed class GemiCompanyProvider(
             return mapped is null
                 ? new CompanyLookupResult.NotFound(lookupValue)
                 : new CompanyLookupResult.Found(mapped);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "GEMI transport error for {Value}", lookupValue);
-            return new CompanyLookupResult.Unavailable($"Could not contact GEMI for {lookupValue}: {ex.Message}");
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return new CompanyLookupResult.Unavailable($"GEMI did not respond within timeout for {lookupValue}");
-        }
+        }, "Greece (GEMI)", lookupValue, logger, ct).ConfigureAwait(false);
     }
 
     private static CompanyResponse? MapToResponse(JsonElement root, string id)

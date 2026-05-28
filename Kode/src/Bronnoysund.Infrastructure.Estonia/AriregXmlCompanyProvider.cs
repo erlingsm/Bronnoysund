@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
@@ -45,7 +46,7 @@ internal sealed class AriregXmlCompanyProvider(
                 "Estonia (RIK) credentials not configured — set Bronnoysund:International:Estonia:Username and :Password in Azure App Config.");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
             var soap = BuildLihtandmedRequest(ee.Value, opts.Username, opts.Password);
             using var req = new HttpRequestMessage(HttpMethod.Post, opts.BaseUrl)
@@ -64,17 +65,7 @@ internal sealed class AriregXmlCompanyProvider(
             return company is null
                 ? new CompanyLookupResult.NotFound(ee.Value)
                 : new CompanyLookupResult.Found(company);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "RIK transport error for {Code}", ee.Value);
-            return new CompanyLookupResult.Unavailable($"Could not contact RIK for {ee.Value}: {ex.Message}");
-        }
-        catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
-        {
-            logger.LogWarning(ex, "RIK timeout for {Code}", ee.Value);
-            return new CompanyLookupResult.Unavailable($"RIK did not respond within timeout for {ee.Value}");
-        }
+        }, "Estonia (RIK)", ee.Value, logger, ct).ConfigureAwait(false);
     }
 
     private static string BuildLihtandmedRequest(string registrikood, string username, string password)

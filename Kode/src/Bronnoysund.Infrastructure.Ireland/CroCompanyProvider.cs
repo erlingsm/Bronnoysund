@@ -3,6 +3,7 @@
 using System.Net;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
@@ -33,7 +34,7 @@ internal sealed class CroCompanyProvider(
                 $"CroCompanyProvider only accepts Irish CRO numbers (got {id.CountryCode}:{id.Value}).");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
             var opts = options.Value;
             // CKAN datastore_search takes filters as URL-encoded JSON. company_num is the
@@ -55,29 +56,28 @@ internal sealed class CroCompanyProvider(
             }
             if (!doc.RootElement.TryGetProperty("result", out var result) ||
                 !result.TryGetProperty("records", out var records) ||
+                records.ValueKind != JsonValueKind.Array ||
                 records.GetArrayLength() == 0)
             {
                 return new CompanyLookupResult.NotFound(ie.Value);
             }
 
             var mapped = MapToResponse(records[0], ie.Value);
-            return new CompanyLookupResult.Found(mapped);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "CRO transport error for {Number}", ie.Value);
-            return new CompanyLookupResult.Unavailable($"Could not contact CRO for {ie.Value}: {ex.Message}");
-        }
-        catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
-        {
-            logger.LogWarning(ex, "CRO timeout for {Number}", ie.Value);
-            return new CompanyLookupResult.Unavailable($"CRO did not respond within timeout for {ie.Value}");
-        }
+            return mapped is null
+                ? new CompanyLookupResult.NotFound(ie.Value)
+                : new CompanyLookupResult.Found(mapped);
+        }, "Ireland (CRO)", ie.Value, logger, ct).ConfigureAwait(false);
     }
 
-    private static CompanyResponse MapToResponse(JsonElement record, string companyNumber)
+    private static CompanyResponse? MapToResponse(JsonElement record, string companyNumber)
     {
-        var name = ReadString(record, "company_name") ?? string.Empty;
+        // Code-review-2026-05-29: return null on missing name so the caller maps to
+        // NotFound, matching every other adapter's contract. The earlier behaviour
+        // (return Found with empty OrganizationName) surfaced as a "blank result"
+        // bug rather than a clean miss.
+        var name = ReadString(record, "company_name");
+        if (string.IsNullOrWhiteSpace(name)) return null;
+
         var address = ComposeAddress(record);
         var registeredDate = ParseDate(ReadString(record, "company_reg_date"));
         return new CompanyResponse(

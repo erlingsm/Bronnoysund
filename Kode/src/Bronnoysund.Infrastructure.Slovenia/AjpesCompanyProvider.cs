@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
@@ -40,7 +41,7 @@ internal sealed class AjpesCompanyProvider(
                 "Slovenia (AJPES) credentials not configured — set Bronnoysund:International:Slovenia:Username and :Password in Azure App Config.");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
             var payload = new
             {
@@ -73,16 +74,7 @@ internal sealed class AjpesCompanyProvider(
             return mapped is null
                 ? new CompanyLookupResult.NotFound(si.Value)
                 : new CompanyLookupResult.Found(mapped);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "AJPES transport error for {Ms}", si.Value);
-            return new CompanyLookupResult.Unavailable($"Could not contact AJPES for {si.Value}: {ex.Message}");
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return new CompanyLookupResult.Unavailable($"AJPES did not respond within timeout for {si.Value}");
-        }
+        }, "Slovenia (AJPES)", si.Value, logger, ct).ConfigureAwait(false);
     }
 
     private static CompanyResponse? MapToResponse(JsonElement subj, string ms)

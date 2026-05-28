@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Results;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -28,10 +30,17 @@ internal sealed class OpenCorporatesClient(
                 "OpenCorporates API token not configured — set Bronnoysund:International:OpenCorporates:ApiToken in Azure App Config.");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
-            var url = $"v0.4/companies/{jurisdiction}/{Uri.EscapeDataString(companyId)}?api_token={Uri.EscapeDataString(opts.ApiToken)}";
-            using var res = await http.GetAsync(new Uri(url, UriKind.Relative), ct).ConfigureAwait(false);
+            // Auth via Authorization header (OpenCorporates' Doorkeeper-style Token scheme),
+            // not the URL query parameter form documented in v0.4 examples — query strings
+            // get logged by Microsoft.Extensions.Http's default LoggingHttpMessageHandler
+            // and by upstream reverse proxies / APM tooling. Header auth keeps the token
+            // out of URL traces. (Code-review-2026-05-29 should-fix.)
+            var url = $"v0.4/companies/{jurisdiction}/{Uri.EscapeDataString(companyId)}";
+            using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(url, UriKind.Relative));
+            req.Headers.Authorization = new AuthenticationHeaderValue("Token", $"token={opts.ApiToken}");
+            using var res = await http.SendAsync(req, ct).ConfigureAwait(false);
             if (res.StatusCode == HttpStatusCode.NotFound) return new CompanyLookupResult.NotFound(companyId);
             if (res.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or (HttpStatusCode)402)
             {
@@ -50,16 +59,7 @@ internal sealed class OpenCorporatesClient(
             return mapped is null
                 ? new CompanyLookupResult.NotFound(companyId)
                 : new CompanyLookupResult.Found(mapped);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "OpenCorporates transport error for {Jurisdiction}/{Id}", jurisdiction, companyId);
-            return new CompanyLookupResult.Unavailable($"Could not contact OpenCorporates for {jurisdiction}/{companyId}: {ex.Message}");
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return new CompanyLookupResult.Unavailable($"OpenCorporates did not respond within timeout for {jurisdiction}/{companyId}");
-        }
+        }, $"OpenCorporates ({jurisdiction})", companyId, logger, ct).ConfigureAwait(false);
     }
 
     private static CompanyResponse? MapToResponse(JsonElement company, string companyId, string countryCode)

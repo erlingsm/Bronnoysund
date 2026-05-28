@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
@@ -43,7 +44,7 @@ internal sealed class CvrCompanyProvider(
                 "Denmark (CVR) credentials not configured — set Bronnoysund:International:Denmark:Username and :Password in Azure App Config.");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
             var query = new
             {
@@ -67,25 +68,25 @@ internal sealed class CvrCompanyProvider(
             using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
             if (!doc.RootElement.TryGetProperty("hits", out var hits) ||
                 !hits.TryGetProperty("hits", out var hitArray) ||
+                hitArray.ValueKind != JsonValueKind.Array ||
                 hitArray.GetArrayLength() == 0)
             {
                 return new CompanyLookupResult.NotFound(dk.Value);
             }
-            var source = hitArray[0].GetProperty("_source").GetProperty("Vrvirksomhed");
+            // Code-review-2026-05-29: guard the _source/Vrvirksomhed chain — an
+            // Elasticsearch shape change (e.g. _source disabled) would otherwise
+            // KeyNotFoundException past the per-lookup catch.
+            var firstHit = hitArray[0];
+            if (!firstHit.TryGetProperty("_source", out var src) || src.ValueKind != JsonValueKind.Object ||
+                !src.TryGetProperty("Vrvirksomhed", out var source) || source.ValueKind != JsonValueKind.Object)
+            {
+                return new CompanyLookupResult.Unavailable("CVR response missing _source.Vrvirksomhed.");
+            }
             var mapped = MapToResponse(source, dk.Value);
             return mapped is null
                 ? new CompanyLookupResult.NotFound(dk.Value)
                 : new CompanyLookupResult.Found(mapped);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "CVR transport error for {Cvr}", dk.Value);
-            return new CompanyLookupResult.Unavailable($"Could not contact CVR for {dk.Value}: {ex.Message}");
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return new CompanyLookupResult.Unavailable($"CVR did not respond within timeout for {dk.Value}");
-        }
+        }, "Denmark (CVR)", dk.Value, logger, ct).ConfigureAwait(false);
     }
 
     private static CompanyResponse? MapToResponse(JsonElement vrvirksomhed, string cvr)

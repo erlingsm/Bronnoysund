@@ -12,7 +12,11 @@ public sealed class DenmarkOptions
 {
     public const string SectionName = "Bronnoysund:International:Denmark";
 
-    public string BaseUrl { get; set; } = "http://distribution.virk.dk/";
+    // HTTPS by default — CVR's distribution endpoint accepts both http and https since
+    // 2024, and sending Basic Auth credentials over plaintext (the original http://
+    // default) would expose username + password on any intermediate hop. Override in
+    // App Config only if Erhvervsstyrelsen rolls back TLS support.
+    public string BaseUrl { get; set; } = "https://distribution.virk.dk/";
 
     public string Username { get; set; } = string.Empty;
 

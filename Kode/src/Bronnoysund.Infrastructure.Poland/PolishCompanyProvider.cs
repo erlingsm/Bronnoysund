@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
@@ -26,6 +27,8 @@ internal sealed class PolishCompanyProvider(
     IOptions<PolandOptions> options,
     ILogger<PolishCompanyProvider> logger) : ICompanyProvider
 {
+    private static readonly string[] KrsRegisters = ["P", "S"];
+
     public string CountryCode => "PL";
 
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
@@ -42,34 +45,46 @@ internal sealed class PolishCompanyProvider(
 
     private async Task<CompanyLookupResult> LookupKrsAsync(PolishKrsNumber krsNumber, CancellationToken ct)
     {
-        // Try the commercial register first; if 404, fall back to the associations register.
-        foreach (var rejestr in new[] { "P", "S" })
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
-            try
+            // Try the commercial register first; if 404, fall back to the associations
+            // register. Code-review-2026-05-29: per-attempt transport failures used to
+            // skip the S fallback. The outer translator now catches the LAST attempt's
+            // transport exception only after BOTH attempts have failed.
+            Exception? lastTransientException = null;
+            foreach (var rejestr in KrsRegisters)
             {
-                var url = $"api/krs/OdpisAktualny/{krsNumber.Value}?rejestr={rejestr}&format=json";
-                using var res = await krs.GetAsync(new Uri(url, UriKind.Relative), ct).ConfigureAwait(false);
-                if (res.StatusCode == HttpStatusCode.NotFound) continue;
-                res.EnsureSuccessStatusCode();
+                try
+                {
+                    var url = $"api/krs/OdpisAktualny/{krsNumber.Value}?rejestr={rejestr}&format=json";
+                    using var res = await krs.GetAsync(new Uri(url, UriKind.Relative), ct).ConfigureAwait(false);
+                    if (res.StatusCode == HttpStatusCode.NotFound) continue;
+                    res.EnsureSuccessStatusCode();
 
-                await using var stream = await res.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
-                var mapped = MapKrsToResponse(doc.RootElement, krsNumber.Value);
-                return mapped is null
-                    ? new CompanyLookupResult.Unavailable("KRS returned an unexpected response structure.")
-                    : new CompanyLookupResult.Found(mapped);
+                    await using var stream = await res.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
+                    using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
+                    var mapped = MapKrsToResponse(doc.RootElement, krsNumber.Value);
+                    return mapped is null
+                        ? new CompanyLookupResult.Unavailable("KRS returned an unexpected response structure.")
+                        : new CompanyLookupResult.Found(mapped);
+                }
+                catch (HttpRequestException ex)
+                {
+                    lastTransientException = ex;
+                }
+                catch (TaskCanceledException ex) when (!ct.IsCancellationRequested)
+                {
+                    lastTransientException = ex;
+                }
             }
-            catch (HttpRequestException ex)
+            if (lastTransientException is not null)
             {
-                logger.LogWarning(ex, "KRS transport error for {Krs}", krsNumber.Value);
-                return new CompanyLookupResult.Unavailable($"Could not contact KRS for {krsNumber.Value}: {ex.Message}");
+                // Both P and S failed transiently. Re-throw so the shared translator
+                // gives the caller a single canonical Unavailable.
+                throw lastTransientException;
             }
-            catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-            {
-                return new CompanyLookupResult.Unavailable($"KRS did not respond within timeout for {krsNumber.Value}");
-            }
-        }
-        return new CompanyLookupResult.NotFound(krsNumber.Value);
+            return new CompanyLookupResult.NotFound(krsNumber.Value);
+        }, "Poland (KRS)", krsNumber.Value, logger, ct).ConfigureAwait(false);
     }
 
     private async Task<CompanyLookupResult> LookupCeidgAsync(string value, string queryParam, CancellationToken ct)
@@ -81,7 +96,7 @@ internal sealed class PolishCompanyProvider(
                 "CEIDG bearer token not configured — set Bronnoysund:International:Poland:CeidgBearerToken in Azure App Config. (KRS lookups by KRS number still work.)");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
             var url = $"api/ceidg/v3/firmy?{queryParam}={value}&limit=1";
             using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(url, UriKind.Relative));
@@ -103,16 +118,7 @@ internal sealed class PolishCompanyProvider(
             return mapped is null
                 ? new CompanyLookupResult.NotFound(value)
                 : new CompanyLookupResult.Found(mapped);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "CEIDG transport error for {Value}", value);
-            return new CompanyLookupResult.Unavailable($"Could not contact CEIDG for {value}: {ex.Message}");
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return new CompanyLookupResult.Unavailable($"CEIDG did not respond within timeout for {value}");
-        }
+        }, "Poland (CEIDG)", value, logger, ct).ConfigureAwait(false);
     }
 
     private static CompanyResponse? MapKrsToResponse(JsonElement root, string krs)

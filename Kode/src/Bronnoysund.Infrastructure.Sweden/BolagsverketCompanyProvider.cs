@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
@@ -45,7 +46,7 @@ internal sealed class BolagsverketCompanyProvider(
                 "Sweden (Bolagsverket) credentials not configured — set Bronnoysund:International:Sweden:ClientId and :ClientSecret in Azure App Config.");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
             var token = await GetTokenAsync(opts, ct).ConfigureAwait(false);
             using var req = new HttpRequestMessage(HttpMethod.Get,
@@ -69,16 +70,7 @@ internal sealed class BolagsverketCompanyProvider(
             return mapped is null
                 ? new CompanyLookupResult.NotFound(se.Value)
                 : new CompanyLookupResult.Found(mapped);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "Bolagsverket transport error for {Value}", se.Value);
-            return new CompanyLookupResult.Unavailable($"Could not contact Bolagsverket for {se.Value}: {ex.Message}");
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return new CompanyLookupResult.Unavailable($"Bolagsverket did not respond within timeout for {se.Value}");
-        }
+        }, "Sweden (Bolagsverket)", se.Value, logger, ct).ConfigureAwait(false);
     }
 
     private async Task<string> GetTokenAsync(SwedenOptions opts, CancellationToken ct)
@@ -98,9 +90,21 @@ internal sealed class BolagsverketCompanyProvider(
         res.EnsureSuccessStatusCode();
         await using var stream = await res.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
         using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
-        var token = doc.RootElement.GetProperty("access_token").GetString()
-            ?? throw new InvalidOperationException("Bolagsverket token response missing access_token.");
-        var expiresIn = doc.RootElement.TryGetProperty("expires_in", out var ei) ? ei.GetInt32() : 3600;
+        // Code-review-2026-05-29: tolerate token-endpoint error envelopes (e.g.
+        // {"error":"invalid_client"}) and unexpected response shapes by returning a
+        // typed HttpRequestException, which the outer translator turns into a
+        // consistent Unavailable. The earlier code threw InvalidOperationException
+        // / KeyNotFoundException which propagated uncaught past the per-lookup catch.
+        if (!doc.RootElement.TryGetProperty("access_token", out var tokenEl) ||
+            tokenEl.ValueKind != JsonValueKind.String)
+        {
+            throw new HttpRequestException("Bolagsverket token response missing access_token.");
+        }
+        var token = tokenEl.GetString()!;
+        var expiresIn = doc.RootElement.TryGetProperty("expires_in", out var ei) &&
+                        ei.ValueKind is JsonValueKind.Number
+            ? ei.GetInt32()
+            : 3600;
         tokenCache.Set(TokenCacheKey, token, TimeSpan.FromSeconds(Math.Max(60, expiresIn - 60)));
         return token;
     }

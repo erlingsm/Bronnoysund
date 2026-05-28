@@ -3,6 +3,7 @@
 using System.Net;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
+using Bronnoysund.Application.International;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
@@ -33,7 +34,7 @@ internal sealed class JarCompanyProvider(
                 $"JarCompanyProvider only accepts Lithuanian company codes (got {id.CountryCode}:{id.Value}).");
         }
 
-        try
+        return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
             var opts = options.Value;
             var url = $"{opts.JarDatasetId}/?company_code={lt.Value}&limit(1)";
@@ -51,7 +52,10 @@ internal sealed class JarCompanyProvider(
             {
                 record = doc.RootElement[0];
             }
-            else if (doc.RootElement.TryGetProperty("_data", out var data) && data.GetArrayLength() > 0)
+            // Code-review-2026-05-29: guard ValueKind before GetArrayLength — _data could
+            // be an object or null in an error envelope.
+            else if (doc.RootElement.TryGetProperty("_data", out var data) &&
+                     data.ValueKind == JsonValueKind.Array && data.GetArrayLength() > 0)
             {
                 record = data[0];
             }
@@ -64,16 +68,7 @@ internal sealed class JarCompanyProvider(
             return mapped is null
                 ? new CompanyLookupResult.NotFound(lt.Value)
                 : new CompanyLookupResult.Found(mapped);
-        }
-        catch (HttpRequestException ex)
-        {
-            logger.LogWarning(ex, "data.gov.lt transport error for {Code}", lt.Value);
-            return new CompanyLookupResult.Unavailable($"Could not contact data.gov.lt for {lt.Value}: {ex.Message}");
-        }
-        catch (TaskCanceledException) when (!ct.IsCancellationRequested)
-        {
-            return new CompanyLookupResult.Unavailable($"data.gov.lt did not respond within timeout for {lt.Value}");
-        }
+        }, "Lithuania (data.gov.lt)", lt.Value, logger, ct).ConfigureAwait(false);
     }
 
     private static CompanyResponse? MapToResponse(JsonElement record, string code)
