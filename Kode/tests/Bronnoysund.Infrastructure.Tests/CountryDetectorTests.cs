@@ -43,12 +43,40 @@ public class CountryDetectorTests
     }
 
     [Theory]
+    [InlineData("12417834")]  // Bolt Technology OÜ
+    [InlineData("90012345")]  // foundation shape
+    public void Detect_EstonianRegistryCode_ReturnsEstonia(string raw)
+    {
+        var result = _detector.Detect(raw);
+        result.Should().BeOfType<EstonianRegistryCode>();
+        result!.CountryCode.Should().Be("EE");
+    }
+
+    [Theory]
+    [InlineData("0000028860")]  // PKN Orlen — leading zeros → KRS
+    [InlineData("7740001454")]  // PKN Orlen NIP
+    public void Detect_PolishKrsOrNip_ReturnsPoland(string raw)
+    {
+        var result = _detector.Detect(raw);
+        result.Should().BeAssignableTo<CompanyIdentifier>();
+        result!.CountryCode.Should().Be("PL");
+    }
+
+    [Theory]
+    [InlineData("408059")]
+    [InlineData("5")]
+    public void Detect_IrishCroNumber_ReturnsIreland(string raw)
+    {
+        var result = _detector.Detect(raw);
+        result.Should().BeOfType<IrishCroNumber>();
+        result!.CountryCode.Should().Be("IE");
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
     [InlineData("not a number")]
-    [InlineData("12345")]          // too short
-    [InlineData("123456785")]      // starts with 1 — fails NO rule
     [InlineData("0112038-0")]      // looks Finnish but wrong checksum
     public void Detect_UnknownOrInvalidInput_ReturnsNull(string? raw)
     {

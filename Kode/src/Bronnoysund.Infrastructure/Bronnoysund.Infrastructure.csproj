@@ -3,7 +3,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Bronnoysund.Application\Bronnoysund.Application.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Brreg.Generated\Bronnoysund.Infrastructure.Brreg.Generated.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.Estonia\Bronnoysund.Infrastructure.Estonia.csproj" />
     <ProjectReference Include="..\Bronnoysund.Infrastructure.Finland\Bronnoysund.Infrastructure.Finland.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.Ireland\Bronnoysund.Infrastructure.Ireland.csproj" />
+    <ProjectReference Include="..\Bronnoysund.Infrastructure.Poland\Bronnoysund.Infrastructure.Poland.csproj" />
   </ItemGroup>
 
   <ItemGroup>

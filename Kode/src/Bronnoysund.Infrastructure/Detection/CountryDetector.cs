@@ -24,18 +24,55 @@ internal sealed class CountryDetector : ICountryDetector
             return null;
         }
 
+        // 1. Norwegian — 9 digits + MOD11 + leading 8/9 is highly specific; try first.
         if (OrganizationNumber.TryCreate(rawInput, out var organizationNumber, out _))
         {
             return organizationNumber;
         }
 
-        // Require an explicit dash for Finnish IDs so we don't claim every random 8-digit
-        // string. PRH itself accepts the dashless form on the wire, but as a user-input
-        // signal the dash is the discriminator.
+        // 2. Finnish — NNNNNNN-N requires an explicit dash to commit (the dashless form
+        //    would be ambiguous with Estonian/Danish 8-digit codes).
         if (rawInput.Contains('-') &&
             FinnishBusinessId.TryCreate(rawInput, out var finnishBusinessId, out _))
         {
             return finnishBusinessId;
+        }
+
+        // 3. Estonian — 8 digits starting with 1, 7, 8 or 9 (entity-type prefix) is
+        //    unambiguous within the set we support today.
+        if (EstonianRegistryCode.TryCreate(rawInput, out var estonian, out _))
+        {
+            return estonian;
+        }
+
+        // 4. Polish — try KRS (10 digits, leading zeros are common) before NIP (10 digits
+        //    with MOD-11) because KRS values starting "0000" never validate as NIP.
+        var digits = new string(rawInput.Where(char.IsDigit).ToArray());
+        if (digits.Length == 10 && digits.StartsWith("0000", StringComparison.Ordinal) &&
+            PolishKrsNumber.TryCreate(rawInput, out var krs, out _))
+        {
+            return krs;
+        }
+        if (PolishNip.TryCreate(rawInput, out var nip, out _))
+        {
+            return nip;
+        }
+        if (digits.Length == 10 && PolishKrsNumber.TryCreate(rawInput, out var krs2, out _))
+        {
+            return krs2;
+        }
+        if ((digits.Length == 9 || digits.Length == 14) &&
+            PolishRegon.TryCreate(rawInput, out var regon, out _))
+        {
+            return regon;
+        }
+
+        // 5. Irish — 1-7 digits without prefix. Tried last because a bare "5" matches IE
+        //    but would also match many partial inputs from other countries; we accept the
+        //    false-positive risk because the alternative (no detection at all) is worse.
+        if (IrishCroNumber.TryCreate(rawInput, out var irish, out _))
+        {
+            return irish;
         }
 
         return null;
