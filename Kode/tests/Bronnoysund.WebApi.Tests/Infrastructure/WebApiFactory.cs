@@ -32,6 +32,7 @@ public sealed class WebApiFactory : WebApplicationFactory<Program>
     public IVoluntaryOrganizationProvider Voluntary { get; } = Substitute.For<IVoluntaryOrganizationProvider>();
     public IVoluntaryOrganizationSearchProvider VoluntarySearch { get; } = Substitute.For<IVoluntaryOrganizationSearchProvider>();
     public IKodeverkProvider Kodeverk { get; } = Substitute.For<IKodeverkProvider>();
+    public IBrregStatisticsProvider Statistics { get; } = Substitute.For<IBrregStatisticsProvider>();
 
     private readonly string _dbPath = Path.Combine(
         Path.GetTempPath(),
@@ -67,6 +68,7 @@ public sealed class WebApiFactory : WebApplicationFactory<Program>
             ReplaceSingleton<IVoluntaryOrganizationProvider>(services, Voluntary);
             ReplaceSingleton<IVoluntaryOrganizationSearchProvider>(services, VoluntarySearch);
             ReplaceSingleton<IKodeverkProvider>(services, Kodeverk);
+            ReplaceSingleton<IBrregStatisticsProvider>(services, Statistics);
         });
     }
 

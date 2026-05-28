@@ -116,6 +116,17 @@ public static class ServiceCollectionExtensions
                     inner: sp.GetRequiredService<BrregKodeverkProvider>(),
                     cache: sp.GetRequiredService<HybridCache>(),
                     logger: sp.GetRequiredService<ILogger<CachingKodeverkProvider>>()));
+
+            // Brreg statistics — currently just /roller/totalbestand. Wrapped in a 2-minute
+            // HybridCache (H9) so dashboard tiles re-rendering on every navigation do not
+            // hammer Brreg. The TTL matches the entity-changes feed: short enough to feel
+            // live, long enough to absorb a render burst.
+            services.AddSingleton<BrregStatisticsProvider>();
+            services.AddSingleton<IBrregStatisticsProvider>(sp =>
+                new CachingBrregStatisticsProvider(
+                    inner: sp.GetRequiredService<BrregStatisticsProvider>(),
+                    cache: sp.GetRequiredService<HybridCache>(),
+                    logger: sp.GetRequiredService<ILogger<CachingBrregStatisticsProvider>>()));
         }
 
         // Phase 4 aggregator: parallel calls to every registered provider, per-provider error
@@ -178,6 +189,7 @@ public static class ServiceCollectionExtensions
             services.AddSingleton<IVoluntaryOrganizationSearchProvider, NotAvailableVoluntaryOrganizationSearchProvider>();
             services.AddSingleton<IBankruptcyProvider, NotAvailableBankruptcyProvider>();
             services.AddSingleton<IKodeverkProvider, NotAvailableKodeverkProvider>();
+            services.AddSingleton<IBrregStatisticsProvider, NotAvailableBrregStatisticsProvider>();
         }
 
         // Stub providers for registries that require gated access (Maskinporten, AML, commercial).

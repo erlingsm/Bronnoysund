@@ -119,18 +119,56 @@ internal sealed class NotAvailableVoluntaryOrganizationSearchProvider : IVolunta
 
 internal sealed class NotAvailableKodeverkProvider : IKodeverkProvider
 {
-    private static Task<KodeverkLookupResult> NotAvailable(string endpoint) =>
-        Task.FromResult<KodeverkLookupResult>(new KodeverkLookupResult.Unavailable(
-            $"Kodeverk {endpoint} is only available in Direct mode. Switch DataSource:Mode=Direct."));
+    private const string Reason = " is only available in Direct mode. Switch DataSource:Mode=Direct.";
+
+    private static Task<KodeverkLookupResult> NotAvailableList(string endpoint) =>
+        Task.FromResult<KodeverkLookupResult>(new KodeverkLookupResult.Unavailable($"Kodeverk {endpoint}{Reason}"));
+
+    private static Task<KodeverkSingleResult> NotAvailableSingle(string endpoint) =>
+        Task.FromResult<KodeverkSingleResult>(new KodeverkSingleResult.Unavailable($"Kodeverk {endpoint}{Reason}"));
+
+    private static Task<KodeverkPagedResult> NotAvailablePaged(string endpoint) =>
+        Task.FromResult<KodeverkPagedResult>(new KodeverkPagedResult.Unavailable($"Kodeverk {endpoint}{Reason}"));
 
     public Task<KodeverkLookupResult> GetOrganisasjonsformerAsync(CancellationToken ct) =>
-        NotAvailable("organisasjonsformer");
+        NotAvailableList("organisasjonsformer");
 
     public Task<KodeverkLookupResult> GetIcnpoCategoriesAsync(CancellationToken ct) =>
-        NotAvailable("icnpo-kategorier");
+        NotAvailableList("icnpo-kategorier");
 
     public Task<KodeverkLookupResult> GetVoluntaryInformationTypesAsync(CancellationToken ct) =>
-        NotAvailable("informasjonstyper");
+        NotAvailableList("informasjonstyper");
+
+    public Task<KodeverkPagedResult> GetKommunerAsync(int page, int size, CancellationToken ct) =>
+        NotAvailablePaged("kommuner");
+
+    public Task<KodeverkSingleResult> GetKommuneAsync(string kommunenummer, CancellationToken ct) =>
+        NotAvailableSingle("kommuner");
+
+    public Task<KodeverkLookupResult> GetRolletyperAsync(CancellationToken ct) =>
+        NotAvailableList("rolletyper");
+
+    public Task<KodeverkLookupResult> GetRollegruppetyperAsync(CancellationToken ct) =>
+        NotAvailableList("rollegruppetyper");
+
+    public Task<KodeverkLookupResult> GetRepresentanterAsync(CancellationToken ct) =>
+        NotAvailableList("representanter");
+
+    public Task<KodeverkSingleResult> GetOrganisasjonsformAsync(string kode, CancellationToken ct) =>
+        NotAvailableSingle("organisasjonsformer");
+
+    public Task<KodeverkLookupResult> GetOrganisasjonsformerWithEnheterAsync(CancellationToken ct) =>
+        NotAvailableList("organisasjonsformer/enheter");
+
+    public Task<KodeverkLookupResult> GetOrganisasjonsformerWithUnderenheterAsync(CancellationToken ct) =>
+        NotAvailableList("organisasjonsformer/underenheter");
+}
+
+internal sealed class NotAvailableBrregStatisticsProvider : IBrregStatisticsProvider
+{
+    public Task<RolesTotalCountResult> GetRolesTotalCountAsync(CancellationToken ct) =>
+        Task.FromResult<RolesTotalCountResult>(new RolesTotalCountResult.Unavailable(
+            "Brreg statistics is only available in Direct mode. Switch DataSource:Mode=Direct."));
 }
 
 internal sealed class NotAvailablePersonRolesProvider : IPersonRolesProvider

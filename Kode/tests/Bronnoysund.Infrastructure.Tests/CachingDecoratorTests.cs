@@ -164,6 +164,27 @@ public class CachingDecoratorTests
         await inner.Received(1).GetVoluntaryInformationTypesAsync(Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task CachingBrregStatisticsProvider_GetRolesTotalCount_OnlyCallsInnerOnce()
+    {
+        // H9: Second/third call within the 2-minute TTL must hit the cache, not the inner.
+        var inner = Substitute.For<IBrregStatisticsProvider>();
+        inner.GetRolesTotalCountAsync(Arg.Any<CancellationToken>())
+            .Returns(new RolesTotalCountResult.Found(4711000L));
+        var sut = new CachingBrregStatisticsProvider(inner, CreateCache(),
+            NullLogger<CachingBrregStatisticsProvider>.Instance);
+
+        var first = await sut.GetRolesTotalCountAsync(CancellationToken.None);
+        var second = await sut.GetRolesTotalCountAsync(CancellationToken.None);
+        var third = await sut.GetRolesTotalCountAsync(CancellationToken.None);
+
+        first.Should().BeOfType<RolesTotalCountResult.Found>();
+        second.Should().BeOfType<RolesTotalCountResult.Found>();
+        third.Should().BeOfType<RolesTotalCountResult.Found>();
+        ((RolesTotalCountResult.Found)first).TotalCount.Should().Be(4711000L);
+        await inner.Received(1).GetRolesTotalCountAsync(Arg.Any<CancellationToken>());
+    }
+
     private static SubUnitDetailsResponse SampleSubUnit() => new(
         OrganizationNumber: Org.Value,
         OrganizationName: "Sample",

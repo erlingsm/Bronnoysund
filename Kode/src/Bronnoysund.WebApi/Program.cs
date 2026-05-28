@@ -389,6 +389,211 @@ try
         };
     });
 
+    app.MapGet("/kodeverk/kommuner", async (
+        int? page,
+        int? size,
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        var pageValue = Math.Max(0, page ?? 0);
+        var sizeValue = Math.Clamp(size ?? 100, 1, 100);
+        var result = await provider.GetKommunerAsync(pageValue, sizeValue, ct);
+        return result switch
+        {
+            KodeverkPagedResult.Found f => Results.Ok(new
+            {
+                entries = f.Entries,
+                page = f.Page,
+                size = f.Size,
+                totalElements = f.TotalElements,
+                totalPages = f.TotalPages,
+            }),
+            KodeverkPagedResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/kommuner/{kommunenummer}", async (
+        string kommunenummer,
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        // H11: Reject obviously-malformed kommunenummer at our edge so Brreg is not contacted
+        // for inputs that cannot possibly match. Today's catalogue is 4 digits (e.g. 0301),
+        // but historic codes have used 2 digits, so we accept 2-4 digits.
+        if (!KodeverkRouteValidator.IsValidKommunenummer(kommunenummer))
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid input",
+                detail: "kommunenummer must be 2-4 digits.",
+                type: InvalidInputType);
+        }
+
+        var result = await provider.GetKommuneAsync(kommunenummer, ct);
+        return result switch
+        {
+            KodeverkSingleResult.Found f => Results.Ok(f.Entry),
+            KodeverkSingleResult.NotFound nf => Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Kommune not found",
+                detail: $"No Kommune with number {nf.Code} was found.",
+                type: NotFoundType),
+            KodeverkSingleResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/rolletyper", async (
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        var result = await provider.GetRolletyperAsync(ct);
+        return result switch
+        {
+            KodeverkLookupResult.Found f => Results.Ok(f.Entries),
+            KodeverkLookupResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/rollegruppetyper", async (
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        var result = await provider.GetRollegruppetyperAsync(ct);
+        return result switch
+        {
+            KodeverkLookupResult.Found f => Results.Ok(f.Entries),
+            KodeverkLookupResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/representanter", async (
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        var result = await provider.GetRepresentanterAsync(ct);
+        return result switch
+        {
+            KodeverkLookupResult.Found f => Results.Ok(f.Entries),
+            KodeverkLookupResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/organisasjonsformer/{kode}", async (
+        string kode,
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        // H11: Organisasjonsform codes are short alphanumeric tokens (e.g. AS, ENK, FLI,
+        // BEDR). Reject lower-case / punctuation / overlong inputs at the edge so we do not
+        // forward malformed paths to Brreg.
+        if (!KodeverkRouteValidator.IsValidOrganisasjonsformKode(kode))
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Invalid input",
+                detail: "organisasjonsform code must be 2-6 upper-case letters or digits.",
+                type: InvalidInputType);
+        }
+
+        var result = await provider.GetOrganisasjonsformAsync(kode, ct);
+        return result switch
+        {
+            KodeverkSingleResult.Found f => Results.Ok(f.Entry),
+            KodeverkSingleResult.NotFound nf => Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                title: "Organisasjonsform not found",
+                detail: $"No Organisasjonsform with code {nf.Code} was found.",
+                type: NotFoundType),
+            KodeverkSingleResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/organisasjonsformer-med-enheter", async (
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        var result = await provider.GetOrganisasjonsformerWithEnheterAsync(ct);
+        return result switch
+        {
+            KodeverkLookupResult.Found f => Results.Ok(f.Entries),
+            KodeverkLookupResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    app.MapGet("/kodeverk/organisasjonsformer-med-underenheter", async (
+        IKodeverkProvider provider,
+        CancellationToken ct) =>
+    {
+        var result = await provider.GetOrganisasjonsformerWithUnderenheterAsync(ct);
+        return result switch
+        {
+            KodeverkLookupResult.Found f => Results.Ok(f.Entries),
+            KodeverkLookupResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
+    // H12: The Found arm wraps the scalar in { totalCount: <long> } so the response stays a
+    // JSON object (consistent with the rest of the API). Raw scalars at the top level are valid
+    // JSON but harder to consume from typed clients (System.Text.Json deserialises them as a
+    // root long, which makes adding sibling fields later a breaking change). Wrapping leaves
+    // the door open for adding metadata (e.g. lastUpdated) without versioning.
+    app.MapGet("/statistics/roles-total-count", async (
+        IBrregStatisticsProvider provider,
+        CancellationToken ct) =>
+    {
+        var result = await provider.GetRolesTotalCountAsync(ct);
+        return result switch
+        {
+            RolesTotalCountResult.Found f => Results.Ok(new { totalCount = f.TotalCount }),
+            RolesTotalCountResult.Unavailable u => Results.Problem(
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: BrregUnavailableTitle,
+                detail: u.Message,
+                type: UnavailableType),
+            _ => Results.Problem("Unexpected result type.")
+        };
+    });
+
     app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Bronnoysund.WebApi" }));
 
     Log.Information("Bronnoysund.WebApi starting");
@@ -456,6 +661,28 @@ internal static class SearchAfterValidator
         }
         return true;
     }
+}
+
+/// <summary>
+/// Edge-level format validation for the kodeverk single-entity endpoints. Both regexes are
+/// generated at compile time (no per-request allocation) and stay deliberately liberal:
+/// stricter validation lives upstream at Brreg, so this layer only blocks inputs that cannot
+/// possibly match a real code. Used by <c>/kodeverk/kommuner/{kommunenummer}</c> and
+/// <c>/kodeverk/organisasjonsformer/{kode}</c>.
+/// </summary>
+internal static partial class KodeverkRouteValidator
+{
+    [System.Text.RegularExpressions.GeneratedRegex("^\\d{2,4}$")]
+    private static partial System.Text.RegularExpressions.Regex KommunenummerPattern();
+
+    [System.Text.RegularExpressions.GeneratedRegex("^[A-Z0-9]{2,6}$")]
+    private static partial System.Text.RegularExpressions.Regex OrganisasjonsformKodePattern();
+
+    public static bool IsValidKommunenummer(string? value)
+        => !string.IsNullOrEmpty(value) && KommunenummerPattern().IsMatch(value);
+
+    public static bool IsValidOrganisasjonsformKode(string? value)
+        => !string.IsNullOrEmpty(value) && OrganisasjonsformKodePattern().IsMatch(value);
 }
 
 /// <summary>Marker class so Microsoft.AspNetCore.Mvc.Testing can find the entry assembly.</summary>
