@@ -17,7 +17,8 @@
       "tests\\Bronnoysund.Infrastructure.Tests\\Bronnoysund.Infrastructure.Tests.csproj",
       "tests\\Bronnoysund.Infrastructure.Persistence.Tests\\Bronnoysund.Infrastructure.Persistence.Tests.csproj",
       "tests\\Bronnoysund.Speech.Tests\\Bronnoysund.Speech.Tests.csproj",
-      "tests\\Bronnoysund.ViewModels.Tests\\Bronnoysund.ViewModels.Tests.csproj"
+      "tests\\Bronnoysund.ViewModels.Tests\\Bronnoysund.ViewModels.Tests.csproj",
+      "tests\\Bronnoysund.WebApi.Tests\\Bronnoysund.WebApi.Tests.csproj"
     ]
   }
 }

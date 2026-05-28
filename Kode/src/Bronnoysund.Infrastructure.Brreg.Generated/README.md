@@ -47,3 +47,17 @@ Direkte bruk skal kun skje fra `Bronnoysund.Infrastructure`. Andre lag
 adapter-laget i Infrastructure — aldri direkte mot generert klient.
 
 Se [Plan 50-55](../../../Plan/) for full kontekst.
+
+## Endepunkt som ikke følger Kiota
+
+Noen Brreg-endepunkt har spec-bugs som hindrer Kiota fra å generere
+fungerende klient-kode. For disse leser vi JSON manuelt via `HttpClient`
+inntil Brreg fikser spec-en. **Disse fanges ikke av nightly spec-drift-CI
+i Plan 53.**
+
+| Endepunkt | Adapter | Spec-problem | Migrer tilbake når |
+| --- | --- | --- | --- |
+| `/frivillighetsregisteret/api/frivillige-organisasjoner/{orgnr}` | `BrregVoluntaryOrganizationProvider` | `FrivilligOrganisasjon` er en `oneOf` uten `discriminator` — Kiota genererer en composed-type-wrapper som ikke kan deserialisere svaret (mapping path `""`). | Brreg legger til `discriminator: { propertyName: "respons_klasse" }` på `FrivilligOrganisasjon`. |
+
+Når en bypass-adapter migreres tilbake, slett seksjonen ovenfor og fjern
+den manuelle JSON-modellen i adapter-en.

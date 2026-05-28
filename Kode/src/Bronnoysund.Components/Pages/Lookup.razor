@@ -185,6 +185,27 @@
                 </MudAlert>
             }
 
+            @if (ViewModel.VoluntaryOrganization is { } volOrg)
+            {
+                <MudAlert Severity="Severity.Info" Icon="@Icons.Material.Filled.VolunteerActivism" Class="mb-3">
+                    <MudText Typo="Typo.body2">
+                        <strong>@L["VoluntaryOrgBadge"]</strong> · @L["VoluntaryOrgStatusLabel"]: @volOrg.Status
+                        @if (!string.IsNullOrWhiteSpace(volOrg.PrimaryIcnpoCategoryName))
+                        {
+                            <span> · @L["VoluntaryOrgCategoryLabel"]: @volOrg.PrimaryIcnpoCategoryName</span>
+                        }
+                        @if (volOrg.FirstRegisteredDate is { } firstReg)
+                        {
+                            <span> · @L["VoluntaryOrgFirstRegisteredLabel"]: @firstReg.ToString("d", CultureInfo.CurrentUICulture)</span>
+                        }
+                        @if (volOrg.ParticipatesInGrasrotandel)
+                        {
+                            <span> · @L["VoluntaryOrgGrasrot"]</span>
+                        }
+                    </MudText>
+                </MudAlert>
+            }
+
             @if (HasContact(found))
             {
                 <MudText Typo="Typo.subtitle1" Class="mt-2 mb-1">@L["ContactSection"]</MudText>
@@ -309,6 +330,39 @@
             </MudPaper>
         }
 
+        @if (ViewModel.LegalRoles is { Holdings: var holdings } && holdings.Count > 0)
+        {
+            <MudPaper Class="pa-4 mb-3" Elevation="2">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">
+                    @L["LegalRolesSection"] (@holdings.Count)
+                </MudText>
+                <MudTable Items="@FlattenHoldings(holdings)" Dense="true" Hover="true" T="LegalRoleRow">
+                    <HeaderContent>
+                        <MudTh>@L["LegalRolesColTarget"]</MudTh>
+                        <MudTh>@L["LegalRolesColRoleType"]</MudTh>
+                        <MudTh>@L["LegalRolesColStatus"]</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="row">
+                        <MudTd>@row.TargetName <code class="ml-2">@row.TargetOrgNumber</code></MudTd>
+                        <MudTd>@row.RoleDescription <code class="ml-2">@row.RoleCode</code></MudTd>
+                        <MudTd>@LocalizedStatus(row)</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        }
+
+        @if (ViewModel.Changes is { } changes && HasAnyChanges(changes))
+        {
+            <MudPaper Class="pa-4 mb-3" Elevation="2">
+                <MudText Typo="Typo.subtitle1" Class="mb-2">@L["ChangesSection"]</MudText>
+                <MudExpansionPanels MultiExpansion="true">
+                    @RenderFeed(L["ChangesEntityFeed"], changes.EntityFeed)
+                    @RenderFeed(L["ChangesSubUnitFeed"], changes.SubUnitFeed)
+                    @RenderFeed(L["ChangesRoleFeed"], changes.RoleFeed)
+                </MudExpansionPanels>
+            </MudPaper>
+        }
+
         @if (ViewModel.Aggregated?.Errors is { Count: > 0 } errors)
         {
             <MudPaper Class="pa-4 mb-3" Elevation="2">
@@ -324,7 +378,77 @@
                 </MudList>
             </MudPaper>
         }
+
+        @if (ViewModel.EnrichmentErrors is { Count: > 0 } enrichmentErrors)
+        {
+            <MudPaper Class="pa-4 mb-3" Elevation="2">
+                <MudText Typo="Typo.subtitle1" Color="Color.Warning" Class="mb-2">
+                    @L["RegistryErrorsSection"]
+                </MudText>
+                <MudList T="string" Dense="true">
+                    @foreach (var err in enrichmentErrors)
+                    {
+                        <MudListItem T="string" Icon="@Icons.Material.Filled.Warning"
+                                     Text="@L["RegistryErrorRow", err.RegistryName, err.Message]" />
+                    }
+                </MudList>
+            </MudPaper>
+        }
     };
+
+    private RenderFragment RenderFeed(string title, EntityChangesFeed feed) => __builder =>
+    {
+        <MudExpansionPanel Text="@($"{title} ({feed.Changes.Count})")">
+            @if (feed.ErrorMessage is not null)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">@L["ChangesFeedError", feed.ErrorMessage]</MudAlert>
+            }
+            else if (feed.Changes.Count == 0)
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary">@L["ChangesEmpty"]</MudText>
+            }
+            else
+            {
+                <MudTable Items="@feed.Changes" Dense="true" Hover="true" T="EntityChange">
+                    <HeaderContent>
+                        <MudTh>@L["ChangesColTimestamp"]</MudTh>
+                        <MudTh>@L["ChangesColType"]</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="change">
+                        <MudTd>@(change.Timestamp?.ToString("g", CultureInfo.CurrentUICulture) ?? "")</MudTd>
+                        <MudTd>@change.ChangeType</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudExpansionPanel>
+    };
+
+    private static IEnumerable<LegalRoleRow> FlattenHoldings(IReadOnlyList<LegalRoleHolding> holdings) =>
+        holdings.SelectMany(h => h.Roles.Select(r => new LegalRoleRow(
+            TargetOrgNumber: h.OrganizationNumber,
+            TargetName: h.Name,
+            RoleCode: r.TypeCode,
+            RoleDescription: r.TypeDescription,
+            IsResigned: r.IsResigned,
+            IsDeregistered: r.IsDeregistered)));
+
+    private string LocalizedStatus(LegalRoleRow row) =>
+        row.IsResigned ? L["LegalRolesStatusResigned"]
+        : row.IsDeregistered ? L["LegalRolesStatusDeregistered"]
+        : L["LegalRolesStatusActive"];
+
+    private static bool HasAnyChanges(EntityChangesResponse changes) =>
+        changes.EntityFeed.Changes.Count > 0 || changes.EntityFeed.ErrorMessage is not null
+        || changes.SubUnitFeed.Changes.Count > 0 || changes.SubUnitFeed.ErrorMessage is not null
+        || changes.RoleFeed.Changes.Count > 0 || changes.RoleFeed.ErrorMessage is not null;
+
+    private sealed record LegalRoleRow(
+        string TargetOrgNumber,
+        string TargetName,
+        string RoleCode,
+        string RoleDescription,
+        bool IsResigned,
+        bool IsDeregistered);
 
     protected override async Task OnInitializedAsync()
     {

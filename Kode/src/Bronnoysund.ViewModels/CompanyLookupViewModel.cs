@@ -2,8 +2,10 @@
 
 using Bronnoysund.Application.Dtos;
 using Bronnoysund.Application.Ports;
+using Bronnoysund.Application.Results;
 using Bronnoysund.Application.UseCases.LookupCompany;
 using Bronnoysund.Application.UseCases.SearchCompaniesByName;
+using Bronnoysund.Domain;
 using Bronnoysund.ViewModels.Resources;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -18,8 +20,18 @@ namespace Bronnoysund.ViewModels;
 public sealed partial class CompanyLookupViewModel(
     LookupAggregatedCompanyHandler aggregatedHandler,
     SearchCompaniesByNameHandler searchHandler,
-    IStringLocalizer<SharedResources> localizer) : ObservableObject
+    IStringLocalizer<SharedResources> localizer,
+    ILegalRolesProvider legalRolesProvider,
+    IVoluntaryOrganizationProvider voluntaryProvider,
+    IEntityChangesProvider changesProvider) : ObservableObject, IDisposable
 {
+    /// <summary>
+    /// Cancels in-flight enrichment fan-out when the user triggers a new lookup before the
+    /// previous one finished. Without this, a quick A→B click sequence could race so that
+    /// Hit A's enrichment results overwrite Hit B's VoluntaryOrganization/LegalRoles/Changes.
+    /// </summary>
+    private CancellationTokenSource? _enrichmentCts;
+
     [ObservableProperty]
     public partial string OrgNumberInput { get; set; } = string.Empty;
 
@@ -40,6 +52,26 @@ public sealed partial class CompanyLookupViewModel(
     /// <summary>Full aggregated payload including roles, sub-units, bankruptcy, errors per provider.</summary>
     [ObservableProperty]
     public partial AggregatedCompanyResponse? Aggregated { get; set; }
+
+    /// <summary>Frivillighetsregister-treff for the looked-up entity. Null when not registered or before lookup.</summary>
+    [ObservableProperty]
+    public partial VoluntaryOrganizationResponse? VoluntaryOrganization { get; set; }
+
+    /// <summary>Legal roles the entity holds in other companies. Null before lookup or when none.</summary>
+    [ObservableProperty]
+    public partial LegalRolesResponse? LegalRoles { get; set; }
+
+    /// <summary>Aggregated change-log for the entity (entity + sub-units + roles). Null before lookup.</summary>
+    [ObservableProperty]
+    public partial EntityChangesResponse? Changes { get; set; }
+
+    /// <summary>
+    /// Per-enrichment-feed errors (Voluntary/LegalRoles Unavailable). Separate from
+    /// <see cref="Aggregated"/>.Errors which carries aggregator-fan-out errors.
+    /// Changes feed-errors are rendered inline per panel and not duplicated here.
+    /// </summary>
+    [ObservableProperty]
+    public partial IReadOnlyList<RegistryError> EnrichmentErrors { get; set; } = [];
 
     [ObservableProperty]
     public partial string? ErrorMessage { get; set; }
@@ -74,6 +106,11 @@ public sealed partial class CompanyLookupViewModel(
                     Found = f.Data.Core;
                     Aggregated = f.Data;
                     StatusMessage = localizer["FoundInRegistry"];
+                    _enrichmentCts = new CancellationTokenSource();
+                    using (var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, _enrichmentCts.Token))
+                    {
+                        await LoadEnrichmentAsync(f.Data.Core.OrganizationNumber, linked.Token);
+                    }
                     break;
                 case AggregatedLookupResult.NotFound nf:
                     ErrorMessage = localizer["NotFoundForOrgNumber", nf.OrganizationNumber];
@@ -145,11 +182,86 @@ public sealed partial class CompanyLookupViewModel(
 
     private void ResetTransientState()
     {
+        // Cancel any in-flight enrichment fan-out so its results cannot overwrite the
+        // next lookup's state. Dispose + null so the next LoadEnrichmentAsync allocates fresh.
+        if (_enrichmentCts is not null)
+        {
+            try { _enrichmentCts.Cancel(); }
+            catch (ObjectDisposedException) { /* race with Dispose() — safe to ignore */ }
+            _enrichmentCts.Dispose();
+            _enrichmentCts = null;
+        }
+
         ErrorMessage = null;
         StatusMessage = null;
         Found = null;
         Aggregated = null;
+        VoluntaryOrganization = null;
+        LegalRoles = null;
+        Changes = null;
+        EnrichmentErrors = [];
         SearchHits = [];
         SearchTotalElements = 0;
+    }
+
+    /// <summary>
+    /// Fan-out the three additional per-entity endpoints (Frivillighetsregister, legal-roles,
+    /// change-log) after a successful core lookup. NotFound/NotRegistered are silenced as
+    /// "no badge / no table"; Unavailable surfaces in <see cref="EnrichmentErrors"/> so the
+    /// UI can render a warning. Changes carries per-feed errors inside the response itself
+    /// and is rendered inline by the Lookup page — not duplicated to EnrichmentErrors.
+    /// </summary>
+    private async Task LoadEnrichmentAsync(string orgnr, CancellationToken ct)
+    {
+        if (!OrganizationNumber.TryCreate(orgnr, out var org, out _))
+        {
+            return;
+        }
+
+        var voluntaryTask = voluntaryProvider.LookupAsync(org, ct);
+        var legalTask = legalRolesProvider.GetLegalRolesAsync(org, ct);
+        var changesTask = changesProvider.GetChangesAsync(org, pageSize: 20, ct);
+
+        await Task.WhenAll(voluntaryTask, legalTask, changesTask).ConfigureAwait(false);
+
+        var errors = new List<RegistryError>();
+
+        switch (voluntaryTask.Result)
+        {
+            case VoluntaryOrganizationLookupResult.Found vf:
+                VoluntaryOrganization = vf.Organization;
+                break;
+            case VoluntaryOrganizationLookupResult.Unavailable vu:
+                VoluntaryOrganization = null;
+                errors.Add(new RegistryError("Frivillighetsregisteret", vu.Message));
+                break;
+            default:
+                VoluntaryOrganization = null;
+                break;
+        }
+
+        switch (legalTask.Result)
+        {
+            case LegalRolesLookupResult.Found lf:
+                LegalRoles = lf.Roles;
+                break;
+            case LegalRolesLookupResult.Unavailable lu:
+                LegalRoles = null;
+                errors.Add(new RegistryError("LegalRoles", lu.Message));
+                break;
+            default:
+                LegalRoles = null;
+                break;
+        }
+
+        Changes = changesTask.Result;
+        EnrichmentErrors = errors;
+    }
+
+    public void Dispose()
+    {
+        _enrichmentCts?.Cancel();
+        _enrichmentCts?.Dispose();
+        _enrichmentCts = null;
     }
 }

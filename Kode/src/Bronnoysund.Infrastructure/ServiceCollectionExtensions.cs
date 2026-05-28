@@ -120,6 +120,39 @@ public static class ServiceCollectionExtensions
         {
             services.AddSingleton<IRolesProvider, BrregRolesProvider>();
             services.AddSingleton<ISubUnitsProvider, BrregSubUnitsProvider>();
+
+            // The four per-entity providers below get HybridCache decorators so repeated
+            // Lookup-page renders for the same orgnr do not hammer Brreg. TTLs picked per
+            // volatility: sub-unit details + voluntary status are stable (1h), legal roles
+            // are stable-ish (30m), change feeds are volatile (2m).
+            services.AddSingleton<BrregSubUnitDetailsProvider>();
+            services.AddSingleton<ISubUnitDetailsProvider>(sp =>
+                new CachingSubUnitDetailsProvider(
+                    inner: sp.GetRequiredService<BrregSubUnitDetailsProvider>(),
+                    cache: sp.GetRequiredService<HybridCache>(),
+                    logger: sp.GetRequiredService<ILogger<CachingSubUnitDetailsProvider>>()));
+
+            services.AddSingleton<BrregLegalRolesProvider>();
+            services.AddSingleton<ILegalRolesProvider>(sp =>
+                new CachingLegalRolesProvider(
+                    inner: sp.GetRequiredService<BrregLegalRolesProvider>(),
+                    cache: sp.GetRequiredService<HybridCache>(),
+                    logger: sp.GetRequiredService<ILogger<CachingLegalRolesProvider>>()));
+
+            services.AddSingleton<BrregEntityChangesProvider>();
+            services.AddSingleton<IEntityChangesProvider>(sp =>
+                new CachingEntityChangesProvider(
+                    inner: sp.GetRequiredService<BrregEntityChangesProvider>(),
+                    cache: sp.GetRequiredService<HybridCache>(),
+                    logger: sp.GetRequiredService<ILogger<CachingEntityChangesProvider>>()));
+
+            services.AddSingleton<BrregVoluntaryOrganizationProvider>();
+            services.AddSingleton<IVoluntaryOrganizationProvider>(sp =>
+                new CachingVoluntaryOrganizationProvider(
+                    inner: sp.GetRequiredService<BrregVoluntaryOrganizationProvider>(),
+                    cache: sp.GetRequiredService<HybridCache>(),
+                    logger: sp.GetRequiredService<ILogger<CachingVoluntaryOrganizationProvider>>()));
+
             services.AddSingleton<IBankruptcyProvider, BrregBankruptcyProvider>();
         }
         else
@@ -128,6 +161,10 @@ public static class ServiceCollectionExtensions
             // the aggregated endpoint, which then makes per-provider registrations moot.
             services.AddSingleton<IRolesProvider, NotAvailableRolesProvider>();
             services.AddSingleton<ISubUnitsProvider, NotAvailableSubUnitsProvider>();
+            services.AddSingleton<ISubUnitDetailsProvider, NotAvailableSubUnitDetailsProvider>();
+            services.AddSingleton<ILegalRolesProvider, NotAvailableLegalRolesProvider>();
+            services.AddSingleton<IEntityChangesProvider, NotAvailableEntityChangesProvider>();
+            services.AddSingleton<IVoluntaryOrganizationProvider, NotAvailableVoluntaryOrganizationProvider>();
             services.AddSingleton<IBankruptcyProvider, NotAvailableBankruptcyProvider>();
         }
 

@@ -1,14 +1,44 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
+using Bronnoysund.Application.Dtos;
 using Bronnoysund.Application.Exceptions;
 using Bronnoysund.Application.Ports;
+using Bronnoysund.Application.Results;
 using Bronnoysund.Domain;
 
 namespace Bronnoysund.Infrastructure.Stubs;
 
+// SUMMARY — two stub patterns side-by-side
+// ---------------------------------------------------------------------------
+// The file mixes two unavailability conventions, intentionally. New code
+// should prefer the "Result-type"-pattern; the throw-based one survives only
+// because the surrounding aggregator already knows how to demote it.
+//
+// Old stubs (throw RegistryNotAvailableException):
+//   - IRolesProvider, IAnnualReportProvider, IBeneficialOwnerProvider,
+//     IDebtRegisterProvider, IBankruptcyProvider, ISubUnitsProvider,
+//     IPersonRolesProvider.
+//   These are consumed via ParallelCompanyDataAggregator which catches
+//   RegistryNotAvailableException specifically and demotes the result to null
+//   (with a RegistryError entry). Direct callers would see the exception
+//   bubble up — but in practice only the aggregator wraps these ports.
+//
+// New stubs (return Result-types with an Unavailable variant):
+//   - ISubUnitDetailsProvider, ILegalRolesProvider, IEntityChangesProvider,
+//     IVoluntaryOrganizationProvider.
+//   These are consumed directly by the WebApi endpoints and the
+//   CompanyLookupViewModel, both of which handle Result discriminated unions
+//   explicitly. No exception-translation is needed at the caller.
+//
+// TODO (Plan B-iterasjon): converting the old stubs to the Result-pattern is
+// a natural cut-point during Plan B — when an old port gets a real adapter,
+// switch the port + its stub to the Result-pattern in the same PR rather
+// than leaving the discrepancy lingering.
+// ---------------------------------------------------------------------------
+//
 // Placeholder implementations for registry ports that are not implemented in Phase 0.
-// Throws RegistryNotAvailableException when called. Used as default registrations
-// so the DI graph is complete. Replaced with real providers in Phase 4.
+// Used as default registrations so the DI graph is complete. Replaced with real
+// providers in Phase 4.
 
 internal sealed class NotAvailableRolesProvider : IRolesProvider
 {
@@ -44,6 +74,40 @@ internal sealed class NotAvailableSubUnitsProvider : ISubUnitsProvider
 {
     public Task<SubUnitsResponse?> GetSubUnitsAsync(OrganizationNumber org, CancellationToken ct) =>
         throw new RegistryNotAvailableException("SubUnits", "Implemented in Phase 4. Open API.");
+}
+
+internal sealed class NotAvailableSubUnitDetailsProvider : ISubUnitDetailsProvider
+{
+    public Task<SubUnitLookupResult> LookupAsync(OrganizationNumber org, CancellationToken ct) =>
+        Task.FromResult<SubUnitLookupResult>(new SubUnitLookupResult.Unavailable(
+            "SubUnitDetails is only available in Direct mode. Switch DataSource:Mode=Direct."));
+}
+
+internal sealed class NotAvailableLegalRolesProvider : ILegalRolesProvider
+{
+    public Task<LegalRolesLookupResult> GetLegalRolesAsync(OrganizationNumber org, CancellationToken ct) =>
+        Task.FromResult<LegalRolesLookupResult>(new LegalRolesLookupResult.Unavailable(
+            "LegalRoles is only available in Direct mode. Switch DataSource:Mode=Direct."));
+}
+
+internal sealed class NotAvailableEntityChangesProvider : IEntityChangesProvider
+{
+    public Task<EntityChangesResponse> GetChangesAsync(OrganizationNumber org, int pageSize, CancellationToken ct)
+    {
+        const string Message = "EntityChanges is only available in Direct mode. Switch DataSource:Mode=Direct.";
+        return Task.FromResult(new EntityChangesResponse(
+            OrganizationNumber: org.Value,
+            EntityFeed: new EntityChangesFeed([], Message),
+            SubUnitFeed: new EntityChangesFeed([], Message),
+            RoleFeed: new EntityChangesFeed([], Message)));
+    }
+}
+
+internal sealed class NotAvailableVoluntaryOrganizationProvider : IVoluntaryOrganizationProvider
+{
+    public Task<VoluntaryOrganizationLookupResult> LookupAsync(OrganizationNumber org, CancellationToken ct) =>
+        Task.FromResult<VoluntaryOrganizationLookupResult>(new VoluntaryOrganizationLookupResult.Unavailable(
+            "Frivillighetsregisteret is only available in Direct mode. Switch DataSource:Mode=Direct."));
 }
 
 internal sealed class NotAvailablePersonRolesProvider : IPersonRolesProvider

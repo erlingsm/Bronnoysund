@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
+using Bronnoysund.Application.Dtos;
 using Bronnoysund.Application.Exceptions;
 using Bronnoysund.Application.Ports;
 using Bronnoysund.Application.Results;
@@ -15,6 +16,14 @@ namespace Bronnoysund.Infrastructure.Aggregation;
 /// the rest. RegistryNotAvailableException (stub providers) is downgraded silently because
 /// it is the expected signal for "not implemented yet" rather than a runtime fault.
 /// </summary>
+/// <remarks>
+/// Iteration 8 added four optional enrichment providers (<see cref="ISubUnitDetailsProvider"/>,
+/// <see cref="ILegalRolesProvider"/>, <see cref="IVoluntaryOrganizationProvider"/>,
+/// <see cref="IEntityChangesProvider"/>). They are only fanned out when the caller passes
+/// <see cref="AggregatedScope.IncludeEnrichment"/> (or Full) so the default WebApi path keeps
+/// the lightweight CoreOnly payload. The Blazor Lookup page still drives these directly via
+/// <c>LoadEnrichmentAsync</c> — the aggregator integration is for WebApi one-shot consumers.
+/// </remarks>
 internal sealed class ParallelCompanyDataAggregator(
     ICompanyProvider company,
     IRolesProvider roles,
@@ -23,9 +32,18 @@ internal sealed class ParallelCompanyDataAggregator(
     IDebtRegisterProvider debt,
     IBankruptcyProvider bankruptcy,
     ISubUnitsProvider subUnits,
+    ISubUnitDetailsProvider subUnitDetails,
+    ILegalRolesProvider legalRoles,
+    IVoluntaryOrganizationProvider voluntary,
+    IEntityChangesProvider entityChanges,
     ILogger<ParallelCompanyDataAggregator> log) : ICompanyDataAggregator
 {
-    public async Task<AggregatedCompanyResponse> AggregateAsync(OrganizationNumber org, CancellationToken ct)
+    private const int EntityChangesPageSize = 20;
+
+    public async Task<AggregatedCompanyResponse> AggregateAsync(
+        OrganizationNumber org,
+        AggregatedScope scope,
+        CancellationToken ct)
     {
         var errors = new List<RegistryError>();
 
@@ -37,7 +55,43 @@ internal sealed class ParallelCompanyDataAggregator(
         var bankruptcyTask  = SafeOptionalAsync("bankruptcy",  () => bankruptcy.GetAsync(org, ct), errors);
         var subUnitsTask    = SafeOptionalAsync("subUnits",    () => subUnits.GetSubUnitsAsync(org, ct), errors);
 
-        await Task.WhenAll(coreTask, rolesTask, annualTask, beneficialTask, debtTask, bankruptcyTask, subUnitsTask);
+        // Enrichment ports are opt-in. When scope=CoreOnly we never even await the providers,
+        // matching the legacy behaviour and keeping the WebApi default cheap.
+        var includeEnrichment = scope is AggregatedScope.IncludeEnrichment or AggregatedScope.Full;
+        var subUnitDetailsTask = includeEnrichment
+            ? SafeResultAsync<SubUnitLookupResult, SubUnitDetailsResponse>(
+                "subUnitDetails",
+                () => subUnitDetails.LookupAsync(org, ct),
+                static r => r is SubUnitLookupResult.Found f ? f.SubUnit : null,
+                static r => r is SubUnitLookupResult.Unavailable u ? u.Message : null,
+                errors)
+            : Task.FromResult<SubUnitDetailsResponse?>(null);
+
+        var legalRolesTask = includeEnrichment
+            ? SafeResultAsync<LegalRolesLookupResult, LegalRolesResponse>(
+                "legalRoles",
+                () => legalRoles.GetLegalRolesAsync(org, ct),
+                static r => r is LegalRolesLookupResult.Found f ? f.Roles : null,
+                static r => r is LegalRolesLookupResult.Unavailable u ? u.Message : null,
+                errors)
+            : Task.FromResult<LegalRolesResponse?>(null);
+
+        var voluntaryTask = includeEnrichment
+            ? SafeResultAsync<VoluntaryOrganizationLookupResult, VoluntaryOrganizationResponse>(
+                "voluntary",
+                () => voluntary.LookupAsync(org, ct),
+                static r => r is VoluntaryOrganizationLookupResult.Found f ? f.Organization : null,
+                static r => r is VoluntaryOrganizationLookupResult.Unavailable u ? u.Message : null,
+                errors)
+            : Task.FromResult<VoluntaryOrganizationResponse?>(null);
+
+        var changesTask = includeEnrichment
+            ? SafeRequiredAsync("changes", () => entityChanges.GetChangesAsync(org, EntityChangesPageSize, ct), errors)
+            : Task.FromResult<EntityChangesResponse?>(null);
+
+        await Task.WhenAll(
+            coreTask, rolesTask, annualTask, beneficialTask, debtTask, bankruptcyTask, subUnitsTask,
+            subUnitDetailsTask, legalRolesTask, voluntaryTask, changesTask);
 
         var core = coreTask.Result switch
         {
@@ -59,7 +113,11 @@ internal sealed class ParallelCompanyDataAggregator(
             Debt: debtTask.Result,
             Bankruptcy: bankruptcyTask.Result,
             SubUnits: subUnitsTask.Result,
-            Errors: errors);
+            Errors: errors,
+            SubUnitDetails: subUnitDetailsTask.Result,
+            LegalRoles: legalRolesTask.Result,
+            Voluntary: voluntaryTask.Result,
+            Changes: changesTask.Result);
     }
 
     public Task<CompanyLookupResult> CoreOnlyAsync(OrganizationNumber org, CancellationToken ct)
@@ -81,6 +139,35 @@ internal sealed class ParallelCompanyDataAggregator(
         where T : class
     {
         try { return await op(); }
+        catch (RegistryNotAvailableException) { return null; }
+        catch (Exception ex) { RecordError(registryName, ex, errors); return null; }
+    }
+
+    // Demote discriminated-union results (Found/NotFound/Unavailable) to the same
+    // RegistryError pattern: Unavailable -> RegistryError, NotFound/NotRegistered -> null
+    // (a meaningful business "no data" answer), Found -> the payload.
+    private async Task<TPayload?> SafeResultAsync<TResult, TPayload>(
+        string registryName,
+        Func<Task<TResult>> op,
+        Func<TResult, TPayload?> selectPayload,
+        Func<TResult, string?> selectUnavailableMessage,
+        List<RegistryError> errors)
+        where TPayload : class
+    {
+        try
+        {
+            var result = await op();
+            var unavailable = selectUnavailableMessage(result);
+            if (unavailable is not null)
+            {
+                lock (errors)
+                {
+                    errors.Add(new RegistryError(registryName, unavailable));
+                }
+                return null;
+            }
+            return selectPayload(result);
+        }
         catch (RegistryNotAvailableException) { return null; }
         catch (Exception ex) { RecordError(registryName, ex, errors); return null; }
     }

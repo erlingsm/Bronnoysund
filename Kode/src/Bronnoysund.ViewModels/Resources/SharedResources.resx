@@ -87,6 +87,33 @@
   <data name="YesValue"><value>yes</value></data>
   <data name="NoValue"><value>no</value></data>
 
+  <!-- Frivillighetsregister badge (Lookup page) -->
+  <data name="VoluntaryOrgBadge"><value>Registered voluntary organization</value></data>
+  <data name="VoluntaryOrgGrasrot"><value>Participates in Grasrotandelen</value></data>
+  <data name="VoluntaryOrgCategoryLabel"><value>ICNPO category</value></data>
+  <data name="VoluntaryOrgStatusLabel"><value>Status</value></data>
+  <data name="VoluntaryOrgFirstRegisteredLabel"><value>First registered</value></data>
+
+  <!-- Juridiske roller (Lookup page) -->
+  <data name="LegalRolesSection"><value>Legal roles in other entities</value></data>
+  <data name="LegalRolesEmpty"><value>This entity holds no legal roles in other entities.</value></data>
+  <data name="LegalRolesColTarget"><value>Target entity</value></data>
+  <data name="LegalRolesColRoleType"><value>Role</value></data>
+  <data name="LegalRolesColStatus"><value>Status</value></data>
+  <data name="LegalRolesStatusActive"><value>Active</value></data>
+  <data name="LegalRolesStatusResigned"><value>Resigned</value></data>
+  <data name="LegalRolesStatusDeregistered"><value>Deregistered</value></data>
+
+  <!-- Endringslogg (Lookup page) -->
+  <data name="ChangesSection"><value>Change log</value></data>
+  <data name="ChangesEntityFeed"><value>Entity changes</value></data>
+  <data name="ChangesSubUnitFeed"><value>Sub-unit changes</value></data>
+  <data name="ChangesRoleFeed"><value>Role changes</value></data>
+  <data name="ChangesEmpty"><value>No recent changes recorded.</value></data>
+  <data name="ChangesColTimestamp"><value>When</value></data>
+  <data name="ChangesColType"><value>Change</value></data>
+  <data name="ChangesFeedError"><value>Could not load this feed: {0}</value></data>
+
   <!-- Lookup ViewModel messages -->
   <data name="EnterOrgNumber"><value>Enter an organization number.</value></data>
   <data name="FoundInRegistry"><value>Found in the Brønnøysund Register Centre.</value></data>

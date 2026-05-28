@@ -13,7 +13,10 @@ namespace Bronnoysund.Infrastructure.Aggregation;
 /// </summary>
 internal sealed class CoreOnlyAggregator(ICompanyProvider company) : ICompanyDataAggregator
 {
-    public async Task<AggregatedCompanyResponse> AggregateAsync(OrganizationNumber org, CancellationToken ct)
+    public async Task<AggregatedCompanyResponse> AggregateAsync(
+        OrganizationNumber org,
+        AggregatedScope scope,
+        CancellationToken ct)
     {
         var result = await company.LookupAsync(org, ct);
         if (result is CompanyLookupResult.Found found)

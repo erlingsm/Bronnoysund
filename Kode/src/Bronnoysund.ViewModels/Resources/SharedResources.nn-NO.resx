@@ -84,6 +84,30 @@
   <data name="YesValue"><value>ja</value></data>
   <data name="NoValue"><value>nei</value></data>
 
+  <data name="VoluntaryOrgBadge"><value>Registrert frivillig organisasjon</value></data>
+  <data name="VoluntaryOrgGrasrot"><value>Deltek i Grasrotandelen</value></data>
+  <data name="VoluntaryOrgCategoryLabel"><value>ICNPO-kategori</value></data>
+  <data name="VoluntaryOrgStatusLabel"><value>Status</value></data>
+  <data name="VoluntaryOrgFirstRegisteredLabel"><value>Første gong registrert</value></data>
+
+  <data name="LegalRolesSection"><value>Juridiske roller i andre einingar</value></data>
+  <data name="LegalRolesEmpty"><value>Denne eininga har ingen juridiske roller i andre einingar.</value></data>
+  <data name="LegalRolesColTarget"><value>Mål-eining</value></data>
+  <data name="LegalRolesColRoleType"><value>Rolle</value></data>
+  <data name="LegalRolesColStatus"><value>Status</value></data>
+  <data name="LegalRolesStatusActive"><value>Aktiv</value></data>
+  <data name="LegalRolesStatusResigned"><value>Fråtreden</value></data>
+  <data name="LegalRolesStatusDeregistered"><value>Avregistrert</value></data>
+
+  <data name="ChangesSection"><value>Endringslogg</value></data>
+  <data name="ChangesEntityFeed"><value>Endringar på eininga</value></data>
+  <data name="ChangesSubUnitFeed"><value>Endringar på undereiningar</value></data>
+  <data name="ChangesRoleFeed"><value>Endringar på roller</value></data>
+  <data name="ChangesEmpty"><value>Ingen registrerte endringar.</value></data>
+  <data name="ChangesColTimestamp"><value>Når</value></data>
+  <data name="ChangesColType"><value>Endring</value></data>
+  <data name="ChangesFeedError"><value>Kunne ikkje hente denne straumen: {0}</value></data>
+
   <data name="EnterOrgNumber"><value>Skriv inn eit organisasjonsnummer.</value></data>
   <data name="FoundInRegistry"><value>Funne i Brønnøysundregistera.</value></data>
   <data name="NotFoundForOrgNumber"><value>Inga verksemd med organisasjonsnummer {0} blei funne.</value></data>
