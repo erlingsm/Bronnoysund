@@ -112,7 +112,9 @@
                                         {
                                             var configured = status.GetValueOrDefault(code);
                                             var failing = configured && healthSnapshot.TryGetValue(code, out var h) && h.IsFailingNow;
-                                            var dotColor = !configured ? "#bdbdbd" : failing ? "#d32f2f" : "#4caf50";
+                                            // WCAG AA requires ≥3:1 contrast for non-text UI graphics.
+                                            // Darker greens / reds / grays pull all three states above 4.5:1 on white.
+                                            var dotColor = !configured ? "#616161" : failing ? "#c62828" : "#2e7d32";
                                             var statusLabel = !configured ? L["Country.Picker.StatusNotConfigured"]
                                                 : failing ? L["Country.Picker.StatusFailing"]
                                                 : L["Country.Picker.StatusConfigured"];
@@ -447,6 +449,12 @@
                 var sourceCountry = CountryDetector.Detect(found.OrganizationNumber)?.CountryCode;
                 var registryInfo = RegistryMetadata.For(sourceCountry);
             }
+            @* Plan 26 B3 promised "Source • Updated {LastModified} • Licence", but Brreg's
+               Enhet payload doesn't expose a last-modified timestamp on the entity record —
+               the closest is /oppdateringer/enheter, a separate feed that's not yet wired
+               into ICompanyProvider. International adapters don't have a unified equivalent
+               either. Shipping "Source • Licence" until we either add a cross-country
+               LastModified field to CompanyResponse or hit the changes feed per lookup. *@
             @if (registryInfo is not null)
             {
                 <MudDivider Class="mt-4 mb-2" />
@@ -713,6 +721,14 @@
     {
         ViewModel.IsNameSearchMode = true;
         ViewModel.NameQueryInput = name;
+        if (IsNonNorwegianCountrySelected())
+        {
+            // Plan 26 B4 — same guard as the manual Search button. Voice input must not
+            // smuggle a name search past the picker selection or the user would see
+            // Norwegian hits while the picker label still says e.g. Sweden.
+            Snackbar.Add(L["NameSearch.NorwegianOnly"], Severity.Info);
+            return;
+        }
         await ViewModel.SearchByNameAsync(CancellationToken.None);
     }
 
@@ -769,15 +785,11 @@
         || c.RegisteredInVatRegistry is not null
         || c.RegisteredInBusinessRegistry is not null;
 
-    // CountryDetector's open-API rule set rejects bare 8-digit Estonian codes (no checksum
-    // signature in that bucket). Hint Estonian users to prefix EE so the dispatch hits
-    // the Estonian provider instead of falling through to Unknown.
-    private static bool LooksLikeEstonianFormat(string? input)
-    {
-        if (string.IsNullOrWhiteSpace(input)) return false;
-        var trimmed = input.Trim();
-        return trimmed.Length == 8 && trimmed.All(char.IsDigit);
-    }
+    // Delegated to Bronnoysund.Application.International.CountryRouting so the same hint
+    // rule is unit-tested. Plan 26 B1 keeps the Estonian "try EE prefix" hint alive
+    // whenever the typed input is exactly eight digits.
+    private static bool LooksLikeEstonianFormat(string? input) =>
+        CountryRouting.LooksLikeEstonianAmbiguous(input);
 
     private bool _countryPickerOpen;
     private string _countryFilter = string.Empty;
@@ -802,21 +814,16 @@
         && !string.Equals(hint, "NO", StringComparison.OrdinalIgnoreCase);
 
     // Plan 26 M2 — surface the appropriate mobile keyboard for the country whose adapter
-    // will receive the lookup. Numeric IDs cover most of the registered set; ES NIF starts
-    // with an entity-type letter and GR allows an "EL"/"GR" VAT prefix, so those keep the
-    // default text keyboard. When the user has not picked a country yet, the detector's
-    // current best guess decides — typing a Norwegian number lands InputMode.numeric long
-    // before the lookup button is hit.
+    // will receive the lookup. CountryRouting.InputModeFor owns the mapping and is
+    // unit-tested in CountryRoutingTests; here we just translate the string contract into
+    // MudBlazor's InputMode enum.
     private InputMode CurrentInputMode()
     {
         var code = ViewModel.SelectedCountryHint
             ?? CountryDetector.Detect(ViewModel.OrgNumberInput)?.CountryCode;
-        if (code is null) return InputMode.text;
-        return code.ToUpperInvariant() switch
-        {
-            "ES" or "GR" => InputMode.text,
-            _ => InputMode.numeric,
-        };
+        return CountryRouting.InputModeFor(code) == "numeric"
+            ? InputMode.numeric
+            : InputMode.text;
     }
 
     private static string? FormatAddress(PostalAddress a)

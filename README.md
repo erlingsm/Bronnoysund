@@ -250,7 +250,12 @@ dotnet run --project src/Bronnoysund.BlazorWeb
 dotnet run --project src/Bronnoysund.WebApi --urls http://localhost:5000
 
 # MAUI Desktop (Mac Catalyst — macOS only)
-dotnet run --project src/Bronnoysund.MauiDesktop -f net10.0-maccatalyst
+# Use `dotnet publish`, not `dotnet build` — the .NET 10 MAUI Razor SDK pipeline does
+# not bundle wwwroot/index.html into the Catalyst .app on `dotnet build`, so the
+# BlazorWebView lands on an empty document and Blazor renders its built-in "There is
+# no content at" placeholder. Tracking issue worth opening against dotnet/maui.
+dotnet publish src/Bronnoysund.MauiDesktop -f net10.0-maccatalyst -p:RuntimeIdentifier=maccatalyst-arm64
+open src/Bronnoysund.MauiDesktop/bin/Release/net10.0-maccatalyst/maccatalyst-arm64/Bronnoysund.app
 
 # MAUI Mobile (iOS simulator — macOS only)
 dotnet build src/Bronnoysund.MauiMobile -f net10.0-ios -t:Run

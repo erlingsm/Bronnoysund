@@ -43,13 +43,28 @@
         z-index: 1100;
     }
 
+    /* The OS keyboard slides in over the viewport on mobile. Using `100dvh` (dynamic
+       viewport height) instead of `vh` keeps the sheet height anchored to the visible
+       area so the search field and list stay scrollable above the keyboard. Falls back
+       to `vh` on older browsers without the unit. */
     .country-picker-popover > .mud-paper {
         border-radius: 16px 16px 0 0;
         max-height: 80vh;
+        max-height: 80dvh;
         overflow-y: auto;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     .country-picker-mobile-header {
         display: flex;
+    }
+}
+
+/* Landscape phones lose ~half the visible height once the keyboard slides up. Cap the
+   sheet tighter so the search field stays above the keyboard and the list stays
+   scrollable to the visible items. */
+@media (max-width: 900px) and (orientation: landscape) {
+    .country-picker-popover > .mud-paper {
+        max-height: 60dvh;
     }
 }
