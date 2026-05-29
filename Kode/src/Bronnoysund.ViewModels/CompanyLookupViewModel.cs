@@ -85,6 +85,47 @@ public sealed partial class CompanyLookupViewModel(
     [ObservableProperty]
     public partial int SearchTotalElements { get; set; }
 
+    /// <summary>
+    /// When the user has explicitly picked a country in the Lookup picker (Plan 26 B2) this
+    /// holds the ISO 3166-1 alpha-2 code. Null means "auto" — let <c>ICountryDetector</c> route
+    /// from the raw input. Persists across lookups within the same session so the picker
+    /// label stays in sync with the selection.
+    /// </summary>
+    [ObservableProperty]
+    public partial string? SelectedCountryHint { get; set; }
+
+    /// <summary>
+    /// ISO 3166-1 alpha-2 codes whose value-objects accept a VAT-style prefix in
+    /// <see cref="ICountryDetector.Detect"/>. When the user picks one of these and the typed
+    /// input lacks the prefix, <see cref="EffectiveOrgNumberInput"/> prepends it so the
+    /// existing detector routes to the right adapter without a new override API. Countries
+    /// outside this set (IE, SI, HR, ES, RS) rely on their distinctive format heuristics
+    /// — manual selection is currently visual and doesn't change routing for those.
+    /// </summary>
+    private static readonly IReadOnlySet<string> PrefixCountries =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "NO", "SE", "FI", "DK", "EE", "LV", "PL", "GR", "IT",
+        };
+
+    private string EffectiveOrgNumberInput()
+    {
+        var input = OrgNumberInput?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(SelectedCountryHint))
+        {
+            return input;
+        }
+        if (!PrefixCountries.Contains(SelectedCountryHint))
+        {
+            return input;
+        }
+        if (input.StartsWith(SelectedCountryHint, StringComparison.OrdinalIgnoreCase))
+        {
+            return input;
+        }
+        return SelectedCountryHint.ToUpperInvariant() + input;
+    }
+
     [RelayCommand]
     public async Task LookupAsync(CancellationToken ct)
     {
@@ -99,7 +140,7 @@ public sealed partial class CompanyLookupViewModel(
 
         try
         {
-            var result = await aggregatedHandler.HandleAsync(new LookupCompanyQuery(OrgNumberInput), ct);
+            var result = await aggregatedHandler.HandleAsync(new LookupCompanyQuery(EffectiveOrgNumberInput()), ct);
             switch (result)
             {
                 case AggregatedLookupResult.Found f:

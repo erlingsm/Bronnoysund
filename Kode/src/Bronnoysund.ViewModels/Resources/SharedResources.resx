@@ -334,4 +334,13 @@
   <data name="Country.UnknownFormat"><value>Unknown format — pick a country manually</value></data>
   <data name="Country.EstoniaHint"><value>Estonian number? Try prefixing with EE (e.g. EE12417834).</value></data>
   <data name="Registry.Footer"><value>Source: {0} • Licence: {1}</value></data>
+
+  <!-- Country picker (Plan 26, B2) -->
+  <data name="Country.Picker.Auto"><value>Auto</value></data>
+  <data name="Country.Picker.AutoDescription"><value>Detected from input</value></data>
+  <data name="Country.Picker.Title"><value>Select country</value></data>
+  <data name="Country.Picker.StatusConfigured"><value>Live</value></data>
+  <data name="Country.Picker.StatusNotConfigured"><value>Awaiting credentials</value></data>
+  <data name="Country.Picker.Footer"><value>{0} of {1} countries live</value></data>
+  <data name="Country.SelectedManually"><value>Selected: {0}</value></data>
 </root>

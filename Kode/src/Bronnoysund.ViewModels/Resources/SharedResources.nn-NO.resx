@@ -309,4 +309,13 @@
   <data name="Country.UnknownFormat"><value>Ukjent format — vel land manuelt</value></data>
   <data name="Country.EstoniaHint"><value>Estisk nummer? Prøv med EE-prefiks (t.d. EE12417834).</value></data>
   <data name="Registry.Footer"><value>Kjelde: {0} • Lisens: {1}</value></data>
+
+  <!-- Land-veljar (Plan 26, B2) -->
+  <data name="Country.Picker.Auto"><value>Auto</value></data>
+  <data name="Country.Picker.AutoDescription"><value>Oppdaga frå input</value></data>
+  <data name="Country.Picker.Title"><value>Vel land</value></data>
+  <data name="Country.Picker.StatusConfigured"><value>Live</value></data>
+  <data name="Country.Picker.StatusNotConfigured"><value>Ventar på avtale</value></data>
+  <data name="Country.Picker.Footer"><value>{0} av {1} land aktive</value></data>
+  <data name="Country.SelectedManually"><value>Vald: {0}</value></data>
 </root>
