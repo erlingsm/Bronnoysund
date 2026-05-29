@@ -252,7 +252,7 @@ try
     app.MapGet("/companies/{orgnr}/changes", async (
         string orgnr,
         int? size,
-        ICompanyProvider companyProvider,
+        ICompanyProviderRegistry providerRegistry,
         IEntityChangesProvider provider,
         CancellationToken ct) =>
     {
@@ -267,8 +267,10 @@ try
 
         // The Brreg /oppdateringer/* feeds return 200 OK with empty lists for unknown orgnrs,
         // so we cannot distinguish "no changes" from "no such entity" by hitting them directly.
-        // Validate existence against ICompanyProvider first — CachingCompanyProvider already
-        // caches lookups so this is normally free on a cache-hit path.
+        // Route via the registry's NO entry rather than the singular ICompanyProvider so the
+        // Plan 21 international adapters don't shadow Brreg when DI resolves the bare interface.
+        var companyProvider = providerRegistry.GetForCountry("NO")
+            ?? throw new InvalidOperationException("Norwegian ICompanyProvider is not registered.");
         var existence = await companyProvider.LookupAsync(org, ct);
         switch (existence)
         {

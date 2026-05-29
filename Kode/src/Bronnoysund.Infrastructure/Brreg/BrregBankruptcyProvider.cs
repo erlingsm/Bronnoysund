@@ -20,12 +20,21 @@ namespace Bronnoysund.Infrastructure.Brreg;
 /// the parallel aggregator now makes one HTTP request per orgnr instead of two.
 /// </remarks>
 internal sealed class BrregBankruptcyProvider(
-    ICompanyProvider companies,
+    ICompanyProviderRegistry registry,
     ILogger<BrregBankruptcyProvider> logger) : IBankruptcyProvider
 {
+    // Same singular-injection trap the aggregators hit (commit e3d010d). After Plan 21
+    // Bølge 1-4 registered fourteen international ICompanyProvider implementations,
+    // resolving the bare interface picks the last-registered one — typically Serbia —
+    // and the bankruptcy lookup returns a "wrong country" error for every Norwegian org.
+    // Route through the registry's "NO" entry so we always hit Brreg's cached payload.
+    private ICompanyProvider NorwegianCompanies =>
+        registry.GetForCountry("NO")
+            ?? throw new InvalidOperationException("Norwegian ICompanyProvider is not registered.");
+
     public async Task<BankruptcyResponse?> GetAsync(OrganizationNumber org, CancellationToken ct)
     {
-        var result = await companies.LookupAsync(org, ct).ConfigureAwait(false);
+        var result = await NorwegianCompanies.LookupAsync(org, ct).ConfigureAwait(false);
         return result switch
         {
             CompanyLookupResult.Found f => new BankruptcyResponse(
