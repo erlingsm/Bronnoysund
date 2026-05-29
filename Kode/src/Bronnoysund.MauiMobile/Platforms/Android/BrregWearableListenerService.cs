@@ -31,6 +31,12 @@ public sealed class BrregWearableListenerService : WearableListenerService
             return;
         }
 
+        // Capture managed values before returning from OnMessageReceived — the
+        // IMessageEvent and its native backing can be released once Android sees
+        // us return, so anything async must work from copies.
+        var sourceNodeId = messageEvent.SourceNodeId;
+        var data = messageEvent.GetData() ?? Array.Empty<byte>();
+
         var services = IPlatformApplication.Current?.Services;
         if (services is null)
         {
@@ -38,10 +44,10 @@ public sealed class BrregWearableListenerService : WearableListenerService
         }
 
         var logger = services.GetRequiredService<ILogger<BrregWearableListenerService>>();
-        var request = WatchProtocol.TryDecode(messageEvent.GetData() ?? Array.Empty<byte>());
+        var request = WatchProtocol.TryDecode(data);
         if (request is null)
         {
-            ReplyBack(messageEvent.SourceNodeId, new LookupResponse(
+            ReplyBack(sourceNodeId, new LookupResponse(
                 Version: WatchProtocol.CurrentVersion,
                 Result: "invalid",
                 Code: "unrecognizedFormat",
@@ -55,12 +61,12 @@ public sealed class BrregWearableListenerService : WearableListenerService
             {
                 var lookup = services.GetRequiredService<WatchLookupService>();
                 var response = await lookup.HandleAsync(request, CancellationToken.None).ConfigureAwait(false);
-                ReplyBack(messageEvent.SourceNodeId, response);
+                ReplyBack(sourceNodeId, response);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Watch lookup failed");
-                ReplyBack(messageEvent.SourceNodeId, new LookupResponse(
+                ReplyBack(sourceNodeId, new LookupResponse(
                     Version: WatchProtocol.CurrentVersion,
                     Result: "unavailable",
                     Message: ex.Message));

@@ -37,7 +37,7 @@ final class Companion: NSObject, ObservableObject, WCSessionDelegate {
         }
         do {
             let payload = try request.encode()
-            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
                 session.sendMessageData(payload, replyHandler: { reply in
                     Task { @MainActor in
                         do {

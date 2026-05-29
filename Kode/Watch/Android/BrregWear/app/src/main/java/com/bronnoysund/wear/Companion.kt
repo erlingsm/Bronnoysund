@@ -32,7 +32,14 @@ class Companion(context: Context) {
         val payload = json.encodeToString(LookupRequest.serializer(), request).toByteArray()
 
         return suspendCancellableCoroutine { cont ->
-            val listener = MessageClient.OnMessageReceivedListener { event ->
+            lateinit var listener: MessageClient.OnMessageReceivedListener
+            val resumeOnce: (LookupResponse) -> Unit = { response ->
+                if (cont.isActive) {
+                    messageClient.removeListener(listener)
+                    cont.resume(response)
+                }
+            }
+            listener = MessageClient.OnMessageReceivedListener { event ->
                 if (event.path == ProtocolPaths.LOOKUP) {
                     val parsed = runCatching {
                         json.decodeFromString(LookupResponse.serializer(), String(event.data))
@@ -43,7 +50,7 @@ class Companion(context: Context) {
                             message = "Ugyldig svar fra telefonen.",
                         )
                     }
-                    if (cont.isActive) cont.resume(parsed)
+                    resumeOnce(parsed)
                 }
             }
             messageClient.addListener(listener)
@@ -51,15 +58,13 @@ class Companion(context: Context) {
 
             messageClient.sendMessage(phone.id, ProtocolPaths.LOOKUP, payload)
                 .addOnFailureListener { error ->
-                    if (cont.isActive) {
-                        cont.resume(
-                            LookupResponse(
-                                version = 1,
-                                result = "unavailable",
-                                message = error.localizedMessage ?: "Ukjent feil.",
-                            ),
-                        )
-                    }
+                    resumeOnce(
+                        LookupResponse(
+                            version = 1,
+                            result = "unavailable",
+                            message = error.localizedMessage ?: "Ukjent feil.",
+                        ),
+                    )
                 }
         }
     }

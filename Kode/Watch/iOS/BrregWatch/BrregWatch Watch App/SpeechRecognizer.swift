@@ -74,6 +74,8 @@ final class SpeechRecognizer: ObservableObject {
         task = nil
         request = nil
         isRecording = false
+        // Release audio routing so other apps (and TTS for "Les opp") can play.
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     func currentValue() -> String {

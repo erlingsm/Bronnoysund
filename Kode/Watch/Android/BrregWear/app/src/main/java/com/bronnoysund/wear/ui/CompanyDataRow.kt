@@ -2,10 +2,12 @@
 
 package com.bronnoysund.wear.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -24,12 +26,14 @@ fun CompanyDataRow(label: String, value: String) {
             style = MaterialTheme.typography.caption1,
             color = MaterialTheme.colors.onSurfaceVariant,
         )
-        Divider(
+        // Wear OS does not ship a stable Divider in androidx.wear.compose.material —
+        // a thin tinted Box gives the same hairline without pulling in material3.
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 2.dp),
-            thickness = 0.5.dp,
-            color = MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
+                .padding(vertical = 2.dp)
+                .height(0.5.dp)
+                .background(MaterialTheme.colors.onSurface.copy(alpha = 0.3f)),
         )
         Text(
             text = value,
