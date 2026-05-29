@@ -446,7 +446,11 @@
             }
 
             @{
-                var sourceCountry = CountryDetector.Detect(found.OrganizationNumber)?.CountryCode;
+                // ViewModel.LastLookupCountryCode is set at request time (Plan 26 follow-up,
+                // CR N1). Falls back to a fresh detect if for any reason the property is
+                // still null — e.g. enrichment fires before the initial lookup completes.
+                var sourceCountry = ViewModel.LastLookupCountryCode
+                    ?? CountryDetector.Detect(found.OrganizationNumber)?.CountryCode;
                 var registryInfo = RegistryMetadata.For(sourceCountry);
             }
             @* Plan 26 B3 promised "Source • Updated {LastModified} • Licence", but Brreg's
@@ -672,6 +676,11 @@
     private void OnLayoutChanged(object? sender, EventArgs e)
         => InvokeAsync(StateHasChanged);
 
+    // The picker selection (ViewModel.SelectedCountryHint) intentionally persists across
+    // a mode switch — a user who pre-selected Sweden in orgnr-mode and then switches to
+    // name-mode will see the B4 "Norwegian only" alert immediately. Resetting the hint
+    // here would silently drop their pick and hide the constraint. Plan 26 expects the
+    // selection to be session-sticky until the user picks Auto or another country.
     private void OnSearchModeChanged(bool isNameMode)
     {
         ViewModel.IsNameSearchMode = isNameMode;
@@ -797,13 +806,16 @@
     private void SelectCountry(string? countryCode)
     {
         ViewModel.SelectedCountryHint = countryCode;
+        _countryFilter = string.Empty;
         ClosePicker();
     }
 
+    // Keeps the search filter across close/reopen cycles (CR N3) so a user who closed the
+    // picker mid-search comes back to the same filtered view. Cleared on explicit country
+    // selection — see SelectCountry below.
     private void ClosePicker()
     {
         _countryPickerOpen = false;
-        _countryFilter = string.Empty;
     }
 
     // Plan 26 B4 — name search is implemented only against Brreg today. Block the action

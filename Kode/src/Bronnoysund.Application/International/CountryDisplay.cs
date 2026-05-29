@@ -16,6 +16,14 @@ public static class CountryDisplay
     /// renders as a single colour flag (NO -> 🇳🇴, FI -> 🇫🇮, …). Returns the white-flag
     /// fallback (🏳) for input that is not exactly two ASCII letters.
     /// </summary>
+    /// <remarks>
+    /// On Windows &lt; 11 and Linux without Twemoji the regional-indicator pair renders as
+    /// two blank squares (one per letter). Every UI call-site pairs the flag with either a
+    /// localized country name (picker list, detection badges, B3 footer) or the ISO code
+    /// itself (picker activator). The accompanying text carries the semantic load, so the
+    /// "no flag-glyph" state degrades to plain text rather than to "unknown country" —
+    /// CR N5 confirmed this pattern is graceful on the bare-flag-fallback platforms.
+    /// </remarks>
     public static string Flag(string? isoAlpha2)
     {
         if (string.IsNullOrEmpty(isoAlpha2) || isoAlpha2.Length != 2) return "\U0001F3F3";

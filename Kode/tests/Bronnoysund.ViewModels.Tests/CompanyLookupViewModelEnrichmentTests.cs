@@ -123,7 +123,7 @@ public sealed class CompanyLookupViewModelEnrichmentTests
             new StubSearchProvider(), NullLogger<SearchCompaniesByNameHandler>.Instance);
         return new CompanyLookupViewModel(
             aggregatedHandler, searchHandler, NewLocalizer(),
-            legalRoles, voluntary, changes);
+            legalRoles, voluntary, changes, detector);
     }
 
     private sealed class PassthroughNorwegianDetector : ICountryDetector

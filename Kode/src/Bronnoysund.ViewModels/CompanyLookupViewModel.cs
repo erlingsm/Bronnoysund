@@ -23,7 +23,8 @@ public sealed partial class CompanyLookupViewModel(
     IStringLocalizer<SharedResources> localizer,
     ILegalRolesProvider legalRolesProvider,
     IVoluntaryOrganizationProvider voluntaryProvider,
-    IEntityChangesProvider changesProvider) : ObservableObject, IDisposable
+    IEntityChangesProvider changesProvider,
+    ICountryDetector countryDetector) : ObservableObject, IDisposable
 {
     /// <summary>
     /// Cancels in-flight enrichment fan-out when the user triggers a new lookup before the
@@ -94,6 +95,15 @@ public sealed partial class CompanyLookupViewModel(
     [ObservableProperty]
     public partial string? SelectedCountryHint { get; set; }
 
+    /// <summary>
+    /// ISO 3166-1 alpha-2 code of the country that handled the most recent lookup. Captured
+    /// when <see cref="LookupAsync"/> dispatches so the result-side UI (Plan 26 B3 footer)
+    /// can read it back without re-running <see cref="ICountryDetector.Detect"/>.
+    /// Null before any lookup has run.
+    /// </summary>
+    [ObservableProperty]
+    public partial string? LastLookupCountryCode { get; set; }
+
     private string EffectiveOrgNumberInput() =>
         Application.International.CountryRouting.ApplyPrefix(OrgNumberInput, SelectedCountryHint);
 
@@ -111,7 +121,11 @@ public sealed partial class CompanyLookupViewModel(
 
         try
         {
-            var result = await aggregatedHandler.HandleAsync(new LookupCompanyQuery(EffectiveOrgNumberInput()), ct);
+            var effective = EffectiveOrgNumberInput();
+            // Capture the routed country before handing off to the handler so the
+            // result-side UI doesn't have to re-detect from the canonical OrganizationNumber.
+            LastLookupCountryCode = SelectedCountryHint ?? countryDetector.Detect(effective)?.CountryCode;
+            var result = await aggregatedHandler.HandleAsync(new LookupCompanyQuery(effective), ct);
             switch (result)
             {
                 case AggregatedLookupResult.Found f:

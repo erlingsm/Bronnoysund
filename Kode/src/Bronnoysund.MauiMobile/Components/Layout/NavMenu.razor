@@ -2,7 +2,11 @@
 @using Bronnoysund.ViewModels.Resources
 @inject IStringLocalizer<SharedResources> L
 
-@* Mirror of the BlazorWeb NavMenu (Plan 57). Rendered inside MainLayout's MudDrawer. *@
+@* Mirror of the BlazorWeb NavMenu (Plan 57). Rendered inside MainLayout's MudDrawer.
+   The Kodeverk MudNavGroup starts collapsed (Expanded="false") so the first drawer-
+   open on a phone shows the top-level destinations without a wall of sub-items
+   pushing them off-screen. MauiDesktop's mirror keeps Expanded="true" because the
+   permanent drawer at Md+ widths has the vertical real estate. *@
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Search">
         @L["NavHome"]
