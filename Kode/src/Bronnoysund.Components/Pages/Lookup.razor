@@ -1,12 +1,14 @@
 @page "/"
 @page "/lookup"
 @using System.Globalization
+@using Bronnoysund.Application.International
 @inject CompanyLookupViewModel ViewModel
 @inject IStringLocalizer<SharedResources> L
 @inject NavigationManager Nav
 @inject IDeviceLayout DeviceLayout
 @inject ITextToSpeech TextToSpeech
 @inject ISnackbar Snackbar
+@inject ICountryDetector CountryDetector
 @implements IDisposable
 
 <PageTitle>@L["LookupTitle"]</PageTitle>
@@ -39,6 +41,35 @@
                                   OnNameRecognized="OnVoiceName"
                                   OnRecognitionFailed="OnVoiceFailed" />
             </div>
+            @if (!string.IsNullOrWhiteSpace(ViewModel.OrgNumberInput))
+            {
+                var detected = CountryDetector.Detect(ViewModel.OrgNumberInput);
+                if (detected is not null)
+                {
+                    <div class="d-flex align-center mt-2" style="gap: 0.4rem;">
+                        <span style="font-size: 1.2rem;" aria-hidden="true">@CountryDisplay.Flag(detected.CountryCode)</span>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            @string.Format(CultureInfo.CurrentCulture, L["Country.Detected"], L[$"Country.{detected.CountryCode}"])
+                        </MudText>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex align-center mt-2" style="gap: 0.4rem;">
+                        <MudIcon Icon="@Icons.Material.Filled.HelpOutline" Color="Color.Warning" Size="Size.Small" />
+                        <MudText Typo="Typo.body2" Color="Color.Warning">@L["Country.UnknownFormat"]</MudText>
+                    </div>
+                }
+                @* 8-digit input is structurally ambiguous between Danish CVR and Estonian registry
+                   codes. Detector picks Denmark first; surface Estonia as a possible alternative
+                   regardless of which bucket the detector landed in. *@
+                @if (LooksLikeEstonianFormat(ViewModel.OrgNumberInput))
+                {
+                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1 ml-7">
+                        @L["Country.EstoniaHint"]
+                    </MudText>
+                }
+            }
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" FullWidth="true"
                        Disabled="@ViewModel.IsBusy" OnClick="OnLookupClicked">
                 @if (ViewModel.IsBusy)
@@ -604,6 +635,16 @@
         || c.RegisteredDate is not null
         || c.RegisteredInVatRegistry is not null
         || c.RegisteredInBusinessRegistry is not null;
+
+    // CountryDetector's open-API rule set rejects bare 8-digit Estonian codes (no checksum
+    // signature in that bucket). Hint Estonian users to prefix EE so the dispatch hits
+    // the Estonian provider instead of falling through to Unknown.
+    private static bool LooksLikeEstonianFormat(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return false;
+        var trimmed = input.Trim();
+        return trimmed.Length == 8 && trimmed.All(char.IsDigit);
+    }
 
     private static string? FormatAddress(PostalAddress a)
     {

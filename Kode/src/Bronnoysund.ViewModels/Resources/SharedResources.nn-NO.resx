@@ -288,4 +288,24 @@
   <data name="StatistikkLoading"><value>Lastar…</value></data>
   <data name="StatistikkLastUpdated"><value>Oppdatert {0}</value></data>
   <data name="StatistikkError"><value>Kunne ikkje hente statistikk: {0}</value></data>
+
+  <!-- Land-namn (Plan 26, B1 + B2) — ISO 3166-1 alpha-2 -->
+  <data name="Country.NO"><value>Noreg</value></data>
+  <data name="Country.FI"><value>Finland</value></data>
+  <data name="Country.EE"><value>Estland</value></data>
+  <data name="Country.IE"><value>Irland</value></data>
+  <data name="Country.PL"><value>Polen</value></data>
+  <data name="Country.SE"><value>Sverige</value></data>
+  <data name="Country.DK"><value>Danmark</value></data>
+  <data name="Country.SI"><value>Slovenia</value></data>
+  <data name="Country.LT"><value>Litauen</value></data>
+  <data name="Country.HR"><value>Kroatia</value></data>
+  <data name="Country.GR"><value>Hellas</value></data>
+  <data name="Country.LV"><value>Latvia</value></data>
+  <data name="Country.ES"><value>Spania</value></data>
+  <data name="Country.IT"><value>Italia</value></data>
+  <data name="Country.RS"><value>Serbia</value></data>
+  <data name="Country.Detected"><value>Oppdaga som {0}</value></data>
+  <data name="Country.UnknownFormat"><value>Ukjent format — vel land manuelt</value></data>
+  <data name="Country.EstoniaHint"><value>Estisk nummer? Prøv med EE-prefiks (t.d. EE12417834).</value></data>
 </root>
