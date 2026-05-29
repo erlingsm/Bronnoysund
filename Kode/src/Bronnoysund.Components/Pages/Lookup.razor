@@ -205,8 +205,14 @@
                                   OnNameRecognized="OnVoiceName"
                                   OnRecognitionFailed="OnVoiceFailed" />
             </div>
+            @if (IsNonNorwegianCountrySelected())
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-3" Dense="true">
+                    @L["NameSearch.NorwegianOnly"]
+                </MudAlert>
+            }
             <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-3" FullWidth="true"
-                       Disabled="@ViewModel.IsBusy" OnClick="OnSearchClicked">
+                       Disabled="@(ViewModel.IsBusy || IsNonNorwegianCountrySelected())" OnClick="OnSearchClicked">
                 @if (ViewModel.IsBusy)
                 {
                     <MudProgressCircular Color="Color.Inherit" Size="Size.Small" Indeterminate="true" Class="mr-2" />
@@ -781,6 +787,13 @@
         _countryPickerOpen = false;
         _countryFilter = string.Empty;
     }
+
+    // Plan 26 B4 — name search is implemented only against Brreg today. Block the action
+    // and surface a localized hint when the user has explicitly picked a non-Norwegian
+    // country, so we don't silently look up "Equinor" inside e.g. Bolagsverket.
+    private bool IsNonNorwegianCountrySelected() =>
+        ViewModel.SelectedCountryHint is { } hint
+        && !string.Equals(hint, "NO", StringComparison.OrdinalIgnoreCase);
 
     // Plan 26 M2 — surface the appropriate mobile keyboard for the country whose adapter
     // will receive the lookup. Numeric IDs cover most of the registered set; ES NIF starts

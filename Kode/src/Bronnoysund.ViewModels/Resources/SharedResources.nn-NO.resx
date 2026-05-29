@@ -321,4 +321,5 @@
   <data name="Country.Picker.SearchPlaceholder"><value>Søk…</value></data>
   <data name="Country.Picker.NoMatch"><value>Ingen land matchar "{0}"</value></data>
   <data name="Country.Picker.Close"><value>Lukk</value></data>
+  <data name="NameSearch.NorwegianOnly"><value>Namnesøk er førebels berre støtta i Brønnøysundregistrene (Noreg). Byt land til «Auto» eller NO, eller slå opp via identifikator i staden.</value></data>
 </root>
