@@ -112,6 +112,21 @@ public class PolishCompanyProviderKrsFallbackTests : IDisposable
         _krsHandler.RequestCount.Should().Be(2);
     }
 
+    [Fact]
+    public async Task P404_STransient_ReturnsUnavailable()
+    {
+        // The missing seventh row of the truth table that iter-3 caught. P=404 says
+        // "not in P-register"; S=transient says "we couldn't check S". Combined we
+        // can't claim NotFound (the entity might be in S) — must Unavailable.
+        _krsHandler.Enqueue(new HttpResponseMessage(HttpStatusCode.NotFound));
+        _krsHandler.EnqueueException(new HttpRequestException("dns blip S"));
+
+        var result = await _sut.LookupAsync(Orlen, CancellationToken.None);
+
+        result.Should().BeOfType<CompanyLookupResult.Unavailable>();
+        _krsHandler.RequestCount.Should().Be(2);
+    }
+
     public void Dispose()
     {
         _krsHttp.Dispose();

@@ -12,11 +12,14 @@ public sealed class DenmarkOptions
 {
     public const string SectionName = "Bronnoysund:International:Denmark";
 
-    // HTTPS by default — CVR's distribution endpoint accepts both http and https since
-    // 2024, and sending Basic Auth credentials over plaintext (the original http://
-    // default) would expose username + password on any intermediate hop. Override in
-    // App Config only if Erhvervsstyrelsen rolls back TLS support.
-    public string BaseUrl { get; set; } = "https://distribution.virk.dk/";
+    // HTTP only — verified 2026-05-29 (iter-2 + iter-3 reviews) that
+    // distribution.virk.dk's three IPv4s all time out on port 443 and respond cleanly
+    // on port 80. Erhvervsstyrelsen has not shipped TLS on the public Elasticsearch
+    // endpoint. An earlier https:// attempt (commits fd00284 and the unsuccessful
+    // iter-2 edit) broke every Danish lookup. Operators who want TLS must front
+    // virk.dk with a reverse proxy and override this setting. Credentials still
+    // travel as HTTP Basic on the wire — accepted tradeoff until virk.dk ships TLS.
+    public string BaseUrl { get; set; } = "http://distribution.virk.dk/";
 
     public string Username { get; set; } = string.Empty;
 
