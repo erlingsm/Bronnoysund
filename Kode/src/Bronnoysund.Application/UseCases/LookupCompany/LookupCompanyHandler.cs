@@ -17,6 +17,7 @@ public sealed class LookupCompanyHandler(
     ICountryDetector detector,
     ICompanyProviderRegistry registry,
     IProviderHealthTracker health,
+    ILookupMetrics metrics,
     ILogger<LookupCompanyHandler> logger)
 {
     public async Task<CompanyLookupResult> HandleAsync(LookupCompanyQuery query, CancellationToken ct)
@@ -40,8 +41,11 @@ public sealed class LookupCompanyHandler(
 
         logger.LogInformation("Looking up {Country}:{Id} via {Provider}",
             identifier.CountryCode, identifier.Value, provider.GetType().Name);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var result = await provider.LookupAsync(identifier, ct);
+        sw.Stop();
         RecordOutcome(identifier.CountryCode, result);
+        metrics.Record(identifier.CountryCode, MapResultKind(result), sw.Elapsed);
         return result;
     }
 
@@ -59,4 +63,12 @@ public sealed class LookupCompanyHandler(
             // InvalidInput is a value-object validation failure, not a provider health signal.
         }
     }
+
+    private static LookupResultKind MapResultKind(CompanyLookupResult result) => result switch
+    {
+        CompanyLookupResult.Found => LookupResultKind.Found,
+        CompanyLookupResult.NotFound => LookupResultKind.NotFound,
+        CompanyLookupResult.InvalidInput => LookupResultKind.InvalidInput,
+        _ => LookupResultKind.Unavailable,
+    };
 }

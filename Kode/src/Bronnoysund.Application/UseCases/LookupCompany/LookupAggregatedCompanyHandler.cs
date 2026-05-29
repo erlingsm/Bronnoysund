@@ -21,6 +21,7 @@ public sealed class LookupAggregatedCompanyHandler(
     ICompanyProviderRegistry registry,
     ICompanyDataAggregator aggregator,
     IProviderHealthTracker health,
+    ILookupMetrics metrics,
     ILogger<LookupAggregatedCompanyHandler> logger)
 {
     public async Task<AggregatedLookupResult> HandleAsync(LookupCompanyQuery query, CancellationToken ct)
@@ -34,13 +35,28 @@ public sealed class LookupAggregatedCompanyHandler(
                 $"Could not detect a known company-identifier format in '{query.OrganizationNumberInput}'.");
         }
 
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        AggregatedLookupResult outcome;
         if (identifier is OrganizationNumber norwegian)
         {
-            return await HandleNorwegianAsync(norwegian, ct).ConfigureAwait(false);
+            outcome = await HandleNorwegianAsync(norwegian, ct).ConfigureAwait(false);
         }
-
-        return await HandleInternationalAsync(identifier, ct).ConfigureAwait(false);
+        else
+        {
+            outcome = await HandleInternationalAsync(identifier, ct).ConfigureAwait(false);
+        }
+        sw.Stop();
+        metrics.Record(identifier.CountryCode, MapKind(outcome), sw.Elapsed);
+        return outcome;
     }
+
+    private static LookupResultKind MapKind(AggregatedLookupResult result) => result switch
+    {
+        AggregatedLookupResult.Found => LookupResultKind.Found,
+        AggregatedLookupResult.NotFound => LookupResultKind.NotFound,
+        AggregatedLookupResult.InvalidInput => LookupResultKind.InvalidInput,
+        _ => LookupResultKind.Unavailable,
+    };
 
     /// <summary>
     /// Norwegian path keeps the parallel fan-out (Brreg roles, sub-units, voluntary, etc.).

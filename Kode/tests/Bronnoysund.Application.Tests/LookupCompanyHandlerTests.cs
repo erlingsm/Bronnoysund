@@ -18,12 +18,13 @@ public class LookupCompanyHandlerTests
     private readonly ICompanyProviderRegistry _registry = Substitute.For<ICompanyProviderRegistry>();
     private readonly ICompanyProvider _provider = Substitute.For<ICompanyProvider>();
     private readonly IProviderHealthTracker _health = Substitute.For<IProviderHealthTracker>();
+    private readonly ILookupMetrics _metrics = Substitute.For<ILookupMetrics>();
     private readonly LookupCompanyHandler _sut;
     private static readonly OrganizationNumber Equinor = OrganizationNumber.Create("919300388");
 
     public LookupCompanyHandlerTests()
     {
-        _sut = new LookupCompanyHandler(_detector, _registry, _health, NullLogger<LookupCompanyHandler>.Instance);
+        _sut = new LookupCompanyHandler(_detector, _registry, _health, _metrics, NullLogger<LookupCompanyHandler>.Instance);
     }
 
     [Fact]

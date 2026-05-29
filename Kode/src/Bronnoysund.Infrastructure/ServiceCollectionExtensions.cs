@@ -243,6 +243,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICountryDetector, CountryDetector>();
         services.AddSingleton<ICompanyProviderRegistry, CompanyProviderRegistry>();
         services.AddSingleton<IProviderHealthTracker, InMemoryProviderHealthTracker>();
+        services.AddSingleton<ILookupMetrics, MeterLookupMetrics>();
 
         // Plan 21 Bølge 1 — international adapters. Each one is registered unconditionally
         // (RemoteApi mode included) so the registry exposes a consistent set of country

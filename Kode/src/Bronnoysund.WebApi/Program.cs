@@ -9,6 +9,7 @@ using Bronnoysund.Domain;
 using Bronnoysund.Infrastructure;
 using Bronnoysund.Infrastructure.Persistence;
 using Bronnoysund.Infrastructure.Persistence.Configuration;
+using OpenTelemetry.Metrics;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -41,6 +42,15 @@ try
 
     builder.Services.AddBronnoysundApplication();
     builder.Services.AddBronnoysundInfrastructure(builder.Configuration);
+
+    // Plan 26 Fase 4b — expose Meter-based lookup metrics as Prometheus text on /metrics
+    // so a scraper (e.g. Azure Managed Prometheus) can chart bronnoysund_lookup_total /
+    // _duration_seconds per country. Counter + histogram are owned by MeterLookupMetrics
+    // (Infrastructure) under the "Bronnoysund.Lookup" meter name.
+    builder.Services.AddOpenTelemetry()
+        .WithMetrics(m => m
+            .AddMeter("Bronnoysund.Lookup")
+            .AddPrometheusExporter());
     builder.Services.AddLocalization();
     builder.Services.AddSingleton<IDatabasePathProvider>(dbPathProvider);
     builder.Services.AddBronnoysundPersistence(builder.Configuration);
@@ -53,6 +63,12 @@ try
     app.UseSerilogRequestLogging();
     app.UseExceptionHandler();
     app.UseStatusCodePages();
+
+    // Plan 26 Fase 4b — Prometheus scrape endpoint at /metrics. Returns text/plain in
+    // the standard exposition format. Authentication is intentionally not gated because
+    // the data is operational metadata (counts + latency histograms) — no PII or org-nr
+    // values are exposed via the tags (country code + result kind only).
+    app.MapPrometheusScrapingEndpoint();
 
     // All non-2xx responses use RFC 7807 ProblemDetails via Results.Problem(...).
     // Stable URIs for `type` fields point at the relevant RFC sections so API consumers can branch
