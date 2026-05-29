@@ -2,9 +2,7 @@
 @using Bronnoysund.ViewModels.Resources
 @inject IStringLocalizer<SharedResources> L
 
-@* Mirror of the BlazorWeb NavMenu (Plan 57). On mobile the drawer is hidden by default;
-   MainLayout currently calls into this component from the sidebar div, so the menu is
-   visible when the user taps the menu icon. *@
+@* Mirror of the BlazorWeb NavMenu (Plan 57). Rendered inside MainLayout's MudDrawer. *@
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Search">
         @L["NavHome"]

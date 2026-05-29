@@ -1,4 +1,10 @@
 @using Bronnoysund.Components
+@using MudBlazor
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <Router AppAssembly="@typeof(MauiProgram).Assembly"
         AdditionalAssemblies="@(new[] { typeof(Bronnoysund.Components.Pages.Lookup).Assembly })"
