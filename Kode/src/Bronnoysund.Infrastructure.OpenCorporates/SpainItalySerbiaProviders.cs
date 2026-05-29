@@ -14,6 +14,8 @@ internal sealed class SpainCompanyProvider(OpenCorporatesClient oc) : ICompanyPr
 {
     public string CountryCode => "ES";
 
+    public bool IsConfigured => oc.IsConfigured;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not SpanishNif es)
@@ -32,6 +34,8 @@ internal sealed class SpainCompanyProvider(OpenCorporatesClient oc) : ICompanyPr
 internal sealed class ItalyCompanyProvider(OpenCorporatesClient oc) : ICompanyProvider
 {
     public string CountryCode => "IT";
+
+    public bool IsConfigured => oc.IsConfigured;
 
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
@@ -52,6 +56,8 @@ internal sealed class ItalyCompanyProvider(OpenCorporatesClient oc) : ICompanyPr
 internal sealed class SerbiaCompanyProvider(OpenCorporatesClient oc) : ICompanyProvider
 {
     public string CountryCode => "RS";
+
+    public bool IsConfigured => oc.IsConfigured;
 
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {

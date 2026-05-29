@@ -16,5 +16,14 @@ public interface ICompanyProvider
 {
     string CountryCode { get; }
 
+    /// <summary>
+    /// Whether the adapter has every credential / setting it needs to actually reach its
+    /// upstream registry. Norwegian Brreg + Finnish PRH + Irish CKAN + Polish KRS +
+    /// Lithuanian data.gov.lt are open APIs that are always configured. The 10 other
+    /// adapters delegate to their respective per-country Options' IsConfigured. Plan 26
+    /// trinn B2 (UI status-prikk) reads this through <see cref="ICompanyProviderRegistry"/>.
+    /// </summary>
+    bool IsConfigured { get; }
+
     Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct);
 }

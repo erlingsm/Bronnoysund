@@ -49,6 +49,22 @@ public class CompanyProviderRegistryTests
     }
 
     [Fact]
+    public void ConfigurationStatus_ReflectsPerProviderIsConfigured()
+    {
+        // Plan 26 trinn B2 reads this directly to drive the UI status-prikk
+        // (green = configured, grey = wired-but-not-configured).
+        var registry = new CompanyProviderRegistry([
+            new FakeProvider("NO", isConfigured: true),
+            new FakeProvider("FI", isConfigured: true),
+            new FakeProvider("SE", isConfigured: false),
+        ]);
+
+        registry.ConfigurationStatus["NO"].Should().BeTrue();
+        registry.ConfigurationStatus["FI"].Should().BeTrue();
+        registry.ConfigurationStatus["SE"].Should().BeFalse();
+    }
+
+    [Fact]
     public void Constructor_DuplicateCountryCode_Throws()
     {
         // A misconfigured composition root is worse than a crash on startup —
@@ -61,9 +77,11 @@ public class CompanyProviderRegistryTests
             .WithMessage("*claim country code 'NO'*");
     }
 
-    private sealed class FakeProvider(string country) : ICompanyProvider
+    private sealed class FakeProvider(string country, bool isConfigured = true) : ICompanyProvider
     {
         public string CountryCode => country;
+
+        public bool IsConfigured => isConfigured;
 
         public Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct) =>
             Task.FromResult<CompanyLookupResult>(new CompanyLookupResult.NotFound(id.Value));

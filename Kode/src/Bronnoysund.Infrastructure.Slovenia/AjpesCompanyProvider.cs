@@ -26,6 +26,8 @@ internal sealed class AjpesCompanyProvider(
 {
     public string CountryCode => "SI";
 
+    public bool IsConfigured => options.Value.IsConfigured;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not SlovenianMaticnaStevilka si)

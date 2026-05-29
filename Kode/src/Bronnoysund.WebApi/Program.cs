@@ -658,12 +658,25 @@ try
     app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "Bronnoysund.WebApi" }));
 
     // Per Plan 21, a single endpoint that enumerates every ICompanyProvider currently wired
-    // up. Useful for verifying a new country adapter is registered after deploy, and for the
-    // smoke-test pages that need to know which flags to render.
-    app.MapGet("/health/providers", (ICompanyProviderRegistry registry) => Results.Ok(new
+    // up. Plan 26 trinn B2 (UI status-prikk grønn/grå/rød) reads ConfigurationStatus so it
+    // can tell which countries are wired-and-configured (green) vs wired-but-not-configured
+    // (grey) without resolving every per-country Options class itself.
+    app.MapGet("/health/providers", (ICompanyProviderRegistry registry) =>
     {
-        supportedCountries = registry.SupportedCountries.OrderBy(c => c).ToArray(),
-    }));
+        var status = registry.ConfigurationStatus;
+        return Results.Ok(new
+        {
+            supportedCountries = registry.SupportedCountries.OrderBy(c => c).ToArray(),
+            countries = registry.SupportedCountries
+                .OrderBy(c => c)
+                .Select(c => new
+                {
+                    countryCode = c,
+                    isConfigured = status.TryGetValue(c, out var configured) && configured,
+                })
+                .ToArray(),
+        });
+    });
 
     Log.Information("Bronnoysund.WebApi starting");
     app.Run();

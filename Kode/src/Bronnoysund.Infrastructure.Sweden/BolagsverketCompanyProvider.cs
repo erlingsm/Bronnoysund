@@ -31,6 +31,8 @@ internal sealed class BolagsverketCompanyProvider(
 
     public string CountryCode => "SE";
 
+    public bool IsConfigured => options.Value.IsConfigured;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not SwedishOrganizationNumber se)

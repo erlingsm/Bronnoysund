@@ -14,19 +14,24 @@ namespace Bronnoysund.Application.Tests;
 
 public class LookupCompanyHandlerTests
 {
+    private readonly ICountryDetector _detector = Substitute.For<ICountryDetector>();
+    private readonly ICompanyProviderRegistry _registry = Substitute.For<ICompanyProviderRegistry>();
     private readonly ICompanyProvider _provider = Substitute.For<ICompanyProvider>();
     private readonly LookupCompanyHandler _sut;
+    private static readonly OrganizationNumber Equinor = OrganizationNumber.Create("919300388");
 
     public LookupCompanyHandlerTests()
     {
-        _sut = new LookupCompanyHandler(_provider, NullLogger<LookupCompanyHandler>.Instance);
+        _sut = new LookupCompanyHandler(_detector, _registry, NullLogger<LookupCompanyHandler>.Instance);
     }
 
     [Fact]
-    public async Task ValidOrgNumber_CallsProvider_AndReturnsFound()
+    public async Task ValidOrgNumber_DispatchesToRegistryProvider_AndReturnsFound()
     {
         var expected = new CompanyResponse("919300388", "Equinor ASA", "AS", "Bokmål");
-        _provider.LookupAsync(Arg.Any<OrganizationNumber>(), Arg.Any<CancellationToken>())
+        _detector.Detect("919300388").Returns(Equinor);
+        _registry.GetForCountry("NO").Returns(_provider);
+        _provider.LookupAsync(Equinor, Arg.Any<CancellationToken>())
             .Returns(new CompanyLookupResult.Found(expected));
 
         var result = await _sut.HandleAsync(new LookupCompanyQuery("919300388"), CancellationToken.None);
@@ -36,26 +41,44 @@ public class LookupCompanyHandlerTests
     }
 
     [Fact]
-    public async Task InvalidOrgNumber_ReturnsInvalidInput_WithoutCallingProvider()
+    public async Task UndetectedInput_ReturnsInvalidInput_WithoutHittingRegistry()
     {
+        _detector.Detect("12345").Returns((CompanyIdentifier?)null);
+
         var result = await _sut.HandleAsync(new LookupCompanyQuery("12345"), CancellationToken.None);
 
         result.Should().BeOfType<CompanyLookupResult.InvalidInput>();
-        await _provider.DidNotReceive().LookupAsync(Arg.Any<OrganizationNumber>(), Arg.Any<CancellationToken>());
+        _registry.DidNotReceiveWithAnyArgs().GetForCountry(default!);
     }
 
     [Fact]
     public async Task EmptyInput_ReturnsInvalidInput()
     {
+        _detector.Detect("").Returns((CompanyIdentifier?)null);
+
         var result = await _sut.HandleAsync(new LookupCompanyQuery(""), CancellationToken.None);
 
         result.Should().BeOfType<CompanyLookupResult.InvalidInput>();
     }
 
     [Fact]
-    public async Task ValidOrgNumberButProviderReturnsNotFound_PropagatesNotFound()
+    public async Task DetectedButNoProviderRegistered_ReturnsUnavailable()
     {
-        _provider.LookupAsync(Arg.Any<OrganizationNumber>(), Arg.Any<CancellationToken>())
+        _detector.Detect("ZZ123").Returns(Equinor); // pretend detector lies; registry decides
+        _registry.GetForCountry("NO").Returns((ICompanyProvider?)null);
+
+        var result = await _sut.HandleAsync(new LookupCompanyQuery("ZZ123"), CancellationToken.None);
+
+        result.Should().BeOfType<CompanyLookupResult.Unavailable>()
+            .Which.Message.Should().Contain("NO");
+    }
+
+    [Fact]
+    public async Task ProviderReturnsNotFound_PropagatesNotFound()
+    {
+        _detector.Detect("919300388").Returns(Equinor);
+        _registry.GetForCountry("NO").Returns(_provider);
+        _provider.LookupAsync(Equinor, Arg.Any<CancellationToken>())
             .Returns(new CompanyLookupResult.NotFound("919300388"));
 
         var result = await _sut.HandleAsync(new LookupCompanyQuery("919300388"), CancellationToken.None);
@@ -65,9 +88,11 @@ public class LookupCompanyHandlerTests
     }
 
     [Fact]
-    public async Task ValidOrgNumberButProviderReturnsUnavailable_PropagatesUnavailable()
+    public async Task ProviderReturnsUnavailable_PropagatesUnavailable()
     {
-        _provider.LookupAsync(Arg.Any<OrganizationNumber>(), Arg.Any<CancellationToken>())
+        _detector.Detect("919300388").Returns(Equinor);
+        _registry.GetForCountry("NO").Returns(_provider);
+        _provider.LookupAsync(Equinor, Arg.Any<CancellationToken>())
             .Returns(new CompanyLookupResult.Unavailable("Brreg is down."));
 
         var result = await _sut.HandleAsync(new LookupCompanyQuery("919300388"), CancellationToken.None);

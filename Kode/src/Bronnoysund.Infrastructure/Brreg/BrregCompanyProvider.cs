@@ -26,6 +26,9 @@ internal sealed class BrregCompanyProvider(
 {
     public string CountryCode => "NO";
 
+    // Brreg is an open API with no per-host credentials.
+    public bool IsConfigured => true;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not OrganizationNumber org)

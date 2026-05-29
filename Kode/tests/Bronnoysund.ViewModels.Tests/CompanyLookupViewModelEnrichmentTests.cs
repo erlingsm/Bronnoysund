@@ -109,13 +109,45 @@ public sealed class CompanyLookupViewModelEnrichmentTests
         ILegalRolesProvider legalRoles,
         IEntityChangesProvider changes)
     {
+        // Iter-3 follow-up (Plan 26 Steg 0): handler is now country-agnostic. For these
+        // viewmodel-level tests we use a passthrough detector that converts the raw input
+        // to an OrganizationNumber (the only path the existing enrichment tests exercise)
+        // and a one-entry registry that routes "NO" to a provider backed by the same
+        // aggregator stub so the existing test fixtures keep working.
+        var detector = new PassthroughNorwegianDetector();
+        var registry = new SingleNorwegianRegistry(new AggregatorBackedProvider(aggregator));
         var aggregatedHandler = new LookupAggregatedCompanyHandler(
-            aggregator, NullLogger<LookupAggregatedCompanyHandler>.Instance);
+            detector, registry, aggregator, NullLogger<LookupAggregatedCompanyHandler>.Instance);
         var searchHandler = new SearchCompaniesByNameHandler(
             new StubSearchProvider(), NullLogger<SearchCompaniesByNameHandler>.Instance);
         return new CompanyLookupViewModel(
             aggregatedHandler, searchHandler, NewLocalizer(),
             legalRoles, voluntary, changes);
+    }
+
+    private sealed class PassthroughNorwegianDetector : ICountryDetector
+    {
+        public CompanyIdentifier? Detect(string? rawInput) =>
+            OrganizationNumber.TryCreate(rawInput, out var org, out _) ? org : null;
+    }
+
+    private sealed class SingleNorwegianRegistry(ICompanyProvider provider) : ICompanyProviderRegistry
+    {
+        public ICompanyProvider? GetForCountry(string countryCode) =>
+            string.Equals(countryCode, "NO", StringComparison.OrdinalIgnoreCase) ? provider : null;
+        public IReadOnlyCollection<string> SupportedCountries => ["NO"];
+        public IReadOnlyDictionary<string, bool> ConfigurationStatus =>
+            new Dictionary<string, bool> { ["NO"] = true };
+    }
+
+    private sealed class AggregatorBackedProvider(ICompanyDataAggregator aggregator) : ICompanyProvider
+    {
+        public string CountryCode => "NO";
+        public bool IsConfigured => true;
+        public Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct) =>
+            id is OrganizationNumber org
+                ? aggregator.CoreOnlyAsync(org, ct)
+                : Task.FromResult<CompanyLookupResult>(new CompanyLookupResult.InvalidInput("not Norwegian"));
     }
 
     private sealed class StubAggregator(AggregatedCompanyResponse aggregated) : ICompanyDataAggregator

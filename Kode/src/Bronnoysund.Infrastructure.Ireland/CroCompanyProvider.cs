@@ -26,6 +26,9 @@ internal sealed class CroCompanyProvider(
 {
     public string CountryCode => "IE";
 
+    // CRO's CKAN datastore is an open API (CC-BY 4.0) with no auth requirement.
+    public bool IsConfigured => true;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not IrishCroNumber ie)

@@ -42,11 +42,12 @@ public sealed class WebApiFactory : WebApplicationFactory<Program>
 
     public WebApiFactory()
     {
-        // The CompanyProviderRegistry constructor reads CountryCode from each registered
-        // ICompanyProvider and throws on null. NSubstitute default-returns null for the
-        // string getter, so seed a sane country code here. Tests that need a different
-        // country can override per-instance.
+        // The CompanyProviderRegistry constructor reads CountryCode + IsConfigured from
+        // each registered ICompanyProvider. NSubstitute default-returns null/false for
+        // those getters, so seed sane defaults here. Tests that need a different country
+        // or "not configured" state can override per-instance.
         Company.CountryCode.Returns("NO");
+        Company.IsConfigured.Returns(true);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

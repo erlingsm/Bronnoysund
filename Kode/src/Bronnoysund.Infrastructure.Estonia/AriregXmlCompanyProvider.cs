@@ -31,6 +31,8 @@ internal sealed class AriregXmlCompanyProvider(
 
     public string CountryCode => "EE";
 
+    public bool IsConfigured => options.Value.IsConfigured;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not EstonianRegistryCode ee)

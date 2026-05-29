@@ -25,6 +25,8 @@ internal sealed class CachingCompanyProvider(
 {
     public string CountryCode => inner.CountryCode;
 
+    public bool IsConfigured => inner.IsConfigured;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         // Country code in the cache key so a future FI/PL/etc. identifier with the same digit

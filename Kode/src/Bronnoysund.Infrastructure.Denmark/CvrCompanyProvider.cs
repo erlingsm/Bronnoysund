@@ -29,6 +29,8 @@ internal sealed class CvrCompanyProvider(
 {
     public string CountryCode => "DK";
 
+    public bool IsConfigured => options.Value.IsConfigured;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not DanishCvrNumber dk)

@@ -40,7 +40,24 @@ public class HealthEndpointTests
         body!.SupportedCountries.Should().Contain("NO");
     }
 
+    [Fact]
+    public async Task GetHealthProviders_ExposesPerCountryIsConfigured_ForPlan26UI()
+    {
+        using var factory = new WebApiFactory();
+        var client = factory.CreateClient();
+
+        var response = await client.GetAsync(new Uri("/health/providers", UriKind.Relative));
+
+        var body = await response.Content.ReadFromJsonAsync<ProvidersResponse>();
+        body!.Countries.Should().NotBeNull();
+        body.Countries.Should().Contain(c => c.CountryCode == "NO");
+        // The NSubstitute fake gets IsConfigured = true by default in WebApiFactory.
+        body.Countries.First(c => c.CountryCode == "NO").IsConfigured.Should().BeTrue();
+    }
+
     private sealed record HealthResponse(string status, string service);
 
-    private sealed record ProvidersResponse(string[] SupportedCountries);
+    private sealed record ProvidersResponse(string[] SupportedCountries, CountryStatus[] Countries);
+
+    private sealed record CountryStatus(string CountryCode, bool IsConfigured);
 }

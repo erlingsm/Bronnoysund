@@ -31,6 +31,12 @@ internal sealed class PolishCompanyProvider(
 
     public string CountryCode => "PL";
 
+    // KRS Open API doesn't need credentials, so the provider is always "configured" for
+    // KRS lookups. NIP/REGON go through CEIDG which DOES need a bearer token, but the
+    // provider gracefully degrades to Unavailable on those identifier types when the
+    // token is missing. UI may want a per-path indicator later (Plan 26 follow-up).
+    public bool IsConfigured => true;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         return id switch

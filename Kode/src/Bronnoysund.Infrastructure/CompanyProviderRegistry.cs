@@ -32,4 +32,7 @@ internal sealed class CompanyProviderRegistry : ICompanyProviderRegistry
         _byCountry.GetValueOrDefault(countryCode);
 
     public IReadOnlyCollection<string> SupportedCountries => _byCountry.Keys;
+
+    public IReadOnlyDictionary<string, bool> ConfigurationStatus =>
+        _byCountry.ToDictionary(p => p.Key, p => p.Value.IsConfigured, StringComparer.OrdinalIgnoreCase);
 }

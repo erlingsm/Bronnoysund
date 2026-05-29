@@ -25,6 +25,9 @@ internal sealed class PrhCompanyProvider(
 {
     public string CountryCode => "FI";
 
+    // PRH's open-data endpoint is anonymous — no credentials needed.
+    public bool IsConfigured => true;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not FinnishBusinessId fi)

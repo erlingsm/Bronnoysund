@@ -20,6 +20,13 @@ internal sealed class OpenCorporatesClient(
     IOptions<OpenCorporatesOptions> options,
     ILogger<OpenCorporatesClient> logger)
 {
+    /// <summary>
+    /// Whether the one shared OpenCorporates token has been provisioned. All three
+    /// jurisdiction providers (ES/IT/RS) delegate here so the UI status-prikk reflects
+    /// the same truth.
+    /// </summary>
+    public bool IsConfigured => options.Value.IsConfigured;
+
     public async Task<CompanyLookupResult> LookupAsync(string jurisdiction, string companyId, string countryCode, CancellationToken ct)
     {
         var opts = options.Value;

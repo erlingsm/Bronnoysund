@@ -19,6 +19,8 @@ internal sealed class GemiCompanyProvider(
 {
     public string CountryCode => "GR";
 
+    public bool IsConfigured => options.Value.IsConfigured;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         var opts = options.Value;

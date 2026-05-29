@@ -13,4 +13,11 @@ public interface ICompanyProviderRegistry
     ICompanyProvider? GetForCountry(string countryCode);
 
     IReadOnlyCollection<string> SupportedCountries { get; }
+
+    /// <summary>
+    /// Per-country snapshot used by Plan 26 trinn B2 (UI status-prikk). Surfaces every
+    /// registered provider's <see cref="ICompanyProvider.IsConfigured"/> flag without
+    /// forcing the UI to resolve every per-country Options class.
+    /// </summary>
+    IReadOnlyDictionary<string, bool> ConfigurationStatus { get; }
 }

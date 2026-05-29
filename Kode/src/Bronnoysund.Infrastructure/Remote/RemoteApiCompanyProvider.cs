@@ -20,6 +20,9 @@ internal sealed class RemoteApiCompanyProvider(
 {
     public string CountryCode => "NO";
 
+    // The RemoteApi mode only works when the host's BaseAddress points at a real WebApi.
+    public bool IsConfigured => http.BaseAddress is not null;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not OrganizationNumber org)

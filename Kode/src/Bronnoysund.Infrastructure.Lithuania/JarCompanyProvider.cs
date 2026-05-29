@@ -26,6 +26,9 @@ internal sealed class JarCompanyProvider(
 {
     public string CountryCode => "LT";
 
+    // data.gov.lt's JAR dataset is open (CC-BY 4.0); no credentials needed.
+    public bool IsConfigured => true;
+
     public async Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not LithuanianCompanyCode lt)

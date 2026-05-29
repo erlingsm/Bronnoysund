@@ -21,6 +21,8 @@ internal sealed class UrCompanyProvider(
 {
     public string CountryCode => "LV";
 
+    public bool IsConfigured => options.Value.IsConfigured;
+
     public Task<CompanyLookupResult> LookupAsync(CompanyIdentifier id, CancellationToken ct)
     {
         if (id is not LatvianRegistrationNumber lv)
