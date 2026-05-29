@@ -94,7 +94,12 @@ internal sealed class AriregXmlCompanyProvider(
         if (string.IsNullOrWhiteSpace(jsonText)) return null;
 
         using var json = JsonDocument.Parse(jsonText);
-        if (!json.RootElement.TryGetProperty("ettevotjad", out var entities) || entities.GetArrayLength() == 0)
+        // ValueKind guard before GetArrayLength — RIK could ship an error envelope where
+        // ettevotjad is omitted, null, or returned as an object instead of an array.
+        // Code-review-2026-05-29-iter2 should-fix #verify-translator.
+        if (!json.RootElement.TryGetProperty("ettevotjad", out var entities) ||
+            entities.ValueKind != JsonValueKind.Array ||
+            entities.GetArrayLength() == 0)
         {
             return null;
         }

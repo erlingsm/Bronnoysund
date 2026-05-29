@@ -7,23 +7,31 @@ namespace Bronnoysund.Infrastructure.Detection;
 
 /// <summary>
 /// Best-effort identifier-to-country detector. Tries each registered country pattern in
-/// priority order and returns the first match. Where two countries can match the same
-/// raw input (8-digit DK/EE, 11-digit HR/IT/LV, 9-digit NO/GR/LT/PL/RS, …) the detector
-/// commits to the most-likely candidate for our user base; the UI provides an explicit
-/// country override (Plan 26 B2) for the rest.
+/// priority order and returns the first match. Where two countries can match the same raw
+/// input (8-digit DK/EE, 11-digit IT/HR/LV, 9-digit GR/LT/PL/RS, 10-digit SE/PL/SI), the
+/// detector commits to the most-likely candidate for our Nordic user base; the UI provides
+/// an explicit country override (Plan 26 B2) for the rest.
 /// </summary>
 /// <remarks>
 /// Detection priority hierarchy:
 /// 1. Strongest checksum + most-specific prefix wins (Norwegian MOD-11 + leading 8/9).
-/// 2. Mandatory separators win next (Finnish dash, Spanish entity-letter, EU VAT prefix).
+/// 2. Mandatory separators / explicit country prefixes win next (Finnish dash, Spanish
+///    entity-letter, EU VAT-style prefixes NO/SE/FI/DK/EE/LV/PL/EL/GR/IT).
 /// 3. Unique-length identifiers (Greek 12-digit GEMI, Polish 14-digit REGON).
-/// 4. For length-collision groups, stricter checksum (ISO 7064) beats weaker (Luhn)
-///    beats format-only. Ties broken by user-base likelihood (Nordic preferred).
+/// 4. For length-collision groups, Nordic user base wins (SE before PL NIP, DK before
+///    EE/RS in the 8-digit bucket). Inside non-Nordic groups (HR/IT/LV at 11 digits),
+///    bigger user base wins (IT before HR).
 /// 5. Last-resort fallbacks (Irish 1-7 digits without prefix) come last.
-/// Known unavoidable ambiguities (no algorithmic discriminator exists):
-///   * DK CVR vs EE registrikood for 8-digit strings starting with 1/7/8/9 — default DK
-///   * RS matični broj is 8-digit format-only and would catch everything 8-digit if
-///     placed too early; ordered behind both DK and EE.
+///
+/// Code-review-2026-05-29 iter-2 changes:
+///   * 10-digit: SE moved BEFORE PL NIP (previous order misrouted ~9% of SE org-nrs that
+///     also pass NIP MOD-11 — including Volvo 5560125790 — to Poland).
+///   * 11-digit: IT moved BEFORE HR (~10% of IT P.IVAs also pass HR ISO 7064 MOD 11,10).
+///   * 8-digit: dead EstonianRegistryCode call removed (DK accepted all non-zero 8-digit
+///     inputs first, making EE unreachable). EE now requires explicit "EE" VAT prefix or
+///     the UI country override to be selected.
+///   * Explicit VAT-style prefix branch extended to NO/SE/FI/DK/EE/PL — pasting
+///     "NO919300388" no longer falls through to Greek AFM length match.
 /// </remarks>
 internal sealed class CountryDetector : ICountryDetector
 {
@@ -34,7 +42,67 @@ internal sealed class CountryDetector : ICountryDetector
             return null;
         }
 
-        // -- Highly-specific prefixes win without a length check ----------------------
+        // ---- Explicit country prefixes commit first ------------------------------------
+        // The TryCreate methods of every value object strip non-digit characters, so
+        // pasting "SE5560360793" or "NO919300388" works as long as the detector dispatches
+        // to the right TryCreate based on the prefix. Without these short-circuits the
+        // length-bucket dispatch below would misroute (e.g. "LV40003032949" passes IT
+        // Luhn; "FI01120389" matches Danish CVR shape; "NO919300388" matches Greek AFM
+        // length).
+        var trimmed = rawInput.TrimStart();
+        // OrganizationNumber.Normalize doesn't strip letters (the other 14 value objects
+        // do via Where(char.IsDigit)), so we pre-strip the NO prefix before calling
+        // TryCreate. Iter-2 caught this regression.
+        if (StartsWithIgnoreCase(trimmed, "NO") &&
+            OrganizationNumber.TryCreate(trimmed[2..], out var noPrefixed, out _))
+        {
+            return noPrefixed;
+        }
+        if (StartsWithIgnoreCase(trimmed, "SE") &&
+            SwedishOrganizationNumber.TryCreate(rawInput, out var sePrefixed, out _))
+        {
+            return sePrefixed;
+        }
+        if (StartsWithIgnoreCase(trimmed, "FI") &&
+            FinnishBusinessId.TryCreate(rawInput, out var fiPrefixed, out _))
+        {
+            return fiPrefixed;
+        }
+        if (StartsWithIgnoreCase(trimmed, "DK") &&
+            DanishCvrNumber.TryCreate(rawInput, out var dkPrefixed, out _))
+        {
+            return dkPrefixed;
+        }
+        if (StartsWithIgnoreCase(trimmed, "EE") &&
+            EstonianRegistryCode.TryCreate(rawInput, out var eePrefixed, out _))
+        {
+            return eePrefixed;
+        }
+        if (StartsWithIgnoreCase(trimmed, "LV") &&
+            LatvianRegistrationNumber.TryCreate(rawInput, out var lvPrefixed, out _))
+        {
+            return lvPrefixed;
+        }
+        // PL prefix is the EU VAT convention = NIP. KRS / REGON aren't typically pasted
+        // with a country prefix, so we don't try them here — they'll go through the
+        // length-bucket dispatch below for unprefixed input.
+        if (StartsWithIgnoreCase(trimmed, "PL") &&
+            PolishNip.TryCreate(rawInput, out var plPrefixed, out _))
+        {
+            return plPrefixed;
+        }
+        if ((StartsWithIgnoreCase(trimmed, "EL") || StartsWithIgnoreCase(trimmed, "GR")) &&
+            GreekVatNumber.TryCreate(rawInput, out var grPrefixed, out _))
+        {
+            return grPrefixed;
+        }
+        if (StartsWithIgnoreCase(trimmed, "IT") &&
+            ItalianFiscalCode.TryCreate(rawInput, out var itPrefixed, out _))
+        {
+            return itPrefixed;
+        }
+
+        // ---- Highly-specific shapes (no prefix needed) ---------------------------------
 
         // Norwegian — 9 digits + MOD-11 + leading 8/9 is unambiguous.
         if (OrganizationNumber.TryCreate(rawInput, out var organizationNumber, out _))
@@ -49,34 +117,17 @@ internal sealed class CountryDetector : ICountryDetector
             return spanish;
         }
 
-        // Explicit EU VAT-style prefixes commit immediately. Without these short-circuits,
-        // "LV40003032949" (Latvenergo) would pass Italian Luhn and be misdetected as IT.
-        var trimmed = rawInput.TrimStart();
-        if (StartsWithIgnoreCase(trimmed, "LV") &&
-            LatvianRegistrationNumber.TryCreate(rawInput, out var lvPrefixed, out _))
-        {
-            return lvPrefixed;
-        }
-        if ((StartsWithIgnoreCase(trimmed, "EL") || StartsWithIgnoreCase(trimmed, "GR")) &&
-            GreekVatNumber.TryCreate(rawInput, out var grPrefixed, out _))
-        {
-            return grPrefixed;
-        }
-        if (StartsWithIgnoreCase(trimmed, "IT") &&
-            ItalianFiscalCode.TryCreate(rawInput, out var itPrefixed, out _))
-        {
-            return itPrefixed;
-        }
-
         // Finnish Y-tunnus requires the explicit dash to commit (the dashless form is
-        // ambiguous with Estonian/Danish 8-digit codes).
-        if (rawInput.Contains('-') &&
-            FinnishBusinessId.TryCreate(rawInput, out var finnishBusinessId, out _))
+        // ambiguous with Estonian/Danish 8-digit codes). Both ASCII hyphen and the common
+        // Unicode dash variants (U+2013 EN DASH, U+2014 EM DASH, U+2212 MINUS SIGN) count
+        // — users routinely paste Finnish IDs that have been auto-corrected by Word/etc.
+        if (ContainsDashLike(rawInput) &&
+            FinnishBusinessId.TryCreate(NormaliseDashes(rawInput), out var finnishBusinessId, out _))
         {
             return finnishBusinessId;
         }
 
-        // -- Numeric-only IDs grouped by digit-count -----------------------------------
+        // ---- Numeric-only IDs grouped by digit-count -----------------------------------
 
         var digits = new string(rawInput.Where(char.IsDigit).ToArray());
 
@@ -94,21 +145,24 @@ internal sealed class CountryDetector : ICountryDetector
             return gemi;
         }
 
-        // 11-digit: try HR (ISO 7064 MOD 11,10 — strongest), then IT (Luhn), then LV
-        // (format-only, leading 4 or 5). HR and IT have non-overlapping valid sets in
-        // practice because the algorithms differ; LV's leading-4/5 guard avoids most
-        // collisions with either.
+        // 11-digit: IT (Luhn) → HR (ISO 7064 MOD 11,10) → LV (format-only, leading 4/5).
+        // ~10% of IT-valid P.IVAs also pass HR ISO 7064 (independent algorithms, no
+        // structural relationship). IT has the larger user base so wins the tie. HR's
+        // valid set is similarly a subset that overlaps IT in places. LV's leading-4/5
+        // guard catches almost everything else; explicit "LV" prefix commits above.
         if (digits.Length == 11)
         {
-            if (CroatianOib.TryCreate(rawInput, out var croatian, out _)) return croatian;
             if (ItalianFiscalCode.TryCreate(rawInput, out var italian, out _)) return italian;
+            if (CroatianOib.TryCreate(rawInput, out var croatian, out _)) return croatian;
             if (LatvianRegistrationNumber.TryCreate(rawInput, out var latvian, out _)) return latvian;
         }
 
-        // 10-digit: KRS-with-leading-0000 is the only structural signal we have. PL NIP
-        // (MOD-11) wins next, then SE (Luhn), then SI (format-only). The unconditional
-        // PL KRS catch-all that earlier swallowed every 10-digit string has been removed
-        // (code-review-2026-05-29 critical #1).
+        // 10-digit: PL KRS-with-leading-0000 → SE Luhn → PL NIP MOD-11 → SI (format-only).
+        // PL KRS-leading-0000 is the most-specific structural signal and must win first —
+        // PKN Orlen's KRS "0000028860" also happens to be Luhn-valid (so SE would
+        // preempt without the explicit leading-0000 guard). SE wins over PL NIP because
+        // ~9% of SE-Luhn-valid org-nrs also pass NIP MOD-11 (brute-force-verified in the
+        // 5560- range) and SE has the larger Nordic user base.
         if (digits.Length == 10)
         {
             if (digits.StartsWith("0000", StringComparison.Ordinal) &&
@@ -116,15 +170,15 @@ internal sealed class CountryDetector : ICountryDetector
             {
                 return krs;
             }
-            if (PolishNip.TryCreate(rawInput, out var nip, out _)) return nip;
             if (SwedishOrganizationNumber.TryCreate(rawInput, out var swedish, out _)) return swedish;
+            if (PolishNip.TryCreate(rawInput, out var nip, out _)) return nip;
             if (SlovenianMaticnaStevilka.TryCreate(rawInput, out var slovenian, out _)) return slovenian;
         }
 
         // 9-digit: GR AFM (powers-of-2 MOD-11) → LT (two-step MOD-11) → PL REGON-9
-        // (MOD-11 with [8,9,2,3,4,5,6,7] weights) → RS PIB (ISO 7064 MOD 11,10). The
-        // four checksums rarely collide; for the cases where they do, we prefer the
-        // earliest in the list. NO orgnr was already handled above.
+        // (MOD-11 with [8,9,2,3,4,5,6,7] weights) → RS PIB (ISO 7064 MOD 11,10). The four
+        // checksums rarely collide; for the cases where they do, we prefer the earliest
+        // in the list. NO orgnr was already handled above.
         if (digits.Length == 9)
         {
             if (GreekVatNumber.TryCreate(rawInput, out var afm, out _)) return afm;
@@ -134,16 +188,17 @@ internal sealed class CountryDetector : ICountryDetector
         }
 
         // 8-digit: DK CVR (format-only, non-zero leading) wins by default because the
-        // Nordic market is the larger user base. EE registrikood (format ^[1789]\d{7}$)
-        // is unreachable from this detector path — it requires the UI's explicit country
-        // override or a future "EE" prefix on the value object. RS matični broj only
-        // catches plain 8-digit input — a dashed input that fell through Finnish above
-        // (Finnish-shape attempted but checksum-failed) should not silently become RS.
+        // Nordic user base is dominant. EE registrikood would be a subset of DK's match
+        // set (DK accepts any non-zero 8-digit, EE accepts only 1/7/8/9-leading); the
+        // earlier in-bucket EE call was dead code and is removed (iter-2). Estonian users
+        // must paste "EE12417834" or use the UI country override to reach EE detection.
+        // RS matični broj is 8-digit format-only with no leading-digit restriction; it
+        // only catches plain digit input, never anything containing a dash-like character
+        // (so a Finnish-shape input that failed MOD-11 doesn't silently leak to RS).
         if (digits.Length == 8)
         {
             if (DanishCvrNumber.TryCreate(rawInput, out var danish, out _)) return danish;
-            if (EstonianRegistryCode.TryCreate(rawInput, out var estonian, out _)) return estonian;
-            if (!rawInput.Contains('-') &&
+            if (!ContainsDashLike(rawInput) &&
                 SerbianMaticniBroj.TryCreate(rawInput, out var mb, out _))
             {
                 return mb;
@@ -164,4 +219,26 @@ internal sealed class CountryDetector : ICountryDetector
 
     private static bool StartsWithIgnoreCase(string s, string prefix) =>
         s.StartsWith(prefix, StringComparison.OrdinalIgnoreCase);
+
+    // Matches ASCII hyphen plus the common Unicode dash variants users paste from Word,
+    // PDFs and rich-text emails.
+    private static bool ContainsDashLike(string s)
+    {
+        foreach (var c in s)
+        {
+            if (c is '-' or '‐' or '‑' or '‒' or '–' or '—' or '―' or '−') return true;
+        }
+        return false;
+    }
+
+    private static string NormaliseDashes(string s)
+    {
+        if (!ContainsDashLike(s)) return s;
+        var sb = new System.Text.StringBuilder(s.Length);
+        foreach (var c in s)
+        {
+            sb.Append(c is '‐' or '‑' or '‒' or '–' or '—' or '―' or '−' ? '-' : c);
+        }
+        return sb.ToString();
+    }
 }

@@ -5,6 +5,7 @@ using System.Xml;
 using Bronnoysund.Application.Results;
 using Microsoft.Extensions.Logging;
 using Polly.CircuitBreaker;
+using Polly.Timeout;
 
 namespace Bronnoysund.Application.International;
 
@@ -15,12 +16,14 @@ namespace Bronnoysund.Application.International;
 /// the same way on transient failures.
 /// </summary>
 /// <remarks>
-/// Covers: Polly's BrokenCircuitException (resilience pipeline tripped), JsonException
-/// (malformed JSON from upstream), XmlException (malformed SOAP/XML), HttpRequestException
-/// (DNS / TLS / socket-level failure), TaskCanceledException (timeout, ignoring callers'
-/// own cancellations). Each one is translated to Unavailable with a provider-specific
-/// message. The action is allowed to throw OperationCanceledException for caller-driven
-/// cancellation — that propagates unchanged.
+/// Covers: Polly's BrokenCircuitException (resilience pipeline tripped),
+/// TimeoutRejectedException (per-attempt or total-request timeout from the standard
+/// resilience handler), JsonException (malformed JSON from upstream), XmlException
+/// (malformed SOAP/XML), HttpRequestException (DNS / TLS / socket-level failure),
+/// TaskCanceledException (HttpClient timeout, ignoring callers' own cancellations).
+/// Each one is translated to Unavailable with a provider-specific message. The action
+/// is allowed to throw OperationCanceledException for caller-driven cancellation —
+/// that propagates unchanged.
 /// </remarks>
 public static class ProviderExceptionTranslator
 {
@@ -39,6 +42,14 @@ public static class ProviderExceptionTranslator
         {
             logger.LogWarning(ex, "{Provider} circuit open for {Id}", providerName, lookupId);
             return new CompanyLookupResult.Unavailable($"{providerName} is temporarily unavailable.");
+        }
+        catch (TimeoutRejectedException ex)
+        {
+            // Polly Standard Resilience Handler's per-attempt or total-request timeout
+            // surfaces as TimeoutRejectedException, not TaskCanceledException. Code-
+            // review-2026-05-29-iter2 should-fix.
+            logger.LogWarning(ex, "{Provider} timeout rejected for {Id}", providerName, lookupId);
+            return new CompanyLookupResult.Unavailable($"{providerName} did not respond within the resilience-handler timeout.");
         }
         catch (JsonException ex)
         {

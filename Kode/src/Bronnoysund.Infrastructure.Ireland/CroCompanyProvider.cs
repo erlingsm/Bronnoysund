@@ -50,7 +50,11 @@ internal sealed class CroCompanyProvider(
 
             await using var stream = await res.Content.ReadAsStreamAsync(ct).ConfigureAwait(false);
             using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct).ConfigureAwait(false);
-            if (!doc.RootElement.TryGetProperty("success", out var success) || !success.GetBoolean())
+            // CKAN error responses sometimes return "success": "false" (string) or omit
+            // it entirely on auth errors. ValueKind guard avoids InvalidOperationException
+            // from GetBoolean(). Code-review-2026-05-29-iter2 should-fix.
+            if (!doc.RootElement.TryGetProperty("success", out var success) ||
+                success.ValueKind != JsonValueKind.True)
             {
                 return new CompanyLookupResult.Unavailable("CRO CKAN response was not successful.");
             }

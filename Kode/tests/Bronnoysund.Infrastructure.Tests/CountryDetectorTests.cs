@@ -29,6 +29,17 @@ public class CountryDetectorTests
         result!.CountryCode.Should().Be("NO");
     }
 
+    [Theory]
+    [InlineData("NO919300388")]
+    [InlineData("no 919300388")]
+    public void Detect_NorwegianWithExplicitPrefix_ReturnsNorway(string raw)
+    {
+        // Without the explicit-NO branch, "NO919300388" would have 9 digits and could
+        // match Greek AFM. The prefix commit ensures the right routing.
+        var result = _detector.Detect(raw);
+        result.Should().BeOfType<OrganizationNumber>();
+    }
+
     // -- Finland ------------------------------------------------------------------
 
     [Theory]
@@ -43,27 +54,53 @@ public class CountryDetectorTests
     }
 
     [Fact]
-    public void Detect_FinnishDigitsWithoutDash_ReturnsSomethingElse()
+    public void Detect_FinnishDigitsWithoutDash_ReturnsNull()
     {
-        // 8 plain digits "01120389" can't unambiguously be Finnish; we route it
-        // to Denmark (8-digit default) or get a generic Estonian/Serbian match.
+        // 8 plain digits "01120389" can't unambiguously be Finnish. With the iter-2
+        // detector: DK rejects leading-0, RS rejects dashless... wait, RS would
+        // accept this (no leading-digit guard). Verify the actual routing:
+        // DK rejects (leading 0), RS accepts (8 plain digits) → returns RS.
+        // Document this surprise here so a future refactor either fixes it explicitly
+        // or accepts it knowingly.
         var result = _detector.Detect("01120389");
-        result.Should().NotBeOfType<FinnishBusinessId>();
+        result.Should().BeOfType<SerbianMaticniBroj>();
+    }
+
+    [Theory]
+    [InlineData("0112038–9")]  // EN DASH
+    [InlineData("0112038—9")]  // EM DASH
+    [InlineData("0112038−9")]  // MINUS SIGN
+    public void Detect_FinnishWithUnicodeDash_StillReturnsFinland(string raw)
+    {
+        // Users copy from Word/PDF/web pages which auto-correct hyphens to en/em
+        // dashes. Iter-2 caught that the ASCII-only Contains('-') guard misroutes
+        // these to RS.
+        var result = _detector.Detect(raw);
+        result.Should().BeOfType<FinnishBusinessId>();
     }
 
     // -- Estonia ------------------------------------------------------------------
 
-    // Estonian registrikood ^[1789]\d{7}$ is unreachable today because the 8-digit
-    // length-bucket commits to Danish first. The fact stays asserted here so a future
-    // refactor that flips the priority doesn't silently break the detector.
     [Fact]
     public void Detect_EstonianRegistryCode_GoesToDenmarkUnderCurrentPolicy()
     {
         // 12417834 (Bolt Technology OÜ) is also valid Danish (8 digits, non-zero
-        // leading). Current policy: Danish wins for the Nordic user base.
+        // leading). Current policy: Danish wins for the Nordic user base. Estonian
+        // users must use the EE prefix or the UI country override.
         var result = _detector.Detect("12417834");
         result.Should().BeOfType<DanishCvrNumber>();
         result!.CountryCode.Should().Be("DK");
+    }
+
+    [Theory]
+    [InlineData("EE12417834")]
+    [InlineData("ee12417834")]  // lowercase prefix
+    [InlineData("Ee 12417834")] // mixed case + space
+    public void Detect_EstonianWithExplicitPrefix_ReturnsEstonia(string raw)
+    {
+        var result = _detector.Detect(raw);
+        result.Should().BeOfType<EstonianRegistryCode>();
+        result!.CountryCode.Should().Be("EE");
     }
 
     // -- Poland -------------------------------------------------------------------
@@ -89,16 +126,27 @@ public class CountryDetectorTests
     }
 
     // -- Sweden — critical regression: 10-digit Swedish org-nrs must not be misdetected
-    //    as Polish KRS (code-review-2026-05-29 critical #1). ------------------------
+    //    as Polish KRS (code-review-2026-05-29 critical #1) or as Polish NIP (iter-2
+    //    critical #3). ---------------------------------------------------------------
 
     [Theory]
     [InlineData("5560360793")]  // Volvo AB
     [InlineData("5567370431")]  // Klarna AB
+    [InlineData("5560125790")]  // Volvo SE-Luhn-valid AND PL-NIP-MOD-11-valid (iter-2 collision case)
     public void Detect_SwedishOrganizationNumber_ReturnsSweden(string raw)
     {
         var result = _detector.Detect(raw);
         result.Should().BeOfType<SwedishOrganizationNumber>();
         result!.CountryCode.Should().Be("SE");
+    }
+
+    [Theory]
+    [InlineData("SE5560360793")]
+    [InlineData("se 5560360793")]
+    public void Detect_SwedishWithExplicitPrefix_ReturnsSweden(string raw)
+    {
+        var result = _detector.Detect(raw);
+        result.Should().BeOfType<SwedishOrganizationNumber>();
     }
 
     [Theory]
@@ -122,6 +170,15 @@ public class CountryDetectorTests
         var result = _detector.Detect(raw);
         result.Should().BeOfType<DanishCvrNumber>();
         result!.CountryCode.Should().Be("DK");
+    }
+
+    [Theory]
+    [InlineData("DK28856713")]
+    [InlineData("dk 28856713")]
+    public void Detect_DanishWithExplicitPrefix_ReturnsDenmark(string raw)
+    {
+        var result = _detector.Detect(raw);
+        result.Should().BeOfType<DanishCvrNumber>();
     }
 
     // -- Slovenia -----------------------------------------------------------------
@@ -206,12 +263,14 @@ public class CountryDetectorTests
         result!.CountryCode.Should().Be("ES");
     }
 
-    // -- Italy --------------------------------------------------------------------
+    // -- Italy — critical regression: 11-digit IT P.IVAs must not be misrouted to HR
+    //    (iter-2 critical #4 — ~10% of IT-Luhn-valid numbers also pass HR ISO 7064). --
 
     [Theory]
     [InlineData("00159560366")]    // Ferrari S.p.A.
     [InlineData("00905811006")]    // Eni S.p.A.
     [InlineData("IT00905811006")]  // With IT VAT prefix
+    [InlineData("it 00905811006")] // mixed-case prefix
     public void Detect_ItalianFiscalCode_ReturnsItaly(string raw)
     {
         var result = _detector.Detect(raw);

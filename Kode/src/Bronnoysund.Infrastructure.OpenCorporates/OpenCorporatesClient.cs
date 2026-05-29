@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text.Json;
 using Bronnoysund.Application.Dtos;
 using Bronnoysund.Application.International;
@@ -32,14 +31,18 @@ internal sealed class OpenCorporatesClient(
 
         return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
-            // Auth via Authorization header (OpenCorporates' Doorkeeper-style Token scheme),
-            // not the URL query parameter form documented in v0.4 examples — query strings
-            // get logged by Microsoft.Extensions.Http's default LoggingHttpMessageHandler
-            // and by upstream reverse proxies / APM tooling. Header auth keeps the token
-            // out of URL traces. (Code-review-2026-05-29 should-fix.)
+            // Auth via OpenCorporates' custom X-API-TOKEN header. Their public API only
+            // accepts either ?api_token=… in the query string or this custom header (per
+            // their Knowledge Base). The query-string form is logged by
+            // Microsoft.Extensions.Http.LoggingHttpMessageHandler and by upstream proxies,
+            // so the header form is the only safe option. The earlier attempt at
+            // Authorization: Token token=… (Doorkeeper-style, commit fd00284) was wrong:
+            // OpenCorporates does NOT expose that scheme and every call returned 401.
+            // TryAddWithoutValidation skips the framework's "is this a standard header"
+            // check since X-API-TOKEN is a custom name with hyphens.
             var url = $"v0.4/companies/{jurisdiction}/{Uri.EscapeDataString(companyId)}";
             using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(url, UriKind.Relative));
-            req.Headers.Authorization = new AuthenticationHeaderValue("Token", $"token={opts.ApiToken}");
+            req.Headers.TryAddWithoutValidation("X-API-TOKEN", opts.ApiToken);
             using var res = await http.SendAsync(req, ct).ConfigureAwait(false);
             if (res.StatusCode == HttpStatusCode.NotFound) return new CompanyLookupResult.NotFound(companyId);
             if (res.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden or (HttpStatusCode)402)

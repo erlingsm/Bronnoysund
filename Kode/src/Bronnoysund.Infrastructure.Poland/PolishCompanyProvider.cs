@@ -47,10 +47,22 @@ internal sealed class PolishCompanyProvider(
     {
         return await ProviderExceptionTranslator.CatchUpstreamAsync(async () =>
         {
-            // Try the commercial register first; if 404, fall back to the associations
-            // register. Code-review-2026-05-29: per-attempt transport failures used to
-            // skip the S fallback. The outer translator now catches the LAST attempt's
-            // transport exception only after BOTH attempts have failed.
+            // Try the commercial register first; on a 404 fall back to the associations
+            // register. Per-attempt transient failures are recorded and re-raised only if
+            // we exit the loop without ever returning Found — at that point we can't
+            // distinguish "not in P, not in S" from "didn't actually find out about P":
+            //
+            //   P=Found             → return Found
+            //   P=transient + S=Found → return Found
+            //   P=404 + S=Found     → return Found
+            //   P=404 + S=404       → NotFound  (we know it's nowhere)
+            //   P=transient + S=404 → Unavailable  (we don't know P; can't claim NotFound)
+            //   P=404 + S=transient → Unavailable  (we don't know S)
+            //   P=transient + S=transient → Unavailable
+            //
+            // The iter-2 review questioned whether P=transient+S=404 should be NotFound;
+            // we keep Unavailable because we honestly don't know whether the KRS exists
+            // in P. Code-review-2026-05-29-iter2 false-positive (verified semantics).
             Exception? lastTransientException = null;
             foreach (var rejestr in KrsRegisters)
             {
@@ -79,8 +91,7 @@ internal sealed class PolishCompanyProvider(
             }
             if (lastTransientException is not null)
             {
-                // Both P and S failed transiently. Re-throw so the shared translator
-                // gives the caller a single canonical Unavailable.
+                // Re-throw so the shared translator gives a single canonical Unavailable.
                 throw lastTransientException;
             }
             return new CompanyLookupResult.NotFound(krsNumber.Value);
