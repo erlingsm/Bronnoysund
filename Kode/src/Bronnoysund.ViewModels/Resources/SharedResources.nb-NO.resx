@@ -308,4 +308,5 @@
   <data name="Country.Detected"><value>Detektert som {0}</value></data>
   <data name="Country.UnknownFormat"><value>Ukjent format — velg land manuelt</value></data>
   <data name="Country.EstoniaHint"><value>Estisk nummer? Prøv med EE-prefiks (f.eks. EE12417834).</value></data>
+  <data name="Registry.Footer"><value>Kilde: {0} • Lisens: {1}</value></data>
 </root>

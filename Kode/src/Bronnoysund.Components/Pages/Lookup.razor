@@ -204,7 +204,7 @@
                 }
             </div>
             <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-3">
-                <code>@found.OrganizationNumber</code> · @found.CompanyType · @found.LanguageForm
+                <code>@found.OrganizationNumber</code> · @found.CompanyType@(string.Equals(found.LanguageForm, "Unknown", StringComparison.OrdinalIgnoreCase) ? "" : " · " + found.LanguageForm)
             </MudText>
 
             @if (ViewModel.Aggregated?.Bankruptcy is { IsBankrupt: true } bankruptcy)
@@ -323,6 +323,21 @@
                 <MudText Typo="Typo.caption" Color="Color.Success" Class="mt-3 d-block">
                     @ViewModel.StatusMessage
                 </MudText>
+            }
+
+            @{
+                var sourceCountry = CountryDetector.Detect(found.OrganizationNumber)?.CountryCode;
+                var registryInfo = RegistryMetadata.For(sourceCountry);
+            }
+            @if (registryInfo is not null)
+            {
+                <MudDivider Class="mt-4 mb-2" />
+                <div class="d-flex align-center" style="gap: 0.4rem;">
+                    <span aria-hidden="true">@CountryDisplay.Flag(registryInfo.CountryCode)</span>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        @string.Format(CultureInfo.CurrentCulture, L["Registry.Footer"], registryInfo.RegistryName, registryInfo.LicenceShort)
+                    </MudText>
+                </div>
             }
         </MudPaper>
 

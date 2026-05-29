@@ -333,4 +333,5 @@
   <data name="Country.Detected"><value>Detected as {0}</value></data>
   <data name="Country.UnknownFormat"><value>Unknown format — pick a country manually</value></data>
   <data name="Country.EstoniaHint"><value>Estonian number? Try prefixing with EE (e.g. EE12417834).</value></data>
+  <data name="Registry.Footer"><value>Source: {0} • Licence: {1}</value></data>
 </root>
