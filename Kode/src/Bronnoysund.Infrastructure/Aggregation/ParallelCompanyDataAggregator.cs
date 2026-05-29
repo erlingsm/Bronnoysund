@@ -25,7 +25,7 @@ namespace Bronnoysund.Infrastructure.Aggregation;
 /// <c>LoadEnrichmentAsync</c> — the aggregator integration is for WebApi one-shot consumers.
 /// </remarks>
 internal sealed class ParallelCompanyDataAggregator(
-    ICompanyProvider company,
+    ICompanyProviderRegistry registry,
     IRolesProvider roles,
     IAnnualReportProvider annualReport,
     IBeneficialOwnerProvider beneficialOwner,
@@ -40,12 +40,21 @@ internal sealed class ParallelCompanyDataAggregator(
 {
     private const int EntityChangesPageSize = 20;
 
+    // The Norwegian core registry routed via the country registry. Picking ICompanyProvider
+    // directly from DI resolves to the last-registered implementation, which is one of the
+    // Plan 21 international providers — Brreg ends up bypassed and lookups for OrganizationNumber
+    // get rejected by the wrong country adapter.
+    private ICompanyProvider NorwegianCompany =>
+        registry.GetForCountry("NO")
+            ?? throw new InvalidOperationException("Norwegian ICompanyProvider is not registered.");
+
     public async Task<AggregatedCompanyResponse> AggregateAsync(
         OrganizationNumber org,
         AggregatedScope scope,
         CancellationToken ct)
     {
         var errors = new List<RegistryError>();
+        var company = NorwegianCompany;
 
         var coreTask        = SafeRequiredAsync("core",        () => company.LookupAsync(org, ct), errors);
         var rolesTask       = SafeOptionalAsync("roles",       () => roles.GetRolesAsync(org, ct), errors);
@@ -121,7 +130,7 @@ internal sealed class ParallelCompanyDataAggregator(
     }
 
     public Task<CompanyLookupResult> CoreOnlyAsync(OrganizationNumber org, CancellationToken ct)
-        => company.LookupAsync(org, ct);
+        => NorwegianCompany.LookupAsync(org, ct);
 
     // Two variants exist because some provider methods return Task<T?> while
     // ICompanyProvider.LookupAsync returns Task<T> (the core is mandatory). Both demote
