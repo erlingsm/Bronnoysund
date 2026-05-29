@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
+using System.IO.Compression;
+using System.Text;
 using Bronnoysund.Application.Results;
 using Bronnoysund.Infrastructure.Brreg;
 using FluentAssertions;
@@ -76,6 +78,37 @@ public class BrregStatisticsProviderTests : IDisposable
         var result = await _sut.GetRolesTotalCountAsync(CancellationToken.None);
 
         result.Should().BeOfType<RolesTotalCountResult.Unavailable>();
+    }
+
+    [Fact]
+    public async Task GetRolesTotalCountAsync_DecompressesGzipBody()
+    {
+        // KB1 (2026-05-28): Brreg actually returns /roller/totalbestand as gzip-compressed
+        // body in production. The DI registration enables AutomaticDecompression on the
+        // primary HttpMessageHandler so the integer parse below sees plain text.
+        var gzippedBody = GzipBytes("88452012");
+        _wireMock.Given(Request.Create()
+                .WithPath("/enhetsregisteret/api/roller/totalbestand").UsingGet())
+            .RespondWith(Response.Create().WithStatusCode(200)
+                .WithHeader("Content-Type", "text/plain")
+                .WithHeader("Content-Encoding", "gzip")
+                .WithBody(gzippedBody));
+
+        var result = await _sut.GetRolesTotalCountAsync(CancellationToken.None);
+
+        result.Should().BeOfType<RolesTotalCountResult.Found>();
+        ((RolesTotalCountResult.Found)result).TotalCount.Should().Be(88452012);
+    }
+
+    private static byte[] GzipBytes(string text)
+    {
+        using var output = new MemoryStream();
+        using (var gzip = new GZipStream(output, CompressionLevel.Optimal, leaveOpen: true))
+        {
+            var bytes = Encoding.UTF8.GetBytes(text);
+            gzip.Write(bytes, 0, bytes.Length);
+        }
+        return output.ToArray();
     }
 
     [Fact]

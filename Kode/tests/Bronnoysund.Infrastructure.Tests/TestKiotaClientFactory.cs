@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 
+using System.Net;
 using Bronnoysund.Infrastructure.Brreg.Generated;
 using Microsoft.Kiota.Abstractions.Authentication;
 using Microsoft.Kiota.Http.HttpClientLibrary;
@@ -16,7 +17,10 @@ internal static class TestKiotaClientFactory
 {
     public static BrregClient ForWireMock(WireMockServer server)
     {
-        var http = new HttpClient { BaseAddress = new Uri(server.Url!) };
+        // Mirror production DI: AutomaticDecompression on the primary handler so tests
+        // exercise the same gzip path Brreg uses for endpoints like /roller/totalbestand.
+        var handler = new SocketsHttpHandler { AutomaticDecompression = DecompressionMethods.All };
+        var http = new HttpClient(handler) { BaseAddress = new Uri(server.Url!) };
         var adapter = new HttpClientRequestAdapter(
             new AnonymousAuthenticationProvider(),
             httpClient: http)
