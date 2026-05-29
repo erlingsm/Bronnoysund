@@ -1,0 +1,32 @@
+# xcodegen spec for the BrregWatch watchOS app.
+#
+# Usage:
+#   brew install xcodegen          # one-time
+#   cd Kode/Watch/iOS/BrregWatch
+#   xcodegen generate              # produces BrregWatch.xcodeproj
+#   open BrregWatch.xcodeproj
+#
+# The .xcodeproj file is gitignored — only this spec + the Swift sources are
+# versioned. Run `xcodegen generate` again after editing this file.
+
+name: BrregWatch
+options:
+  deploymentTarget:
+    watchOS: "11.0"
+  bundleIdPrefix: com.bronnoysund
+
+targets:
+  BrregWatch Watch App:
+    type: application
+    platform: watchOS
+    sources:
+      - path: BrregWatch Watch App
+    info:
+      path: BrregWatch Watch App/Info.plist
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.bronnoysund.BrregWatch.watchkitapp
+        INFOPLIST_KEY_WKApplication: "YES"
+        TARGETED_DEVICE_FAMILY: "4"
+        SWIFT_VERSION: "5.10"
+    dependencies: []

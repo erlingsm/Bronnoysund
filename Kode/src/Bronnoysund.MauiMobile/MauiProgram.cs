@@ -5,6 +5,7 @@ using Bronnoysund.Application.Ports;
 using Bronnoysund.Infrastructure;
 using Bronnoysund.Infrastructure.Persistence;
 using Bronnoysund.Infrastructure.Persistence.Configuration;
+using Bronnoysund.MauiMobile.Watch;
 using Bronnoysund.Speech;
 using Bronnoysund.ViewModels;
 using CommunityToolkit.Maui;
@@ -46,6 +47,7 @@ public static class MauiProgram
 		// builder.Services.AddSingleton<ISpeechToText, MauiSpeechToText>();
 		// builder.Services.AddSingleton<ITextToSpeech, MauiTextToSpeech>();
 		builder.Services.AddTransient<CompanyLookupViewModel>();
+		builder.Services.AddSingleton<WatchLookupService>();
 
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();

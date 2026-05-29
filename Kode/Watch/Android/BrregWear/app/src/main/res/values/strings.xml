@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Brreg</string>
+    <string name="speak">Snakk</string>
+    <string name="stop">Stopp</string>
+    <string name="read_aloud">Les opp</string>
+    <string name="phone_unreachable">Telefonen er ikke tilgjengelig. Åpne appen på telefonen din.</string>
+    <string name="org_number">Organisasjonsnummer</string>
+    <string name="org_name">Navn</string>
+    <string name="company_type">Selskapsform</string>
+    <string name="language_form">Målform</string>
+</resources>

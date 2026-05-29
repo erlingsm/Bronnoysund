@@ -86,6 +86,11 @@
         <Compile Remove="MauiSpeechAdapters.cs" />
     </ItemGroup>
 
+    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+        <!-- Wearable Data Layer client for the Wear OS companion listener (Plan 06). -->
+        <PackageReference Include="Xamarin.GooglePlayServices.Wearable" Version="119.0.0" />
+    </ItemGroup>
+
     <ItemGroup>
       <ProjectReference Include="..\Bronnoysund.Application\Bronnoysund.Application.csproj" />
       <ProjectReference Include="..\Bronnoysund.Infrastructure\Bronnoysund.Infrastructure.csproj" />

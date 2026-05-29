@@ -1,6 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true"></application>
+    <application android:allowBackup="true" android:icon="@mipmap/appicon" android:roundIcon="@mipmap/appicon_round" android:supportsRtl="true">
+        <!-- Watch companion: Wear OS message listener registered with the
+             Wearable Data Layer for the v1 lookup path. The attribute-level
+             [IntentFilter] on BrregWearableListenerService produces the
+             matching <service>/<intent-filter> block at build time. -->
+    </application>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Voice input: needed by CommunityToolkit.Maui.Media.SpeechToText. Recognition runs
