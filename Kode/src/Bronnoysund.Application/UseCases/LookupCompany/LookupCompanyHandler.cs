@@ -16,6 +16,7 @@ namespace Bronnoysund.Application.UseCases.LookupCompany;
 public sealed class LookupCompanyHandler(
     ICountryDetector detector,
     ICompanyProviderRegistry registry,
+    IProviderHealthTracker health,
     ILogger<LookupCompanyHandler> logger)
 {
     public async Task<CompanyLookupResult> HandleAsync(LookupCompanyQuery query, CancellationToken ct)
@@ -39,6 +40,23 @@ public sealed class LookupCompanyHandler(
 
         logger.LogInformation("Looking up {Country}:{Id} via {Provider}",
             identifier.CountryCode, identifier.Value, provider.GetType().Name);
-        return await provider.LookupAsync(identifier, ct);
+        var result = await provider.LookupAsync(identifier, ct);
+        RecordOutcome(identifier.CountryCode, result);
+        return result;
+    }
+
+    private void RecordOutcome(string countryCode, CompanyLookupResult result)
+    {
+        switch (result)
+        {
+            case CompanyLookupResult.Found:
+            case CompanyLookupResult.NotFound:
+                health.RecordSuccess(countryCode);
+                break;
+            case CompanyLookupResult.Unavailable un:
+                health.RecordFailure(countryCode, un.Message);
+                break;
+            // InvalidInput is a value-object validation failure, not a provider health signal.
+        }
     }
 }

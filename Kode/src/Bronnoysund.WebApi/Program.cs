@@ -660,19 +660,30 @@ try
     // Per Plan 21, a single endpoint that enumerates every ICompanyProvider currently wired
     // up. Plan 26 trinn B2 (UI status-prikk grønn/grå/rød) reads ConfigurationStatus so it
     // can tell which countries are wired-and-configured (green) vs wired-but-not-configured
-    // (grey) without resolving every per-country Options class itself.
-    app.MapGet("/health/providers", (ICompanyProviderRegistry registry) =>
+    // (grey) without resolving every per-country Options class itself. Plan 26 Fase 4
+    // extends each country with the last-success/last-failure timestamps so the UI can
+    // turn the dot red when a configured adapter is currently failing.
+    app.MapGet("/health/providers", (ICompanyProviderRegistry registry, IProviderHealthTracker health) =>
     {
         var status = registry.ConfigurationStatus;
+        var snapshot = health.Snapshot;
         return Results.Ok(new
         {
             supportedCountries = registry.SupportedCountries.OrderBy(c => c).ToArray(),
             countries = registry.SupportedCountries
                 .OrderBy(c => c)
-                .Select(c => new
+                .Select(c =>
                 {
-                    countryCode = c,
-                    isConfigured = status.TryGetValue(c, out var configured) && configured,
+                    snapshot.TryGetValue(c, out var hs);
+                    return new
+                    {
+                        countryCode = c,
+                        isConfigured = status.TryGetValue(c, out var configured) && configured,
+                        lastSuccess = hs?.LastSuccess,
+                        lastFailure = hs?.LastFailure,
+                        lastFailureReason = hs?.LastFailureReason,
+                        isFailingNow = hs?.IsFailingNow ?? false,
+                    };
                 })
                 .ToArray(),
         });

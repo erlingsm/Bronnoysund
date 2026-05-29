@@ -192,10 +192,22 @@ public class ParallelCompanyDataAggregatorTests
         providers.SubUnits.GetSubUnitsAsync(Arg.Any<OrganizationNumber>(), Arg.Any<CancellationToken>()).Returns((SubUnitsResponse?)null);
 
         return new ParallelCompanyDataAggregator(
-            providers.Company, providers.Roles, providers.AnnualReport, providers.BeneficialOwner,
+            new SingleNorwegianRegistry(providers.Company), providers.Roles, providers.AnnualReport, providers.BeneficialOwner,
             providers.Debt, providers.Bankruptcy, providers.SubUnits,
             providers.SubUnitDetails, providers.LegalRoles, providers.Voluntary, providers.EntityChanges,
             NullLogger<ParallelCompanyDataAggregator>.Instance);
+    }
+
+    // The aggregator now resolves its Norwegian provider through ICompanyProviderRegistry so
+    // the integration test wires the mock company under that registry shape. Mirrors the
+    // SingleNorwegianRegistry helper used in the ViewModels-level enrichment tests.
+    private sealed class SingleNorwegianRegistry(ICompanyProvider provider) : ICompanyProviderRegistry
+    {
+        public ICompanyProvider? GetForCountry(string countryCode) =>
+            string.Equals(countryCode, "NO", StringComparison.OrdinalIgnoreCase) ? provider : null;
+        public IReadOnlyCollection<string> SupportedCountries => ["NO"];
+        public IReadOnlyDictionary<string, bool> ConfigurationStatus =>
+            new Dictionary<string, bool> { ["NO"] = true };
     }
 
     private sealed record Providers(

@@ -117,7 +117,8 @@ public sealed class CompanyLookupViewModelEnrichmentTests
         var detector = new PassthroughNorwegianDetector();
         var registry = new SingleNorwegianRegistry(new AggregatorBackedProvider(aggregator));
         var aggregatedHandler = new LookupAggregatedCompanyHandler(
-            detector, registry, aggregator, NullLogger<LookupAggregatedCompanyHandler>.Instance);
+            detector, registry, aggregator, new NoopHealthTracker(),
+            NullLogger<LookupAggregatedCompanyHandler>.Instance);
         var searchHandler = new SearchCompaniesByNameHandler(
             new StubSearchProvider(), NullLogger<SearchCompaniesByNameHandler>.Instance);
         return new CompanyLookupViewModel(
@@ -138,6 +139,14 @@ public sealed class CompanyLookupViewModelEnrichmentTests
         public IReadOnlyCollection<string> SupportedCountries => ["NO"];
         public IReadOnlyDictionary<string, bool> ConfigurationStatus =>
             new Dictionary<string, bool> { ["NO"] = true };
+    }
+
+    private sealed class NoopHealthTracker : IProviderHealthTracker
+    {
+        public void RecordSuccess(string countryCode) { }
+        public void RecordFailure(string countryCode, string? reason) { }
+        public IReadOnlyDictionary<string, ProviderHealthSnapshot> Snapshot =>
+            new Dictionary<string, ProviderHealthSnapshot>();
     }
 
     private sealed class AggregatorBackedProvider(ICompanyDataAggregator aggregator) : ICompanyProvider

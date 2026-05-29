@@ -316,6 +316,7 @@
   <data name="Country.Picker.Title"><value>Velg land</value></data>
   <data name="Country.Picker.StatusConfigured"><value>Live</value></data>
   <data name="Country.Picker.StatusNotConfigured"><value>Venter på avtale</value></data>
+  <data name="Country.Picker.StatusFailing"><value>Siste kall feilet</value></data>
   <data name="Country.Picker.Footer"><value>{0} av {1} land aktive</value></data>
   <data name="Country.SelectedManually"><value>Valgt: {0}</value></data>
   <data name="Country.Picker.SearchPlaceholder"><value>Søk…</value></data>

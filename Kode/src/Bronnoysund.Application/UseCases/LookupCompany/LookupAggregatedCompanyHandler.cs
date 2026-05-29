@@ -20,6 +20,7 @@ public sealed class LookupAggregatedCompanyHandler(
     ICountryDetector detector,
     ICompanyProviderRegistry registry,
     ICompanyDataAggregator aggregator,
+    IProviderHealthTracker health,
     ILogger<LookupAggregatedCompanyHandler> logger)
 {
     public async Task<AggregatedLookupResult> HandleAsync(LookupCompanyQuery query, CancellationToken ct)
@@ -47,6 +48,7 @@ public sealed class LookupAggregatedCompanyHandler(
     private async Task<AggregatedLookupResult> HandleNorwegianAsync(OrganizationNumber org, CancellationToken ct)
     {
         var core = await aggregator.CoreOnlyAsync(org, ct).ConfigureAwait(false);
+        RecordOutcome(org.CountryCode, core);
         switch (core)
         {
             case CompanyLookupResult.NotFound nf:
@@ -61,6 +63,20 @@ public sealed class LookupAggregatedCompanyHandler(
                 return new AggregatedLookupResult.Found(aggregated);
             default:
                 return new AggregatedLookupResult.Unavailable("Unexpected result type from core registry.");
+        }
+    }
+
+    private void RecordOutcome(string countryCode, CompanyLookupResult result)
+    {
+        switch (result)
+        {
+            case CompanyLookupResult.Found:
+            case CompanyLookupResult.NotFound:
+                health.RecordSuccess(countryCode);
+                break;
+            case CompanyLookupResult.Unavailable un:
+                health.RecordFailure(countryCode, un.Message);
+                break;
         }
     }
 
@@ -81,6 +97,7 @@ public sealed class LookupAggregatedCompanyHandler(
 
         logger.LogInformation("Looking up {Country}:{Id} (core-only — international)", id.CountryCode, id.Value);
         var result = await provider.LookupAsync(id, ct).ConfigureAwait(false);
+        RecordOutcome(id.CountryCode, result);
         return result switch
         {
             CompanyLookupResult.Found f => new AggregatedLookupResult.Found(

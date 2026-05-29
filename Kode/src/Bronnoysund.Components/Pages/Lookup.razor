@@ -10,6 +10,7 @@
 @inject ISnackbar Snackbar
 @inject ICountryDetector CountryDetector
 @inject ICompanyProviderRegistry ProviderRegistry
+@inject IProviderHealthTracker ProviderHealth
 @implements IDisposable
 
 <PageTitle>@L["LookupTitle"]</PageTitle>
@@ -58,8 +59,9 @@
                     @if (_countryPickerOpen)
                     {
                         var status = ProviderRegistry.ConfigurationStatus;
+                        var healthSnapshot = ProviderHealth.Snapshot;
                         var allCountries = ProviderRegistry.SupportedCountries.OrderBy(c => c).ToList();
-                        var liveCount = allCountries.Count(c => status.GetValueOrDefault(c));
+                        var liveCount = allCountries.Count(c => status.GetValueOrDefault(c) && !(healthSnapshot.TryGetValue(c, out var hs) && hs.IsFailingNow));
                         var filter = _countryFilter?.Trim() ?? string.Empty;
                         var filtered = string.IsNullOrEmpty(filter)
                             ? allCountries
@@ -109,14 +111,18 @@
                                         foreach (var code in filtered)
                                         {
                                             var configured = status.GetValueOrDefault(code);
-                                            var statusLabel = configured ? L["Country.Picker.StatusConfigured"] : L["Country.Picker.StatusNotConfigured"];
+                                            var failing = configured && healthSnapshot.TryGetValue(code, out var h) && h.IsFailingNow;
+                                            var dotColor = !configured ? "#bdbdbd" : failing ? "#d32f2f" : "#4caf50";
+                                            var statusLabel = !configured ? L["Country.Picker.StatusNotConfigured"]
+                                                : failing ? L["Country.Picker.StatusFailing"]
+                                                : L["Country.Picker.StatusConfigured"];
                                             var countryName = L[$"Country.{code}"];
                                             <MudListItem T="string" OnClick="@(() => SelectCountry(code))"
                                                          aria-label="@($"{countryName}, {statusLabel}")">
                                                 <div class="d-flex align-center" style="gap: 0.5rem;">
                                                     <span style="font-size: 1.1rem;" aria-hidden="true">@CountryDisplay.Flag(code)</span>
                                                     <MudText Typo="Typo.body2" Class="flex-grow-1">@countryName</MudText>
-                                                    <span style="color: @(configured ? "#4caf50" : "#bdbdbd"); font-size: 0.8rem;"
+                                                    <span style="color: @dotColor; font-size: 0.8rem;"
                                                           title="@statusLabel" aria-hidden="true">●</span>
                                                 </div>
                                             </MudListItem>
