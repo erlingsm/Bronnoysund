@@ -34,6 +34,7 @@
                               Placeholder="@L["OrgNumberPlaceholder"]"
                               Variant="Variant.Outlined"
                               Immediate="true"
+                              InputMode="@CurrentInputMode()"
                               OnKeyDown="@OnOrgNumberKeyDown"
                               Disabled="@ViewModel.IsBusy"
                               Class="flex-grow-1" />
@@ -57,39 +58,75 @@
                     @if (_countryPickerOpen)
                     {
                         var status = ProviderRegistry.ConfigurationStatus;
-                        var countries = ProviderRegistry.SupportedCountries.OrderBy(c => c).ToList();
-                        var liveCount = countries.Count(c => status.GetValueOrDefault(c));
-                        <div style="position: absolute; top: 100%; right: 0; z-index: 1000; min-width: 280px;">
-                            <MudPaper Elevation="8" Class="mt-1" role="listbox">
-                                <MudList T="string" Dense="true">
-                                    <MudListItem T="string" OnClick="@(() => SelectCountry(null))">
-                                        <div class="d-flex align-center" style="gap: 0.5rem;">
-                                            <MudIcon Icon="@Icons.Material.Filled.AutoFixHigh" Size="Size.Small" />
-                                            <div class="flex-grow-1">
-                                                <MudText Typo="Typo.body2">@L["Country.Picker.Auto"]</MudText>
-                                                <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Country.Picker.AutoDescription"]</MudText>
-                                            </div>
-                                        </div>
-                                    </MudListItem>
-                                    <MudDivider />
-                                    @foreach (var code in countries)
+                        var allCountries = ProviderRegistry.SupportedCountries.OrderBy(c => c).ToList();
+                        var liveCount = allCountries.Count(c => status.GetValueOrDefault(c));
+                        var filter = _countryFilter?.Trim() ?? string.Empty;
+                        var filtered = string.IsNullOrEmpty(filter)
+                            ? allCountries
+                            : allCountries.Where(c =>
+                                c.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+                                L[$"Country.{c}"].Value.Contains(filter, StringComparison.OrdinalIgnoreCase)
+                            ).ToList();
+                        <div class="country-picker-backdrop" @onclick="ClosePicker"></div>
+                        <div class="country-picker-popover mt-1">
+                            <MudPaper Elevation="8" role="listbox">
+                                <div class="country-picker-mobile-header align-center pa-3">
+                                    <MudText Typo="Typo.subtitle1" Class="flex-grow-1">@L["Country.Picker.Title"]</MudText>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                                   OnClick="ClosePicker" aria-label="@L["Country.Picker.Close"]" />
+                                </div>
+                                <div class="pa-2">
+                                    <MudTextField @bind-Value="_countryFilter" Immediate="true"
+                                                  Placeholder="@L["Country.Picker.SearchPlaceholder"]"
+                                                  Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                  Adornment="Adornment.Start"
+                                                  AdornmentIcon="@Icons.Material.Filled.Search" />
+                                </div>
+                                <MudList T="string" Dense="true" Style="max-height: 320px; overflow-y: auto;">
+                                    @if (string.IsNullOrEmpty(filter))
                                     {
-                                        var configured = status.GetValueOrDefault(code);
-                                        var statusLabel = configured ? L["Country.Picker.StatusConfigured"] : L["Country.Picker.StatusNotConfigured"];
-                                        <MudListItem T="string" OnClick="@(() => SelectCountry(code))">
+                                        <MudListItem T="string" OnClick="@(() => SelectCountry(null))">
                                             <div class="d-flex align-center" style="gap: 0.5rem;">
-                                                <span style="font-size: 1.1rem;" aria-hidden="true">@CountryDisplay.Flag(code)</span>
-                                                <MudText Typo="Typo.body2" Class="flex-grow-1">@L[$"Country.{code}"]</MudText>
-                                                <span style="color: @(configured ? "#4caf50" : "#bdbdbd"); font-size: 0.8rem;"
-                                                      title="@statusLabel" aria-label="@statusLabel">●</span>
+                                                <MudIcon Icon="@Icons.Material.Filled.AutoFixHigh" Size="Size.Small" />
+                                                <div class="flex-grow-1">
+                                                    <MudText Typo="Typo.body2">@L["Country.Picker.Auto"]</MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">@L["Country.Picker.AutoDescription"]</MudText>
+                                                </div>
                                             </div>
                                         </MudListItem>
+                                        <MudDivider />
+                                    }
+                                    @if (filtered.Count == 0)
+                                    {
+                                        <div class="px-4 py-3">
+                                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                @string.Format(CultureInfo.CurrentCulture, L["Country.Picker.NoMatch"], filter)
+                                            </MudText>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        foreach (var code in filtered)
+                                        {
+                                            var configured = status.GetValueOrDefault(code);
+                                            var statusLabel = configured ? L["Country.Picker.StatusConfigured"] : L["Country.Picker.StatusNotConfigured"];
+                                            var countryName = L[$"Country.{code}"];
+                                            <MudListItem T="string" OnClick="@(() => SelectCountry(code))"
+                                                         aria-label="@($"{countryName}, {statusLabel}")">
+                                                <div class="d-flex align-center" style="gap: 0.5rem;">
+                                                    <span style="font-size: 1.1rem;" aria-hidden="true">@CountryDisplay.Flag(code)</span>
+                                                    <MudText Typo="Typo.body2" Class="flex-grow-1">@countryName</MudText>
+                                                    <span style="color: @(configured ? "#4caf50" : "#bdbdbd"); font-size: 0.8rem;"
+                                                          title="@statusLabel" aria-hidden="true">●</span>
+                                                </div>
+                                            </MudListItem>
+                                        }
                                     }
                                 </MudList>
                                 <MudDivider />
                                 <div class="px-4 py-2">
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                        @string.Format(CultureInfo.CurrentCulture, L["Country.Picker.Footer"], liveCount, countries.Count)
+                                        @string.Format(CultureInfo.CurrentCulture, L["Country.Picker.Footer"], liveCount, allCountries.Count)
                                     </MudText>
                                 </div>
                             </MudPaper>
@@ -731,11 +768,36 @@
     }
 
     private bool _countryPickerOpen;
+    private string _countryFilter = string.Empty;
 
     private void SelectCountry(string? countryCode)
     {
         ViewModel.SelectedCountryHint = countryCode;
+        ClosePicker();
+    }
+
+    private void ClosePicker()
+    {
         _countryPickerOpen = false;
+        _countryFilter = string.Empty;
+    }
+
+    // Plan 26 M2 — surface the appropriate mobile keyboard for the country whose adapter
+    // will receive the lookup. Numeric IDs cover most of the registered set; ES NIF starts
+    // with an entity-type letter and GR allows an "EL"/"GR" VAT prefix, so those keep the
+    // default text keyboard. When the user has not picked a country yet, the detector's
+    // current best guess decides — typing a Norwegian number lands InputMode.numeric long
+    // before the lookup button is hit.
+    private InputMode CurrentInputMode()
+    {
+        var code = ViewModel.SelectedCountryHint
+            ?? CountryDetector.Detect(ViewModel.OrgNumberInput)?.CountryCode;
+        if (code is null) return InputMode.text;
+        return code.ToUpperInvariant() switch
+        {
+            "ES" or "GR" => InputMode.text,
+            _ => InputMode.numeric,
+        };
     }
 
     private static string? FormatAddress(PostalAddress a)

@@ -343,4 +343,7 @@
   <data name="Country.Picker.StatusNotConfigured"><value>Awaiting credentials</value></data>
   <data name="Country.Picker.Footer"><value>{0} of {1} countries live</value></data>
   <data name="Country.SelectedManually"><value>Selected: {0}</value></data>
+  <data name="Country.Picker.SearchPlaceholder"><value>Search…</value></data>
+  <data name="Country.Picker.NoMatch"><value>No country matches "{0}"</value></data>
+  <data name="Country.Picker.Close"><value>Close</value></data>
 </root>

@@ -1,0 +1,55 @@
+/* Country picker (Plan 26, B2 + M1).
+   On desktop the picker hangs as a popover below the activator button. On phones it
+   slides up from the bottom as a bottom-sheet (Plan 26 M1) so the OS keyboard does not
+   cover the list and one-thumb reach stays comfortable. */
+
+.country-picker-backdrop {
+    display: none;
+}
+
+.country-picker-popover {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000;
+    min-width: 280px;
+    max-width: 360px;
+}
+
+.country-picker-mobile-header {
+    display: none;
+}
+
+@media (max-width: 640px) {
+    .country-picker-backdrop {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.32);
+        z-index: 1099;
+    }
+
+    .country-picker-popover {
+        position: fixed;
+        top: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        max-width: 100%;
+        min-width: 100%;
+        z-index: 1100;
+    }
+
+    .country-picker-popover > .mud-paper {
+        border-radius: 16px 16px 0 0;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .country-picker-mobile-header {
+        display: flex;
+    }
+}

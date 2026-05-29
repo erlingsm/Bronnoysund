@@ -318,4 +318,7 @@
   <data name="Country.Picker.StatusNotConfigured"><value>Venter på avtale</value></data>
   <data name="Country.Picker.Footer"><value>{0} av {1} land aktive</value></data>
   <data name="Country.SelectedManually"><value>Valgt: {0}</value></data>
+  <data name="Country.Picker.SearchPlaceholder"><value>Søk…</value></data>
+  <data name="Country.Picker.NoMatch"><value>Ingen land matcher "{0}"</value></data>
+  <data name="Country.Picker.Close"><value>Lukk</value></data>
 </root>
