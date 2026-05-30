@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 //
 // Wire-format DTOs for the Watch <-> Phone companion protocol v1.
-// Spec: Kode/docs/watch-protocol.md
+// Spec: Kode/docs/watch-protocol.md. Lives in Application so that test
+// projects + future hosts can ship the same shape without MAUI bindings.
 
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Bronnoysund.MauiMobile.Watch;
+namespace Bronnoysund.Application.Watch;
 
 public sealed record LookupRequest(
     [property: JsonPropertyName("version")] int Version,

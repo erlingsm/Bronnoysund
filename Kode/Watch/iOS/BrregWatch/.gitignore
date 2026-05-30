@@ -5,3 +5,5 @@ DerivedData/
 build/
 *.xcuserstate
 .swiftpm/
+# Info.plist is generated from project.yml on every `xcodegen generate` run.
+BrregWatch Watch App/Info.plist

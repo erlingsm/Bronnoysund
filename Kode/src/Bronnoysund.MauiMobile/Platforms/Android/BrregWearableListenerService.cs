@@ -12,19 +12,22 @@
 using Android.App;
 using Android.Content;
 using Android.Gms.Wearable;
-using Bronnoysund.MauiMobile.Watch;
+using Bronnoysund.Application.Watch;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Bronnoysund.MauiMobile.Platforms.Android;
 
 [Service(Exported = true)]
-[IntentFilter(new[] { WearableListenerService.ActionMessageReceived },
+[IntentFilter(new[] { "com.google.android.gms.wearable.MESSAGE_RECEIVED" },
     DataScheme = "wear", DataHost = "*", DataPathPrefix = "/com.bronnoysund/lookup/")]
 public sealed class BrregWearableListenerService : WearableListenerService
 {
-    public override void OnMessageReceived(IMessageEvent messageEvent)
+    // Parameter name must match the generated Android binding (p0) to satisfy CA1725;
+    // we alias it locally so the logic stays readable.
+    public override void OnMessageReceived(IMessageEvent p0)
     {
+        var messageEvent = p0;
         base.OnMessageReceived(messageEvent);
         if (messageEvent.Path != WatchProtocol.AndroidMessagePath)
         {

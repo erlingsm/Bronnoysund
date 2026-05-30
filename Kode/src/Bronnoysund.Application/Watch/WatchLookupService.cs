@@ -6,7 +6,7 @@ using Bronnoysund.Application.UseCases.LookupCompany;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Bronnoysund.MauiMobile.Watch;
+namespace Bronnoysund.Application.Watch;
 
 /// <summary>
 /// Bridges a Watch companion message into the country-aware lookup pipeline and

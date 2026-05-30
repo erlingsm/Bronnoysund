@@ -5,7 +5,7 @@ using Bronnoysund.Application.Ports;
 using Bronnoysund.Infrastructure;
 using Bronnoysund.Infrastructure.Persistence;
 using Bronnoysund.Infrastructure.Persistence.Configuration;
-using Bronnoysund.MauiMobile.Watch;
+using Bronnoysund.Application.Watch;
 using Bronnoysund.Speech;
 using Bronnoysund.ViewModels;
 using CommunityToolkit.Maui;

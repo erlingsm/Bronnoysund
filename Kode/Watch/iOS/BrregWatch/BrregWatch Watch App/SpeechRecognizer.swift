@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Commercial
 //
-// SFSpeechRecognizer wrapper for short utterances. v1 captures a single phrase,
-// strips whitespace, and hands it to the caller. Tale-til-tall-normalisering
-// håndteres på phone-side av ICountryDetector.
+// watchOS does not expose Speech/SFSpeechRecognizer. We use the native
+// presentTextInputController, which surfaces the system dictation flow
+// (microphone first, scribble + emoji as secondary inputs). The captured
+// string is fed straight into the companion message; tale-til-tall-
+// normalisering kjører på telefon-siden via ICountryDetector.
 
 import Foundation
-import Speech
-import AVFoundation
+import WatchKit
 
 @MainActor
 final class SpeechRecognizer: ObservableObject {
@@ -14,71 +15,25 @@ final class SpeechRecognizer: ObservableObject {
     @Published var isRecording: Bool = false
     @Published var error: String?
 
-    private let recognizer: SFSpeechRecognizer?
-    private let audioEngine = AVAudioEngine()
-    private var request: SFSpeechAudioBufferRecognitionRequest?
-    private var task: SFSpeechRecognitionTask?
-
-    init(locale: Locale = Locale(identifier: "nb-NO")) {
-        self.recognizer = SFSpeechRecognizer(locale: locale)
-    }
-
-    func requestAuthorization() async -> Bool {
-        await withCheckedContinuation { cont in
-            SFSpeechRecognizer.requestAuthorization { status in
-                cont.resume(returning: status == .authorized)
-            }
+    func capture(completion: @escaping (String) -> Void) {
+        guard let controller = WKApplication.shared().rootInterfaceController else {
+            self.error = "Kunne ikke åpne taleinput."
+            completion("")
+            return
         }
-    }
-
-    func start() throws {
-        guard let recognizer, recognizer.isAvailable else {
-            throw NSError(domain: "Speech", code: -1, userInfo: [NSLocalizedDescriptionKey: "Talegjenkjenning er ikke tilgjengelig."])
-        }
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.record, mode: .measurement, options: .duckOthers)
-        try session.setActive(true, options: .notifyOthersOnDeactivation)
-
-        let req = SFSpeechAudioBufferRecognitionRequest()
-        req.shouldReportPartialResults = true
-        self.request = req
-
-        let input = audioEngine.inputNode
-        let format = input.outputFormat(forBus: 0)
-        input.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] buffer, _ in
-            self?.request?.append(buffer)
-        }
-        audioEngine.prepare()
-        try audioEngine.start()
-
         isRecording = true
-        transcript = ""
-
-        task = recognizer.recognitionTask(with: req) { [weak self] result, err in
+        controller.presentTextInputController(
+            withSuggestions: nil,
+            allowedInputMode: .plain
+        ) { [weak self] results in
             Task { @MainActor in
-                if let result {
-                    self?.transcript = result.bestTranscription.formattedString
-                }
-                if err != nil {
-                    self?.stop()
-                }
+                guard let self else { return }
+                self.isRecording = false
+                let text = (results?.first as? String)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                self.transcript = text
+                completion(text)
             }
         }
-    }
-
-    func stop() {
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
-        request?.endAudio()
-        task?.cancel()
-        task = nil
-        request = nil
-        isRecording = false
-        // Release audio routing so other apps (and TTS for "Les opp") can play.
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
-    }
-
-    func currentValue() -> String {
-        transcript.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

@@ -7,7 +7,6 @@ struct ContentView: View {
     @EnvironmentObject var companion: Companion
     @StateObject private var speech = SpeechRecognizer()
     @State private var input: String = ""
-    @State private var speechAuthorized: Bool = false
     private let synthesizer = AVSpeechSynthesizer()
 
     var body: some View {
@@ -33,35 +32,25 @@ struct ContentView: View {
             }
             .padding()
         }
-        .task {
-            speechAuthorized = await speech.requestAuthorization()
-        }
     }
 
     private var voiceButton: some View {
-        Button(action: toggleRecording) {
+        Button(action: startCapture) {
             HStack {
-                Image(systemName: speech.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                Text(speech.isRecording ? "Stopp" : "Snakk")
+                Image(systemName: "mic.circle.fill")
+                Text(speech.isRecording ? "Lytter…" : "Snakk")
             }
             .frame(maxWidth: .infinity)
         }
-        .disabled(!speechAuthorized)
+        .disabled(speech.isRecording)
     }
 
-    private func toggleRecording() {
-        if speech.isRecording {
-            speech.stop()
-            input = speech.currentValue()
-            guard !input.isEmpty else { return }
+    private func startCapture() {
+        speech.capture { value in
+            input = value
+            guard !value.isEmpty else { return }
             Task {
-                await companion.send(LookupRequest(action: .lookup, value: input))
-            }
-        } else {
-            do {
-                try speech.start()
-            } catch {
-                companion.lastError = error.localizedDescription
+                await companion.send(LookupRequest(action: .lookup, value: value))
             }
         }
     }
